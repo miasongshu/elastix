@@ -21,11 +21,20 @@
 #include <itkElastixRegistrationMethod.h>
 
 #include "elxCoreMainGTestUtilities.h"
+#include "elxTransformIO.h"
 #include "GTesting/elxGTestUtilities.h"
 
 // ITK header file:
+#include <itkAffineTransform.h>
+#include <itkBSplineTransform.h>
+#include <itkCompositeTransform.h>
+#include <itkEuler2DTransform.h>
 #include <itkImage.h>
 #include <itkIndexRange.h>
+#include <itkFileTools.h>
+#include <itkSimilarity2DTransform.h>
+#include <itkTranslationTransform.h>
+#include <itkTransformFileReader.h>
 
 // GoogleTest header file:
 #include <gtest/gtest.h>
@@ -39,13 +48,17 @@
 // Using-declarations:
 using elx::CoreMainGTestUtilities::CheckNew;
 using elx::CoreMainGTestUtilities::ConvertToOffset;
+using elx::CoreMainGTestUtilities::CreateImageFilledWithSequenceOfNaturalNumbers;
 using elx::CoreMainGTestUtilities::CreateParameterObject;
 using elx::CoreMainGTestUtilities::Deref;
+using elx::CoreMainGTestUtilities::DerefSmartPointer;
 using elx::CoreMainGTestUtilities::FillImageRegion;
 using elx::CoreMainGTestUtilities::Front;
+using elx::CoreMainGTestUtilities::GetBinaryDirectoryPath;
 using elx::CoreMainGTestUtilities::GetDataDirectoryPath;
 using elx::CoreMainGTestUtilities::GetTransformParametersFromFilter;
 using elx::GTestUtilities::MakePoint;
+using elx::GTestUtilities::MakeVector;
 
 
 // Tests registering two small (5x6) binary images, which are translated with respect to each other.
@@ -464,5 +477,72 @@ GTEST_TEST(itkElastixRegistrationMethod, InitialTransformParameterFileLinkToTran
         }
       }
     }
+  }
+}
+
+
+GTEST_TEST(itkElastixRegistrationMethod, WriteCompositeTransform)
+{
+  constexpr auto ImageDimension = 2U;
+  using ImageType = itk::Image<float, ImageDimension>;
+  const auto image =
+    CreateImageFilledWithSequenceOfNaturalNumbers<ImageType::PixelType>(itk::Size<ImageDimension>{ 5, 6 });
+
+  struct NameAndTypeId
+  {
+    const char *                                                    name;
+    itk::Transform<double, ImageDimension, ImageDimension>::Pointer itkTransform;
+  };
+
+  for (const auto transformNameAndTypeId :
+       { NameAndTypeId{ "AffineTransform", itk::AffineTransform<double, ImageDimension>::New() },
+         NameAndTypeId{ "BSplineTransform", itk::BSplineTransform<double, ImageDimension>::New() },
+         NameAndTypeId{ "EulerTransform", itk::Euler2DTransform<>::New() },
+         NameAndTypeId{ "SimilarityTransform", itk::Similarity2DTransform<>::New() },
+         NameAndTypeId{ "TranslationTransform", itk::TranslationTransform<double, ImageDimension>::New() } })
+  {
+    const std::string outputDirectoryPath = GetBinaryDirectoryPath() +
+                                            "/GTEST_itkElastixRegistrationMethod_WriteCompositeTransform_" +
+                                            transformNameAndTypeId.name;
+    itk::FileTools::CreateDirectory(outputDirectoryPath);
+
+    const auto filter = CheckNew<itk::ElastixRegistrationMethod<ImageType, ImageType>>();
+
+    filter->SetOutputDirectory(outputDirectoryPath);
+    filter->SetFixedImage(image);
+    filter->SetMovingImage(image);
+    filter->SetInitialTransformParameterFileName(GetDataDirectoryPath() + "/Translation(1,-2)/TransformParameters.txt");
+    filter->SetParameterObject(CreateParameterObject({ // Parameters in alphabetic order:
+                                                       { "ImageSampler", "Full" },
+                                                       { "MaximumNumberOfIterations", "0" },
+                                                       { "Metric", "AdvancedNormalizedCorrelation" },
+                                                       { "Optimizer", "AdaptiveStochasticGradientDescent" },
+                                                       { "Transform", transformNameAndTypeId.name },
+                                                       { "TransformOutputFileNameExtensions", ".tfm" } }));
+    filter->Update();
+
+    const auto readTransform = elx::TransformIO::Read(outputDirectoryPath + "/TransformParameters.0-experimental.tfm");
+
+    const auto & compositeTransform =
+      Deref(dynamic_cast<const itk::CompositeTransform<double, ImageDimension> *>(readTransform.GetPointer()));
+
+    const auto & transformQueue = compositeTransform.GetTransformQueue();
+    ASSERT_EQ(transformQueue.size(), 2);
+
+    const auto & frontTransform = DerefSmartPointer(transformQueue.front());
+
+    const auto & expectedFrontTransform = *(transformNameAndTypeId.itkTransform);
+
+    EXPECT_EQ(typeid(frontTransform), typeid(expectedFrontTransform));
+    EXPECT_EQ(frontTransform.GetParameters(), expectedFrontTransform.GetParameters());
+
+    // Note that the actual values of the FixedParameters may not be exactly like the expected default-constructed
+    // transform.
+    EXPECT_EQ(frontTransform.GetFixedParameters().size(), expectedFrontTransform.GetFixedParameters().size());
+
+    // Expect that the back of the transformQueue has a translation according to the InitialTransformParameterFileName.
+    const auto & translationTransform = Deref(
+      dynamic_cast<const itk::TranslationTransform<double, ImageDimension> *>(transformQueue.back().GetPointer()));
+    EXPECT_EQ(translationTransform.GetOffset(), MakeVector(1.0, -2.0));
   }
 }

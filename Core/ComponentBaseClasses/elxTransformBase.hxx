@@ -575,13 +575,8 @@ TransformBase<TElastix>::WriteToFile(xl::xoutsimple & transformationParameterInf
     const itk::TransformBase * const thisAsITKBase = this->GetAsITKBaseType();
     assert(thisAsITKBase != nullptr);
 
-    const auto correspondingItkTransform = TransformIO::CreateCorrespondingItkTransform(*this);
+    const auto correspondingItkTransform = TransformIO::CreateCorrespondingItkTransform(GetSelf());
 
-    if (correspondingItkTransform != nullptr)
-    {
-      correspondingItkTransform->SetParameters(thisAsITKBase->GetParameters());
-      correspondingItkTransform->SetFixedParameters(thisAsITKBase->GetFixedParameters());
-    }
     const itk::TransformBase & transformObject =
       (correspondingItkTransform == nullptr) ? *thisAsITKBase : *correspondingItkTransform;
     const auto fileNameWithoutExtension =

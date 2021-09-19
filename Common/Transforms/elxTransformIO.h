@@ -18,7 +18,11 @@
 #ifndef elxTransformIO_h
 #define elxTransformIO_h
 
+#include "itkAdvancedCombinationTransform.h"
+
+#include <itkCompositeTransform.h>
 #include <itkTransformBase.h>
+
 #include <string>
 
 namespace elastix
@@ -48,13 +52,22 @@ public:
   static std::string
   ConvertITKNameOfClassToElastixClassName(const std::string & itkNameOfClass);
 
-  template <typename TElastixTransform>
+  template <unsigned NDimension>
   static itk::TransformBase::Pointer
-  CreateCorrespondingItkTransform(const TElastixTransform & elxTransform)
+  CreateCorrespondingItkTransform(
+    const itk::AdvancedCombinationTransform<double, NDimension> & advancedCombinationTransform)
   {
-    return CreateCorrespondingItkTransform(
-      elxTransform, TElastixTransform::FixedImageDimension, TElastixTransform::MovingImageDimension);
+    if (advancedCombinationTransform.GetNumberOfTransforms() == 1)
+    {
+      const auto currentTransform = advancedCombinationTransform.GetCurrentTransform();
+      if (currentTransform != nullptr)
+      {
+        return CreateCorrespondingSingleItkTransform(*currentTransform);
+      }
+    }
+    return CreateCorrespondingItkCompositeTransform(advancedCombinationTransform);
   }
+
 
   static void
   Write(const itk::TransformBase & itkTransform, const std::string & fileName);
@@ -73,9 +86,32 @@ public:
 
 private:
   static itk::TransformBase::Pointer
-  CreateCorrespondingItkTransform(const BaseComponent & elxTransform,
-                                  const unsigned        fixedImageDimension,
-                                  const unsigned        movingImageDimension);
+  CreateCorrespondingSingleItkTransform(const itk::TransformBase & elxTransform);
+
+  template <unsigned NDimension>
+  static itk::SmartPointer<itk::CompositeTransform<double, NDimension>>
+  CreateCorrespondingItkCompositeTransform(
+    const itk::AdvancedCombinationTransform<double, NDimension> & advancedCombinationTransform)
+  {
+    const auto numberOfTransforms = advancedCombinationTransform.GetNumberOfTransforms();
+
+    const auto compositeTransform = itk::CompositeTransform<double, NDimension>::New();
+
+    for (itk::SizeValueType n{}; n < numberOfTransforms; ++n)
+    {
+      const auto transformBase =
+        CreateCorrespondingSingleItkTransform(*advancedCombinationTransform.GetNthTransform(n));
+      const auto transform = dynamic_cast<itk::Transform<double, NDimension, NDimension> *>(transformBase.GetPointer());
+
+      if (transform == nullptr)
+      {
+        return nullptr;
+      }
+      compositeTransform->AddTransform(transform);
+    }
+    return compositeTransform;
+  }
+
   static std::string
   MakeDeformationFieldFileName(Configuration & configuration, const std::string & transformParameterFileName);
 };
