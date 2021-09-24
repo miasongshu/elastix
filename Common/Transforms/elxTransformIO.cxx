@@ -53,7 +53,7 @@ elastix::TransformIO::ConvertITKNameOfClassToElastixClassName(const std::string 
 
 
 itk::TransformBase::Pointer
-elastix::TransformIO::CreateCorrespondingSingleItkTransform(const itk::TransformBase & elxTransform)
+elastix::TransformIO::ConvertToSingleItkTransform(const itk::TransformBase & elxTransform)
 {
   // itk::TransformBase::GetNameOfClass() may yield a string like the following, for an elastix ITK transform:
   // - "AdvancedMatrixOffsetTransformBase"

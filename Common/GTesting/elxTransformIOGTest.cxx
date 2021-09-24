@@ -100,7 +100,11 @@ struct WithDimension
                 elx::TransformIO::ConvertITKNameOfClassToElastixClassName(
                   TExpectedCorrespondingItkTransform::New()->GetNameOfClass()));
 
-      const auto itkTransform = elx::TransformIO::CreateCorrespondingItkTransform(*elxTransform);
+      const auto compositeTransform = elx::TransformIO::ConvertToItkCompositeTransform(*elxTransform);
+      ASSERT_NE(compositeTransform, nullptr);
+      const auto & transformQueue = compositeTransform->GetTransformQueue();
+      ASSERT_EQ(transformQueue.size(), 1);
+      const auto & itkTransform = transformQueue.front();
       ASSERT_NE(itkTransform, nullptr);
 
       const auto & actualItkTransformTypeId = typeid(*itkTransform);
@@ -159,7 +163,11 @@ struct WithDimension
       const auto elxTransform = ElastixTransformType::New();
       SCOPED_TRACE(fixed);
 
-      const auto itkTransform = elx::TransformIO::CreateCorrespondingItkTransform(*elxTransform);
+      const auto compositeTransform = elx::TransformIO::ConvertToItkCompositeTransform(*elxTransform);
+      ASSERT_NE(compositeTransform, nullptr);
+      const auto & transformQueue = compositeTransform->GetTransformQueue();
+      ASSERT_EQ(transformQueue.size(), 1);
+      const auto & itkTransform = transformQueue.front();
       ASSERT_NE(itkTransform, nullptr);
 
       const auto parameters = elx::TransformIO::GetParameters(fixed, *elxTransform);
@@ -176,7 +184,11 @@ struct WithDimension
 
       SCOPED_TRACE(elxTransform->elxGetClassName());
 
-      const auto itkTransform = elx::TransformIO::CreateCorrespondingItkTransform(*elxTransform);
+      const auto compositeTransform = elx::TransformIO::ConvertToItkCompositeTransform(*elxTransform);
+      ASSERT_NE(compositeTransform, nullptr);
+      const auto & transformQueue = compositeTransform->GetTransformQueue();
+      ASSERT_EQ(transformQueue.size(), 1);
+      const auto & itkTransform = transformQueue.front();
       ASSERT_NE(itkTransform, nullptr);
 
       const auto & actualItkTransformTypeId = typeid(*itkTransform);
@@ -757,7 +769,11 @@ GTEST_TEST(TransformIO, CopyDefaultParametersToCorrespondingItkTransform)
 GTEST_TEST(TransformIO, CopyDefaultEulerTransformElastix3DFixedParametersToCorrespondingItkTransform)
 {
   const auto elxTransform = elx::EulerTransformElastix<ElastixType<3>>::New();
-  const auto itkTransform = elx::TransformIO::CreateCorrespondingItkTransform(*elxTransform);
+  const auto compositeTransform = elx::TransformIO::ConvertToItkCompositeTransform(*elxTransform);
+  ASSERT_NE(compositeTransform, nullptr);
+  const auto & transformQueue = compositeTransform->GetTransformQueue();
+  ASSERT_EQ(transformQueue.size(), 1);
+  const auto & itkTransform = transformQueue.front();
   ASSERT_NE(itkTransform, nullptr);
 
   const auto elxFixedParameters = elxTransform->GetFixedParameters();

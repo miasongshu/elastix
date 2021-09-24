@@ -563,31 +563,47 @@ TransformBase<TElastix>::WriteToFile(xl::xoutsimple & transformationParameterInf
     }
   }
 
-  const auto transformOutputFileNameExtensions =
-    this->m_Configuration->GetValuesOfParameter("TransformOutputFileNameExtensions");
+  const auto & configuration = *(this->Superclass::m_Configuration);
+  const auto & self = GetSelf();
 
-  if (!transformOutputFileNameExtensions.empty())
+  const auto transformOutputFileNameExtension = configuration.GetValuesOfParameter("TransformOutputFileNameExtension");
+
+  if (transformOutputFileNameExtension.size() == 1)
   {
-    elxout << "WARNING: Support for the parameter TransformOutputFileNameExtensions is still experimental!\n"
-              "Transform files stored by this feature may still be incomplete or incorrect!"
-           << std::endl;
+    const auto firstSingleTransform = self.GetNthTransform(0);
 
-    const itk::TransformBase * const thisAsITKBase = this->GetAsITKBaseType();
-    assert(thisAsITKBase != nullptr);
-
-    const auto correspondingItkTransform = TransformIO::CreateCorrespondingItkTransform(GetSelf());
-
-    const itk::TransformBase & transformObject =
-      (correspondingItkTransform == nullptr) ? *thisAsITKBase : *correspondingItkTransform;
-    const auto fileNameWithoutExtension =
-      std::string(m_TransformParametersFileName, 0, m_TransformParametersFileName.rfind('.')) + "-experimental";
-
-    for (const auto & fileNameExtension : transformOutputFileNameExtensions)
+    if (firstSingleTransform != nullptr)
     {
-      if (!fileNameExtension.empty())
-      {
-        TransformIO::Write(transformObject, fileNameWithoutExtension + fileNameExtension);
-      }
+      const auto                       itkTransform = TransformIO::ConvertToSingleItkTransform(*firstSingleTransform);
+      const itk::TransformBase * const transformBase = itkTransform;
+
+      TransformIO::Write((transformBase == nullptr) ? *firstSingleTransform : *transformBase,
+                         std::string(m_TransformParametersFileName, 0, m_TransformParametersFileName.rfind('.')) +
+                           "-Transform" + transformOutputFileNameExtension.front());
+    }
+  }
+
+  const auto writeCompositeTransform =
+    configuration.template RetrieveValuesOfParameter<bool>("WriteCompositeTransform");
+  const auto compositeTransformOutputFileNameExtension =
+    configuration.GetValuesOfParameter("CompositeTransformOutputFileNameExtension");
+
+  if ((writeCompositeTransform != nullptr) && (writeCompositeTransform->size() == 1) &&
+      writeCompositeTransform->front() && compositeTransformOutputFileNameExtension.size() == 1)
+  {
+    const auto compositeTransform = TransformIO::ConvertToItkCompositeTransform(self);
+
+    if (compositeTransform == nullptr)
+    {
+      xl::xout["error"] << "Failed to convert a combination of transform to an ITK CompositeTransform. Please check "
+                           "that the combination does use composition"
+                        << std::endl;
+    }
+    else
+    {
+      TransformIO::Write(*compositeTransform,
+                         std::string(m_TransformParametersFileName, 0, m_TransformParametersFileName.rfind('.')) +
+                           "-CompositeTransform" + compositeTransformOutputFileNameExtension.front());
     }
   }
 

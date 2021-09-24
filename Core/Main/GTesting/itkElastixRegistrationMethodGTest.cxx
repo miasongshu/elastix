@@ -513,15 +513,18 @@ GTEST_TEST(itkElastixRegistrationMethod, WriteCompositeTransform)
     filter->SetMovingImage(image);
     filter->SetInitialTransformParameterFileName(GetDataDirectoryPath() + "/Translation(1,-2)/TransformParameters.txt");
     filter->SetParameterObject(CreateParameterObject({ // Parameters in alphabetic order:
+                                                       { "CompositeTransformOutputFileNameExtension", ".tfm" },
                                                        { "ImageSampler", "Full" },
                                                        { "MaximumNumberOfIterations", "0" },
                                                        { "Metric", "AdvancedNormalizedCorrelation" },
                                                        { "Optimizer", "AdaptiveStochasticGradientDescent" },
                                                        { "Transform", transformNameAndTypeId.name },
-                                                       { "TransformOutputFileNameExtensions", ".tfm" } }));
+                                                       { "TransformOutputFileNameExtension", ".tfm" },
+                                                       { "WriteCompositeTransform", "true" } }));
     filter->Update();
 
-    const auto readTransform = elx::TransformIO::Read(outputDirectoryPath + "/TransformParameters.0-experimental.tfm");
+    const auto readTransform =
+      elx::TransformIO::Read(outputDirectoryPath + "/TransformParameters.0-CompositeTransform.tfm");
 
     const auto & compositeTransform =
       Deref(dynamic_cast<const itk::CompositeTransform<double, ImageDimension> *>(readTransform.GetPointer()));
