@@ -566,9 +566,14 @@ TransformBase<TElastix>::WriteToFile(xl::xoutsimple & transformationParameterInf
   const auto & configuration = *(this->Superclass::m_Configuration);
   const auto & self = GetSelf();
 
-  const auto transformOutputFileNameExtension = configuration.GetValuesOfParameter("TransformOutputFileNameExtension");
+  const auto getFront = [](const auto & container) -> std::string {
+    return container.empty() ? "" : container.front();
+  };
 
-  if (transformOutputFileNameExtension.size() == 1)
+  const auto itkTransformOutputFileNameExtension =
+    getFront(configuration.GetValuesOfParameter("ITKTransformOutputFileNameExtension"));
+
+  if (!itkTransformOutputFileNameExtension.empty())
   {
     const auto firstSingleTransform = self.GetNthTransform(0);
 
@@ -577,19 +582,24 @@ TransformBase<TElastix>::WriteToFile(xl::xoutsimple & transformationParameterInf
       const auto                       itkTransform = TransformIO::ConvertToSingleItkTransform(*firstSingleTransform);
       const itk::TransformBase * const transformBase = itkTransform;
 
-      TransformIO::Write((transformBase == nullptr) ? *firstSingleTransform : *transformBase,
-                         std::string(m_TransformParametersFileName, 0, m_TransformParametersFileName.rfind('.')) +
-                           "-Transform" + transformOutputFileNameExtension.front());
+
+      const auto transformFileName =
+        std::string(m_TransformParametersFileName, 0, m_TransformParametersFileName.rfind('.')) +
+        itkTransformOutputFileNameExtension;
+
+      TransformIO::Write((transformBase == nullptr) ? *firstSingleTransform : *transformBase, transformFileName);
+
+      parameterMap.erase("TransformParameters");
+      parameterMap["Transform"] = { "File" };
+      parameterMap["TransformFileName"] = { transformFileName };
     }
   }
 
   const auto writeCompositeTransform =
-    configuration.template RetrieveValuesOfParameter<bool>("WriteCompositeTransform");
-  const auto compositeTransformOutputFileNameExtension =
-    configuration.GetValuesOfParameter("CompositeTransformOutputFileNameExtension");
+    configuration.template RetrieveValuesOfParameter<bool>("WriteITKCompositeTransform");
 
   if ((writeCompositeTransform != nullptr) && (writeCompositeTransform->size() == 1) &&
-      writeCompositeTransform->front() && compositeTransformOutputFileNameExtension.size() == 1)
+      writeCompositeTransform->front() && !itkTransformOutputFileNameExtension.empty())
   {
     const auto compositeTransform = TransformIO::ConvertToItkCompositeTransform(self);
 
@@ -603,7 +613,7 @@ TransformBase<TElastix>::WriteToFile(xl::xoutsimple & transformationParameterInf
     {
       TransformIO::Write(*compositeTransform,
                          std::string(m_TransformParametersFileName, 0, m_TransformParametersFileName.rfind('.')) +
-                           "-CompositeTransform" + compositeTransformOutputFileNameExtension.front());
+                           "-Composite" + itkTransformOutputFileNameExtension);
     }
   }
 
