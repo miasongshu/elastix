@@ -148,6 +148,13 @@ private:
     OutputType & value,
     CovariantVectorType & deriv ) const;
 
+  /** Method to compute both the value and the derivative. 4D specialization. */
+  inline void EvaluateValueAndDerivativeOptimized(
+    const Dispatch< 4 > &,
+    const ContinuousIndexType & x,
+    OutputType & value,
+    CovariantVectorType & deriv ) const;
+
   /** Method to compute both the value and the derivative. Generic. */
   inline void EvaluateValueAndDerivativeOptimized(
     const DispatchBase &,
