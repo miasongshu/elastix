@@ -32,9 +32,9 @@ template< class TElastix >
 BaseComponentSE< TElastix >::BaseComponentSE()
 {
   /** Initialize.*/
-  this->m_Elastix       = 0;
-  this->m_Configuration = 0;
-  this->m_Registration  = 0;
+  this->m_Elastix       = nullptr;
+  this->m_Configuration = nullptr;
+  this->m_Registration  = nullptr;
 }
 
 
