@@ -1,0 +1,8 @@
+
+ADD_ELXCOMPONENT( AdvNormCorrelationOLastDimMetric
+ elxAdvNormCorrelationOLastDimMetric.h
+ elxAdvNormCorrelationOLastDimMetric.hxx
+ elxAdvNormCorrelationOLastDimMetric.cxx
+ itkAdvNormCorrelationOLastDimImageToImageMetric.h
+ itkAdvNormCorrelationOLastDimImageToImageMetric.hxx )
+

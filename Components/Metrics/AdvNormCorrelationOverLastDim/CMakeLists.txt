@@ -1,6 +1,0 @@
-ADD_ELXCOMPONENT( AdvNormCorrelationOverLastDimMetric
- elxAdvNormCorrelationOverLastDimMetric.h
- elxAdvNormCorrelationOverLastDimMetric.hxx
- elxAdvNormCorrelationOverLastDimMetric.cxx
- itkAdvNormCorrelationOverLastDimImageToImageMetric.h
- itkAdvNormCorrelationOverLastDimImageToImageMetric.hxx )
