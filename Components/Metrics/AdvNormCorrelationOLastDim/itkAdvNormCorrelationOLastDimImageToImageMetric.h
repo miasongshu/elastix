@@ -15,7 +15,7 @@
  *  limitations under the License.
  *
  *=========================================================================*/
-#ifndef __itkAdvNormCorrelationOLastDimImageToImageMetric_h
+#ifndef __itkAdvNormCorrelationOLastDimImageToImageMetric_hxx
 #define __itkAdvNormCorrelationOLastDimImageToImageMetric_h
 
 #include "itkAdvancedImageToImageMetric.h"
