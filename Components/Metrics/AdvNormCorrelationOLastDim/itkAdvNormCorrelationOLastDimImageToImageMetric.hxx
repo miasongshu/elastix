@@ -214,6 +214,25 @@ AdvNormCorrelationOLastDimImageToImageMetric< TFixedImage, TMovingImage >
   typename ImageSampleContainerType::ConstIterator fbegin = sampleContainer->Begin();
   typename ImageSampleContainerType::ConstIterator fend   = sampleContainer->End();
 
+  /** Retrieve slowest varying dimension and its size. */
+  const unsigned int lastDim = this->GetFixedImage()->GetImageDimension() - 1;
+  const unsigned int lastDimSize = this->GetFixedImage()->GetLargestPossibleRegion().GetSize(lastDim);
+
+  /** Vector containing last dimension positions to use:
+   */
+  std::vector< int > lastDimPositions;
+  {
+    for (unsigned int i = 0; i < lastDimSize; ++i)
+    {
+      lastDimPositions.push_back(i);
+    }
+  }
+
+  /** Loop over the slowest varying dimension = for loop over multiple images */
+  const unsigned int realNumLastDimPositions = lastDimPositions.size();
+  for (unsigned int d = 0; d < realNumLastDimPositions; ++d)
+  {
+
   /** Create variables to store intermediate results. */
   AccumulateType sff = NumericTraits< AccumulateType >::Zero;
   AccumulateType smm = NumericTraits< AccumulateType >::Zero;
@@ -225,9 +244,19 @@ AdvNormCorrelationOLastDimImageToImageMetric< TFixedImage, TMovingImage >
   for( fiter = fbegin; fiter != fend; ++fiter )
   {
     /** Read fixed coordinates and initialize some variables. */
-    const FixedImagePointType & fixedPoint = ( *fiter ).Value().m_ImageCoordinates;
+    FixedImagePointType fixedPoint = ( *fiter ).Value().m_ImageCoordinates;
     RealType                    movingImageValue;
     MovingImagePointType        mappedPoint;
+
+    /** Transform sampled point to voxel coordinates. */
+    FixedImageContinuousIndexType voxelCoord;
+    this->GetFixedImage()->TransformPhysicalPointToContinuousIndex(fixedPoint, voxelCoord);
+
+    /** Set fixed point's last dimension to lastDimPosition. */
+    voxelCoord[lastDim] = lastDimPositions[d];
+
+    /** Transform sampled point back to world coordinates. */
+    this->GetFixedImage()->TransformContinuousIndexToPhysicalPoint(voxelCoord, fixedPoint);
 
     /** Transform point and check if it is inside the B-spline support region. */
     bool sampleOk = this->TransformPoint( fixedPoint, mappedPoint );
@@ -286,13 +315,27 @@ AdvNormCorrelationOLastDimImageToImageMetric< TFixedImage, TMovingImage >
   /** Calculate the measure value. */
   if( this->m_NumberOfPixelsCounted > 0 && denom < -1e-14 )
   {
-    measure = sfm / denom;
+    measure += sfm / denom;
   }
   else
   {
-    measure = NumericTraits< MeasureType >::Zero;
+    measure += NumericTraits< MeasureType >::Zero;
   }
+ } // end for loop over multiple images
+ 
+ 
+  /** Check if enough samples were valid. */
+  this->CheckNumberOfSamples(
+    sampleContainer->Size(), this->m_NumberOfPixelsCounted);
 
+  // TODO not sure we need this
+  ///** Compute average over variances. */
+  //measure /= static_cast<float>(this->m_NumberOfPixelsCounted);
+  ///** Normalize with initial variance. */
+  //measure /= this->m_InitialVariance;
+
+ 
+ 
   /** Return the NC measure value. */
   return measure;
 
@@ -350,6 +393,25 @@ AdvNormCorrelationOLastDimImageToImageMetric< TFixedImage, TMovingImage >
   DerivativeType             imageJacobian( nzji.size() );
   TransformJacobianType      jacobian;
 
+
+
+  /** Retrieve slowest varying dimension and its size. */
+  const unsigned int lastDim = this->GetFixedImage()->GetImageDimension() - 1;
+  const unsigned int lastDimSize = this->GetFixedImage()->GetLargestPossibleRegion().GetSize(lastDim);
+
+  /** Vector containing last dimension positions to use:
+   */
+  std::vector< int > lastDimPositions;
+  {
+    for (unsigned int i = 0; i < lastDimSize; ++i)
+    {
+	  lastDimPositions.push_back(i);
+    }
+  }
+
+  /** Loop over the slowest varying dimension = for loop over multiple images */
+  const unsigned int realNumLastDimPositions = lastDimPositions.size();
+
   /** Initialize some variables for intermediate results. */
   AccumulateType sff = NumericTraits< AccumulateType >::Zero;
   AccumulateType smm = NumericTraits< AccumulateType >::Zero;
@@ -383,14 +445,30 @@ AdvNormCorrelationOLastDimImageToImageMetric< TFixedImage, TMovingImage >
   /** Loop over the fixed image to calculate the correlation. */
   for( fiter = fbegin; fiter != fend; ++fiter )
   {
+	unsigned int       numSamplesOk = 0;
+  for (unsigned int d = 0; d < realNumLastDimPositions; ++d)
+  {
+
     /** Read fixed coordinates and initialize some variables. */
-    const FixedImagePointType & fixedPoint = ( *fiter ).Value().m_ImageCoordinates;
+    FixedImagePointType fixedPoint = ( *fiter ).Value().m_ImageCoordinates;
     RealType                    movingImageValue;
     MovingImagePointType        mappedPoint;
     MovingImageDerivativeType   movingImageDerivative;
 
+
+      /** Transform sampled point to voxel coordinates. */
+      FixedImageContinuousIndexType voxelCoord;
+      this->GetFixedImage()->TransformPhysicalPointToContinuousIndex(fixedPoint, voxelCoord);
+
+      /** Set fixed point's last dimension to lastDimPosition. */
+      voxelCoord[lastDim] = lastDimPositions[d];
+
+      /** Transform sampled point back to world coordinates. */
+      this->GetFixedImage()->TransformContinuousIndexToPhysicalPoint(voxelCoord, fixedPoint);
+
+
     /** Transform point and check if it is inside the B-spline support region. */
-    bool sampleOk = this->TransformPoint( fixedPoint, mappedPoint );
+    bool sampleOk = this->TransformPoint( &fixedPoint, mappedPoint );
 
     /** Check if point is inside mask. */
     if( sampleOk )
@@ -409,13 +487,14 @@ AdvNormCorrelationOLastDimImageToImageMetric< TFixedImage, TMovingImage >
 
     if( sampleOk )
     {
+	  numSamplesOk++;
       this->m_NumberOfPixelsCounted++;
 
       /** Get the fixed image value. */
       const RealType & fixedImageValue = static_cast< RealType >( ( *fiter ).Value().m_ImageValue );
 
       /** Get the TransformJacobian dT/dmu. */
-      this->EvaluateTransformJacobian( fixedPoint, jacobian, nzji );
+      this->EvaluateTransformJacobian( &fixedPoint, jacobian, nzji );
 
       /** Compute the innerproducts (dM/dx)^T (dT/dmu) and (dMask/dx)^T (dT/dmu). */
       this->EvaluateTransformJacobianInnerProduct(
@@ -439,7 +518,7 @@ AdvNormCorrelationOLastDimImageToImageMetric< TFixedImage, TMovingImage >
 
   /** Check if enough samples were valid. */
   this->CheckNumberOfSamples(
-    sampleContainer->Size(), this->m_NumberOfPixelsCounted );
+    sampleContainer->Size(), numSamplesOk );
 
   /** If SubtractMean, then subtract things from sff, smm, sfm,
    * derivativeF and derivativeM.
@@ -462,21 +541,28 @@ AdvNormCorrelationOLastDimImageToImageMetric< TFixedImage, TMovingImage >
   const RealType denom = -1.0 * std::sqrt( sff * smm );
 
   /** Calculate the value and the derivative. */
-  if( this->m_NumberOfPixelsCounted > 0 && denom < -1e-14 )
+  if( numSamplesOk > 0 && denom < -1e-14 )
   {
     value = sfm / denom;
     for( unsigned int i = 0; i < this->GetNumberOfParameters(); i++ )
     {
-      derivative[ i ] = ( derivativeF[ i ] - ( sfm / smm ) * derivativeM[ i ] )
+      derivative[ i ] += ( derivativeF[ i ] - ( sfm / smm ) * derivativeM[ i ] )
         / denom;
     }
   }
   else
   {
+	//TODO we should be able to remove this
     value = NumericTraits< MeasureType >::Zero;
     derivative.Fill( NumericTraits< DerivativeValueType >::ZeroValue() );
   }
 
+    /** Check if enough samples were valid. */
+    this->CheckNumberOfSamples(
+      sampleContainer->Size(), this->m_NumberOfPixelsCounted);
+
+  } // end for loop over multiple images
+  
 } // end GetValueAndDerivativeSingleThreaded()
 
 
@@ -559,6 +645,23 @@ AdvNormCorrelationOLastDimImageToImageMetric< TFixedImage, TMovingImage >
   pos_begin = ( pos_begin > sampleContainerSize ) ? sampleContainerSize : pos_begin;
   pos_end   = ( pos_end > sampleContainerSize ) ? sampleContainerSize : pos_end;
 
+  /** Retrieve slowest varying dimension and its size. */
+  const unsigned int lastDim = this->GetFixedImage()->GetImageDimension() - 1;
+  const unsigned int lastDimSize = this->GetFixedImage()->GetLargestPossibleRegion().GetSize(lastDim);
+
+  /** Vector containing last dimension positions to use:
+   */
+  std::vector< int > lastDimPositions;
+  {
+    for (unsigned int i = 0; i < lastDimSize; ++i)
+    {
+      lastDimPositions.push_back(i);
+    }
+  }
+
+  const unsigned int realNumLastDimPositions = lastDimPositions.size(); //const_cast<const unsigned int>(lastDimPositions.size());
+
+	  
   /** Create iterator over the sample container. */
   typename ImageSampleContainerType::ConstIterator threader_fiter;
   typename ImageSampleContainerType::ConstIterator threader_fbegin = sampleContainer->Begin();
@@ -575,17 +678,31 @@ AdvNormCorrelationOLastDimImageToImageMetric< TFixedImage, TMovingImage >
   AccumulateType sm                    = NumericTraits< AccumulateType >::Zero;
   unsigned long  numberOfPixelsCounted = 0;
 
+
   /** Loop over the fixed image to calculate the mean squares. */
   for( threader_fiter = threader_fbegin; threader_fiter != threader_fend; ++threader_fiter )
   {
     /** Read fixed coordinates and initialize some variables. */
-    const FixedImagePointType & fixedPoint = ( *threader_fiter ).Value().m_ImageCoordinates;
+    FixedImagePointType fixedPoint = ( *threader_fiter ).Value().m_ImageCoordinates;
+
+  FixedImageContinuousIndexType voxelCoord;
+  this->GetFixedImage()->TransformPhysicalPointToContinuousIndex(fixedPoint, voxelCoord);
+
+  /** Loop over the slowest varying dimension = for loop over multiple images */
+  for (unsigned int d = 0; d < realNumLastDimPositions; ++d)
+  {
     RealType                    movingImageValue;
     MovingImagePointType        mappedPoint;
     MovingImageDerivativeType   movingImageDerivative;
 
+    /** Set fixed point's last dimension to lastDimPosition. */
+    voxelCoord[lastDim] = lastDimPositions[d];
+
+    /** Transform sampled point back to world coordinates. */
+    this->GetFixedImage()->TransformContinuousIndexToPhysicalPoint(voxelCoord, fixedPoint);
+
     /** Transform point and check if it is inside the B-spline support region. */
-    bool sampleOk = this->TransformPoint( fixedPoint, mappedPoint );
+    bool sampleOk = this->TransformPoint( &fixedPoint, mappedPoint );
 
     /** Check if point is inside mask. */
     if( sampleOk )
@@ -612,7 +729,7 @@ AdvNormCorrelationOLastDimImageToImageMetric< TFixedImage, TMovingImage >
 
 #if 0
       /** Get the TransformJacobian dT/dmu. */
-      this->EvaluateTransformJacobian( fixedPoint, jacobian, nzji );
+      this->EvaluateTransformJacobian( &fixedPoint, jacobian, nzji );
 
       /** Compute the inner products (dM/dx)^T (dT/dmu). */
       this->EvaluateTransformJacobianInnerProduct(
@@ -620,7 +737,7 @@ AdvNormCorrelationOLastDimImageToImageMetric< TFixedImage, TMovingImage >
 #else
       /** Compute the inner product of the transform Jacobian dT/dmu and the moving image gradient dM/dx. */
       this->m_AdvancedTransform->EvaluateJacobianWithImageGradientProduct(
-        fixedPoint, movingImageDerivative, imageJacobian, nzji );
+        &fixedPoint, movingImageDerivative, imageJacobian, nzji );
 #endif
 
       /** Update some sums needed to calculate the value of NC. */
@@ -638,7 +755,8 @@ AdvNormCorrelationOLastDimImageToImageMetric< TFixedImage, TMovingImage >
     } // end if sampleOk
 
   } // end for loop over the image sample container
-
+  } // end for loop over multiple images
+  
   /** Only update these variables at the end to prevent unnecessary "false sharing". */
   this->m_CorrelationGetValueAndDerivativePerThreadVariables[ threadId ].st_NumberOfPixelsCounted = numberOfPixelsCounted;
   this->m_CorrelationGetValueAndDerivativePerThreadVariables[ threadId ].st_Sff                   = sff;
@@ -749,14 +867,14 @@ AdvNormCorrelationOLastDimImageToImageMetric< TFixedImage, TMovingImage >
         diff            = differential[ i ];
         derF            = derivativeF[ i ] - ( sf / N ) * diff;
         derM            = derivativeM[ i ] - ( sm / N ) * diff;
-        derivative[ i ] = ( derF - ( sfm / smm ) * derM ) / denom;
+        derivative[ i ] += ( derF - ( sfm / smm ) * derM ) / denom;
       }
     }
     else
     {
       for( unsigned int i = 0; i < this->GetNumberOfParameters(); ++i )
       {
-        derivative[ i ] = ( derivativeF[ i ] - ( sfm / smm ) * derivativeM[ i ] ) / denom;
+        derivative[ i ] += ( derivativeF[ i ] - ( sfm / smm ) * derivativeM[ i ] ) / denom;
       }
     }
   }
@@ -808,7 +926,7 @@ AdvNormCorrelationOLastDimImageToImageMetric< TFixedImage, TMovingImage >
         derivativeM -= sm_N * differential;
       }
 
-      derivative[ j ] = ( derivativeF - sfm_smm * derivativeM ) / denom;
+      derivative[ j ] += ( derivativeF - sfm_smm * derivativeM ) / denom;
     }
   } // end OpenMP
 #endif

@@ -154,6 +154,8 @@ public:
     Superclass::MovingImageDerivativeScalesType MovingImageDerivativeScalesType;
   typedef typename Superclass::ThreaderType   ThreaderType;
   typedef typename Superclass::ThreadInfoType ThreadInfoType;
+  typedef typename itk::ContinuousIndex< CoordinateRepresentationType, FixedImageDimension >
+    FixedImageContinuousIndexType;
 
   /** The fixed image dimension. */
   itkStaticConstMacro( FixedImageDimension, unsigned int,

@@ -134,6 +134,10 @@ public:
   typedef typename Superclass2::RegistrationPointer  RegistrationPointer;
   typedef typename Superclass2::ITKBaseType          ITKBaseType;
 
+  /** Typedef's for the B-spline transform. */
+  typedef itk::AdvancedBSplineDeformableTransformBase<
+    ScalarType, FixedImageDimension - 1 >            BSplineTransformBaseType;
+
   /** Execute stuff before each new pyramid resolution:
    * \li Set the flag to subtract the mean.
    * \li Set the CheckNumberOfSamples setting.
