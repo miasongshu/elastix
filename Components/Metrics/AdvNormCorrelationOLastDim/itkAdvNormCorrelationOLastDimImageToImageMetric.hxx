@@ -259,7 +259,8 @@ AdvNormCorrelationOLastDimImageToImageMetric< TFixedImage, TMovingImage >
     this->GetFixedImage()->TransformContinuousIndexToPhysicalPoint(voxelCoord, fixedPoint);
 
     /** Transform point and check if it is inside the B-spline support region. */
-    bool sampleOk = this->TransformPoint( fixedPoint, mappedPoint );
+    const FixedImagePointType& fixedPointConst = &fixedPoint;
+    bool sampleOk = this->TransformPoint(fixedPointConst, mappedPoint );
 
     /** Check if point is inside mask. */
     if( sampleOk )
@@ -468,7 +469,8 @@ AdvNormCorrelationOLastDimImageToImageMetric< TFixedImage, TMovingImage >
 
 
     /** Transform point and check if it is inside the B-spline support region. */
-    bool sampleOk = this->TransformPoint( &fixedPoint, mappedPoint );
+    const FixedImagePointType& fixedPointConst = &fixedPoint;
+    bool sampleOk = this->TransformPoint(fixedPointConst, mappedPoint );
 
     /** Check if point is inside mask. */
     if( sampleOk )
@@ -494,7 +496,7 @@ AdvNormCorrelationOLastDimImageToImageMetric< TFixedImage, TMovingImage >
       const RealType & fixedImageValue = static_cast< RealType >( ( *fiter ).Value().m_ImageValue );
 
       /** Get the TransformJacobian dT/dmu. */
-      this->EvaluateTransformJacobian( &fixedPoint, jacobian, nzji );
+      this->EvaluateTransformJacobian(fixedPointConst, jacobian, nzji );
 
       /** Compute the innerproducts (dM/dx)^T (dT/dmu) and (dMask/dx)^T (dT/dmu). */
       this->EvaluateTransformJacobianInnerProduct(
@@ -659,7 +661,7 @@ AdvNormCorrelationOLastDimImageToImageMetric< TFixedImage, TMovingImage >
     }
   }
 
-  const unsigned int realNumLastDimPositions = lastDimPositions.size(); //const_cast<const unsigned int>(lastDimPositions.size());
+  const unsigned int realNumLastDimPositions = lastDimPositions.size();
 
 	  
   /** Create iterator over the sample container. */
@@ -702,7 +704,8 @@ AdvNormCorrelationOLastDimImageToImageMetric< TFixedImage, TMovingImage >
     this->GetFixedImage()->TransformContinuousIndexToPhysicalPoint(voxelCoord, fixedPoint);
 
     /** Transform point and check if it is inside the B-spline support region. */
-    bool sampleOk = this->TransformPoint( &fixedPoint, mappedPoint );
+    const FixedImagePointType& fixedPointConst = &fixedPoint;
+    bool sampleOk = this->TransformPoint(fixedPointConst, mappedPoint );
 
     /** Check if point is inside mask. */
     if( sampleOk )
@@ -729,7 +732,7 @@ AdvNormCorrelationOLastDimImageToImageMetric< TFixedImage, TMovingImage >
 
 #if 0
       /** Get the TransformJacobian dT/dmu. */
-      this->EvaluateTransformJacobian( &fixedPoint, jacobian, nzji );
+      this->EvaluateTransformJacobian( fixedPointConst, jacobian, nzji );
 
       /** Compute the inner products (dM/dx)^T (dT/dmu). */
       this->EvaluateTransformJacobianInnerProduct(
@@ -737,7 +740,7 @@ AdvNormCorrelationOLastDimImageToImageMetric< TFixedImage, TMovingImage >
 #else
       /** Compute the inner product of the transform Jacobian dT/dmu and the moving image gradient dM/dx. */
       this->m_AdvancedTransform->EvaluateJacobianWithImageGradientProduct(
-        &fixedPoint, movingImageDerivative, imageJacobian, nzji );
+        fixedPointConst, movingImageDerivative, imageJacobian, nzji );
 #endif
 
       /** Update some sums needed to calculate the value of NC. */
