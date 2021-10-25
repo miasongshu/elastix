@@ -230,8 +230,6 @@ AdvNormCorrelationOLastDimImageToImageMetric< TFixedImage, TMovingImage >
 
   /** Loop over the slowest varying dimension = for loop over multiple images */
   const unsigned int realNumLastDimPositions = lastDimPositions.size();
-  for (unsigned int d = 0; d < realNumLastDimPositions; ++d)
-  {
 
   /** Create variables to store intermediate results. */
   AccumulateType sff = NumericTraits< AccumulateType >::Zero;
@@ -245,12 +243,14 @@ AdvNormCorrelationOLastDimImageToImageMetric< TFixedImage, TMovingImage >
   {
     /** Read fixed coordinates and initialize some variables. */
     FixedImagePointType fixedPoint = ( *fiter ).Value().m_ImageCoordinates;
-    RealType                    movingImageValue;
-    MovingImagePointType        mappedPoint;
 
     /** Transform sampled point to voxel coordinates. */
     FixedImageContinuousIndexType voxelCoord;
     this->GetFixedImage()->TransformPhysicalPointToContinuousIndex(fixedPoint, voxelCoord);
+  for (unsigned int d = 0; d < realNumLastDimPositions; ++d)
+  {
+    RealType                    movingImageValue;
+    MovingImagePointType        mappedPoint;
 
     /** Set fixed point's last dimension to lastDimPosition. */
     voxelCoord[lastDim] = lastDimPositions[d];
@@ -326,8 +326,8 @@ AdvNormCorrelationOLastDimImageToImageMetric< TFixedImage, TMovingImage >
  
  
   /** Check if enough samples were valid. */
-  this->CheckNumberOfSamples(
-    sampleContainer->Size(), this->m_NumberOfPixelsCounted);
+  //this->CheckNumberOfSamples(
+  //  sampleContainer->Size(), this->m_NumberOfPixelsCounted);
 
   // TODO not sure we need this
   ///** Compute average over variances. */
@@ -447,19 +447,19 @@ AdvNormCorrelationOLastDimImageToImageMetric< TFixedImage, TMovingImage >
   for( fiter = fbegin; fiter != fend; ++fiter )
   {
 	unsigned int       numSamplesOk = 0;
-  for (unsigned int d = 0; d < realNumLastDimPositions; ++d)
-  {
 
     /** Read fixed coordinates and initialize some variables. */
     FixedImagePointType fixedPoint = ( *fiter ).Value().m_ImageCoordinates;
+      /** Transform sampled point to voxel coordinates. */
+      FixedImageContinuousIndexType voxelCoord;
+      this->GetFixedImage()->TransformPhysicalPointToContinuousIndex(fixedPoint, voxelCoord);
+  for (unsigned int d = 0; d < realNumLastDimPositions; ++d)
+  {
     RealType                    movingImageValue;
     MovingImagePointType        mappedPoint;
     MovingImageDerivativeType   movingImageDerivative;
 
 
-      /** Transform sampled point to voxel coordinates. */
-      FixedImageContinuousIndexType voxelCoord;
-      this->GetFixedImage()->TransformPhysicalPointToContinuousIndex(fixedPoint, voxelCoord);
 
       /** Set fixed point's last dimension to lastDimPosition. */
       voxelCoord[lastDim] = lastDimPositions[d];
@@ -520,7 +520,7 @@ AdvNormCorrelationOLastDimImageToImageMetric< TFixedImage, TMovingImage >
 
   /** Check if enough samples were valid. */
   this->CheckNumberOfSamples(
-    sampleContainer->Size(), numSamplesOk );
+    sampleContainer->Size(), this->m_NumberOfPixelsCounted );
 
   /** If SubtractMean, then subtract things from sff, smm, sfm,
    * derivativeF and derivativeM.
@@ -560,8 +560,8 @@ AdvNormCorrelationOLastDimImageToImageMetric< TFixedImage, TMovingImage >
   }
 
     /** Check if enough samples were valid. */
-    this->CheckNumberOfSamples(
-      sampleContainer->Size(), this->m_NumberOfPixelsCounted);
+    //this->CheckNumberOfSamples(
+    //  sampleContainer->Size(), this->m_NumberOfPixelsCounted);
 
   } // end for loop over multiple images
   
@@ -661,7 +661,7 @@ AdvNormCorrelationOLastDimImageToImageMetric< TFixedImage, TMovingImage >
     }
   }
 
-  const unsigned int realNumLastDimPositions = lastDimPositions.size();
+  const unsigned int realNumLastDimPositions = lastDimPositions.size(); //const_cast<const unsigned int>(lastDimPositions.size());
 
 	  
   /** Create iterator over the sample container. */
