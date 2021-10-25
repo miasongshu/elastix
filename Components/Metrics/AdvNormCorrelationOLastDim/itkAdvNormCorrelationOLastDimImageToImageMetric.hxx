@@ -259,7 +259,7 @@ AdvNormCorrelationOLastDimImageToImageMetric< TFixedImage, TMovingImage >
     this->GetFixedImage()->TransformContinuousIndexToPhysicalPoint(voxelCoord, fixedPoint);
 
     /** Transform point and check if it is inside the B-spline support region. */
-    const FixedImagePointType& fixedPointConst = &fixedPoint;
+    const FixedImagePointType fixedPointConst = fixedPoint;
     bool sampleOk = this->TransformPoint(fixedPointConst, mappedPoint );
 
     /** Check if point is inside mask. */
@@ -469,7 +469,7 @@ AdvNormCorrelationOLastDimImageToImageMetric< TFixedImage, TMovingImage >
 
 
     /** Transform point and check if it is inside the B-spline support region. */
-    const FixedImagePointType& fixedPointConst = &fixedPoint;
+    const FixedImagePointType fixedPointConst = fixedPoint;
     bool sampleOk = this->TransformPoint(fixedPointConst, mappedPoint );
 
     /** Check if point is inside mask. */
@@ -702,9 +702,9 @@ AdvNormCorrelationOLastDimImageToImageMetric< TFixedImage, TMovingImage >
 
     /** Transform sampled point back to world coordinates. */
     this->GetFixedImage()->TransformContinuousIndexToPhysicalPoint(voxelCoord, fixedPoint);
+    const FixedImagePointType fixedPointConst = fixedPoint;
 
     /** Transform point and check if it is inside the B-spline support region. */
-    const FixedImagePointType& fixedPointConst = &fixedPoint;
     bool sampleOk = this->TransformPoint(fixedPointConst, mappedPoint );
 
     /** Check if point is inside mask. */
@@ -732,7 +732,7 @@ AdvNormCorrelationOLastDimImageToImageMetric< TFixedImage, TMovingImage >
 
 #if 0
       /** Get the TransformJacobian dT/dmu. */
-      this->EvaluateTransformJacobian( fixedPointConst, jacobian, nzji );
+      this->EvaluateTransformJacobian(fixedPointConst, jacobian, nzji );
 
       /** Compute the inner products (dM/dx)^T (dT/dmu). */
       this->EvaluateTransformJacobianInnerProduct(
