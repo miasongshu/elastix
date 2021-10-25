@@ -485,6 +485,14 @@ ParameterObject
     parameterMap[ "Interpolator" ]              = ParameterValueVectorType( 1, "ReducedDimensionBSplineInterpolator" );
     parameterMap[ "ResampleInterpolator" ]      = ParameterValueVectorType( 1, "FinalReducedDimensionBSplineInterpolator" );
   }
+  else if (transformName == "affineMulti")
+  {
+    parameterMap["Registration"] = ParameterValueVectorType(1, "MultiResolutionRegistration");
+    parameterMap["Transform"] = ParameterValueVectorType(1, "AffineTransform");
+    parameterMap["Metric"] = ParameterValueVectorType(1, "AdvNormCorrelationOLastDim");
+    parameterMap["MaximumNumberOfIterations"] = ParameterValueVectorType(1, "256");
+    parameterMap["AutomaticScalesEstimation"] = ParameterValueVectorType(1, "true");
+  }
   else
   {
     itkGenericExceptionMacro( "No default parameter map \"" << transformName << "\"." );
