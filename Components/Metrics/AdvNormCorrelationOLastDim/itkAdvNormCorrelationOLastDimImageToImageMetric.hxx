@@ -231,6 +231,8 @@ AdvNormCorrelationOLastDimImageToImageMetric< TFixedImage, TMovingImage >
   /** Loop over the slowest varying dimension = for loop over multiple images */
   const unsigned int realNumLastDimPositions = lastDimPositions.size();
 
+  for (unsigned int d = 0; d < realNumLastDimPositions; ++d)
+  {
   /** Create variables to store intermediate results. */
   AccumulateType sff = NumericTraits< AccumulateType >::Zero;
   AccumulateType smm = NumericTraits< AccumulateType >::Zero;
@@ -242,13 +244,11 @@ AdvNormCorrelationOLastDimImageToImageMetric< TFixedImage, TMovingImage >
   for( fiter = fbegin; fiter != fend; ++fiter )
   {
     /** Read fixed coordinates and initialize some variables. */
-    FixedImagePointType fixedPoint = ( *fiter ).Value().m_ImageCoordinates;
+    FixedImagePointType fixedPoint = (*fiter).Value().m_ImageCoordinates;
 
     /** Transform sampled point to voxel coordinates. */
     FixedImageContinuousIndexType voxelCoord;
     this->GetFixedImage()->TransformPhysicalPointToContinuousIndex(fixedPoint, voxelCoord);
-  for (unsigned int d = 0; d < realNumLastDimPositions; ++d)
-  {
     RealType                    movingImageValue;
     MovingImagePointType        mappedPoint;
 
@@ -413,6 +413,8 @@ AdvNormCorrelationOLastDimImageToImageMetric< TFixedImage, TMovingImage >
   /** Loop over the slowest varying dimension = for loop over multiple images */
   const unsigned int realNumLastDimPositions = lastDimPositions.size();
 
+  for (unsigned int d = 0; d < realNumLastDimPositions; ++d)
+  {
   /** Initialize some variables for intermediate results. */
   AccumulateType sff = NumericTraits< AccumulateType >::Zero;
   AccumulateType smm = NumericTraits< AccumulateType >::Zero;
@@ -443,18 +445,16 @@ AdvNormCorrelationOLastDimImageToImageMetric< TFixedImage, TMovingImage >
   typename ImageSampleContainerType::ConstIterator fbegin = sampleContainer->Begin();
   typename ImageSampleContainerType::ConstIterator fend   = sampleContainer->End();
 
+	unsigned int       numSamplesOk = 0;
   /** Loop over the fixed image to calculate the correlation. */
   for( fiter = fbegin; fiter != fend; ++fiter )
   {
-	unsigned int       numSamplesOk = 0;
 
     /** Read fixed coordinates and initialize some variables. */
     FixedImagePointType fixedPoint = ( *fiter ).Value().m_ImageCoordinates;
       /** Transform sampled point to voxel coordinates. */
       FixedImageContinuousIndexType voxelCoord;
       this->GetFixedImage()->TransformPhysicalPointToContinuousIndex(fixedPoint, voxelCoord);
-  for (unsigned int d = 0; d < realNumLastDimPositions; ++d)
-  {
     RealType                    movingImageValue;
     MovingImagePointType        mappedPoint;
     MovingImageDerivativeType   movingImageDerivative;
@@ -663,6 +663,9 @@ AdvNormCorrelationOLastDimImageToImageMetric< TFixedImage, TMovingImage >
 
   const unsigned int realNumLastDimPositions = lastDimPositions.size(); //const_cast<const unsigned int>(lastDimPositions.size());
 
+  /** Loop over the slowest varying dimension = for loop over multiple images */
+  for (unsigned int d = 0; d < realNumLastDimPositions; ++d)
+  {
 	  
   /** Create iterator over the sample container. */
   typename ImageSampleContainerType::ConstIterator threader_fiter;
@@ -690,9 +693,6 @@ AdvNormCorrelationOLastDimImageToImageMetric< TFixedImage, TMovingImage >
   FixedImageContinuousIndexType voxelCoord;
   this->GetFixedImage()->TransformPhysicalPointToContinuousIndex(fixedPoint, voxelCoord);
 
-  /** Loop over the slowest varying dimension = for loop over multiple images */
-  for (unsigned int d = 0; d < realNumLastDimPositions; ++d)
-  {
     RealType                    movingImageValue;
     MovingImagePointType        mappedPoint;
     MovingImageDerivativeType   movingImageDerivative;
@@ -758,7 +758,6 @@ AdvNormCorrelationOLastDimImageToImageMetric< TFixedImage, TMovingImage >
     } // end if sampleOk
 
   } // end for loop over the image sample container
-  } // end for loop over multiple images
   
   /** Only update these variables at the end to prevent unnecessary "false sharing". */
   this->m_CorrelationGetValueAndDerivativePerThreadVariables[ threadId ].st_NumberOfPixelsCounted = numberOfPixelsCounted;
@@ -768,6 +767,7 @@ AdvNormCorrelationOLastDimImageToImageMetric< TFixedImage, TMovingImage >
   this->m_CorrelationGetValueAndDerivativePerThreadVariables[ threadId ].st_Sf                    = sf;
   this->m_CorrelationGetValueAndDerivativePerThreadVariables[ threadId ].st_Sm                    = sm;
 
+  } // end for loop over multiple images
 } // end ThreadedGetValueAndDerivative()
 
 
