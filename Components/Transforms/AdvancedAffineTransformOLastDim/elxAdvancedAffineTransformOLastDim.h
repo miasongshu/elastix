@@ -96,7 +96,7 @@ public:
   typedef itk::AdvancedMatrixOffsetTransformBase<
     typename elx::TransformBase< TElastix >::CoordRepType,
     elx::TransformBase< TElastix >::FixedImageDimension,
-    elx::TransformBase< TElastix >::MovingImageDimension >     AffineTransformType;
+    elx::TransformBase< TElastix >::MovingImageDimension>     AffineTransformType;
 
   /** Method for creation through the object factory. */
   itkNewMacro( Self );
@@ -111,7 +111,10 @@ public:
   elxClassNameMacro( "AffineTransformOLastDim" );
 
   /** Dimension of the domain space. */
-  itkStaticConstMacro( SpaceDimension, unsigned int, Superclass2::FixedImageDimension );
+  itkStaticConstMacro( SpaceDimension, unsigned int, Superclass2::FixedImageDimension -1);
+
+  /** (Reduced) dimension of the fixed image. */
+  //itkStaticConstMacro(ReducedSpaceDimension, unsigned int, Superclass2::FixedImageDimension - 1);
 
   /** Typedefs inherited from the superclass. */
   typedef typename Superclass1::ScalarType                ScalarType;
