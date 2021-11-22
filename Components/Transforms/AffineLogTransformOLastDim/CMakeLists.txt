@@ -1,0 +1,8 @@
+
+ADD_ELXCOMPONENT( AffineLogTransformOLastDimElastix OFF
+ elxAffineLogTransformOLastDim.h
+ elxAffineLogTransformOLastDim.hxx
+ elxAffineLogTransformOLastDim.cxx
+ itkAffineLogTransformOLastDim.h
+ itkAffineLogTransformOLastDim.hxx )
+
