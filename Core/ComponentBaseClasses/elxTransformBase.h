@@ -171,6 +171,10 @@ public:
   itkStaticConstMacro( MovingImageDimension,
     unsigned int, MovingImageType::ImageDimension );
 
+  /** Get a reduced dimension for multi image registration. */
+  itkStaticConstMacro(ReducedImageDimension,
+    unsigned int, FixedImageType::ImageDimension-1);
+
   /** Other typedef's. */
   typedef itk::Object ObjectType;
   typedef itk::AdvancedTransform<
