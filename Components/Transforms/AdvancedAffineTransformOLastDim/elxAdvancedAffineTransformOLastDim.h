@@ -111,7 +111,7 @@ public:
   elxClassNameMacro( "AffineTransformOLastDim" );
 
   /** Dimension of the domain space. */
-  itkStaticConstMacro( SpaceDimension, unsigned int, Superclass2::FixedImageDimension -1);
+  itkStaticConstMacro( SpaceDimension, unsigned int, Superclass2::FixedImageDimension);
 
   /** (Reduced) dimension of the fixed image. */
   //itkStaticConstMacro(ReducedSpaceDimension, unsigned int, Superclass2::FixedImageDimension - 1);
