@@ -1,5 +1,4 @@
-
-ADD_ELXCOMPONENT( AffineLogTransformOLastDimElastix OFF
+ADD_ELXCOMPONENT( AffineLogTransformOLastDimElastix
  elxAffineLogTransformOLastDim.h
  elxAffineLogTransformOLastDim.hxx
  elxAffineLogTransformOLastDim.cxx
