@@ -77,6 +77,21 @@ public:
 
   /** Dimension of the fixed image. */
   itkStaticConstMacro( SpaceDimension, unsigned int, Superclass2::FixedImageDimension );
+  itkStaticConstMacro( ReducedSpaceDimension, unsigned int, Superclass2::FixedImageDimension - 1 );
+
+  typedef itk::AffineLogTransform< typename elx::TransformBase< TElastix >::CoordRepType,
+    itkGetStaticConstMacro( SpaceDimension ) >            AffineLogTransformType;
+  typedef typename AffineLogTransformType::Pointer        AffineLogTransformPointer;
+  typedef typename AffineLogTransformType::InputPointType InputPointType;
+
+  /** The ITK-class for the sub transforms, which have a reduced dimension. */
+  typedef itk::AffineLogTransform< typename elx::TransformBase< TElastix >::CoordRepType,
+    itkGetStaticConstMacro( ReducedSpaceDimension ) >                           ReducedDimensionAffineLogTransformBaseType;
+  typedef typename ReducedDimensionAffineLogTransformBaseType::Pointer ReducedDimensionAffineLogTransformBasePointer;
+
+  typedef typename ReducedDimensionAffineLogTransformBaseType::OutputVectorType ReducedDimensionOutputVectorType;
+  typedef typename ReducedDimensionAffineLogTransformBaseType::InputPointType   ReducedDimensionInputPointType;
+
 
   /** Typedefs inherited from the superclass. */
   typedef typename Superclass1::ScalarType             ScalarType;
@@ -109,21 +124,35 @@ public:
   typedef typename Superclass2::ITKBaseType              ITKBaseType;
   typedef typename Superclass2::CombinationTransformType CombinationTransformType;
 
-  /** Other typedef's. */
-  typedef typename FixedImageType::IndexType     IndexType;
-  typedef typename IndexType::IndexValueType     IndexValueType;
-  typedef typename FixedImageType::SizeType      SizeType;
-  typedef typename FixedImageType::PointType     PointType;
-  typedef typename FixedImageType::SpacingType   SpacingType;
-  typedef typename FixedImageType::RegionType    RegionType;
-  typedef typename FixedImageType::DirectionType DirectionType;
-
-  typedef itk::CenteredTransformInitializer<
-    AffineLogTransformOLastDimType, FixedImageType, MovingImageType >  TransformInitializerType;
-  typedef typename TransformInitializerType::Pointer TransformInitializerPointer;
+  /** Reduced Dimension typedef's. */
+  typedef float PixelType;
+  typedef itk::Image< PixelType,
+    itkGetStaticConstMacro( ReducedSpaceDimension ) >       ReducedDimensionImageType;
+  typedef itk::ImageRegion<
+    itkGetStaticConstMacro( ReducedSpaceDimension ) >         ReducedDimensionRegionType;
+  typedef typename ReducedDimensionImageType::PointType     ReducedDimensionPointType;
+  typedef typename ReducedDimensionImageType::SizeType      ReducedDimensionSizeType;
+  typedef typename ReducedDimensionRegionType::IndexType    ReducedDimensionIndexType;
+  typedef typename ReducedDimensionImageType::SpacingType   ReducedDimensionSpacingType;
+  typedef typename ReducedDimensionImageType::DirectionType ReducedDimensionDirectionType;
+  typedef typename ReducedDimensionImageType::PointType     ReducedDimensionOriginType;
 
   /** For scales setting in the optimizer */
   typedef typename Superclass2::ScalesType ScalesType;
+
+  /** Other typedef's. */
+  typedef typename FixedImageType::IndexType                                   IndexType;
+  typedef typename FixedImageType::SizeType                                    SizeType;
+  typedef typename FixedImageType::PointType                                   PointType;
+  typedef typename FixedImageType::SpacingType                                 SpacingType;
+  typedef typename FixedImageType::RegionType                                  RegionType;
+  typedef typename FixedImageType::DirectionType                               DirectionType;
+  typedef typename itk::ContinuousIndex< CoordRepType, ReducedSpaceDimension > ReducedDimensionContinuousIndexType;
+  typedef typename itk::ContinuousIndex< CoordRepType, SpaceDimension >        ContinuousIndexType;
+
+  /** Execute stuff before anything else is done:*/
+
+  int BeforeAll( void ) override;
 
   /** Execute stuff before the actual registration:
    * \li Call InitializeTransform
