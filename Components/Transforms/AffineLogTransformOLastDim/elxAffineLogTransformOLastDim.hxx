@@ -117,23 +117,23 @@ AffineLogTransformOLastDimElastix< TElastix >
   xout[ "transpar" ] << std::setprecision( 10 );
 
   /** Get the center of rotation point and write it to file. */
-  InputPointType rotationPoint = this->m_AffineLogTransformOLastDim->GetCenter();
+  ReducedDimensionInputPointType rotationPoint = this->m_AffineLogTransformOLastDim->GetCenter();
   xout[ "transpar" ] << "(CenterOfRotationPoint ";
-  for( unsigned int i = 0; i < SpaceDimension - 1; i++ )
+  for( unsigned int i = 0; i < ReducedSpaceDimension - 1; i++ )
   {
     xout[ "transpar" ] << rotationPoint[ i ] << " ";
   }
-  xout[ "transpar" ] << rotationPoint[ SpaceDimension - 1 ] << ")" << std::endl;
+  xout[ "transpar" ] << rotationPoint[ReducedSpaceDimension - 1 ] << ")" << std::endl;
 
   xout[ "transpar" ] << "(MatrixTranslation";
-  for( unsigned int i = 0; i < SpaceDimension; ++i )
+  for( unsigned int i = 0; i < ReducedSpaceDimension; ++i )
   {
-    for( unsigned int j = 0; j < SpaceDimension; ++j )
+    for( unsigned int j = 0; j < ReducedSpaceDimension; ++j )
     {
       xout[ "transpar" ] << " " << this->m_AffineLogTransformOLastDim->GetMatrix() ( i, j );
     }
   }
-  for( unsigned int i = 0; i < SpaceDimension; ++i )
+  for( unsigned int i = 0; i < ReducedSpaceDimension; ++i )
   {
     xout[ "transpar" ] << " " << this->m_AffineLogTransformOLastDim->GetTranslation()[ i ];
   }
@@ -162,11 +162,11 @@ AffineLogTransformOLastDimElastix< TElastix >
    * which is the rotationPoint, expressed in index-values.
    */
 
-  ContinuousIndexType                 centerOfRotationIndex;
-  InputPointType                      centerOfRotationPoint;
+  //ContinuousIndexType                 centerOfRotationIndex;
+  //InputPointType                      centerOfRotationPoint;
   ReducedDimensionContinuousIndexType RDcenterOfRotationIndex;
   ReducedDimensionInputPointType      RDcenterOfRotationPoint;
-  InputPointType                      TransformedCenterOfRotation;
+  //InputPointType                      TransformedCenterOfRotation;
   ReducedDimensionInputPointType      RDTransformedCenterOfRotation;
 
   bool     centerGivenAsIndex = true;
@@ -177,16 +177,16 @@ AffineLogTransformOLastDimElastix< TElastix >
   for( unsigned int i = 0; i < ReducedSpaceDimension; i++ )
   {
     /** Initialize. */
-    centerOfRotationIndex[ i ]         = 0;
+    //centerOfRotationIndex[ i ]         = 0;
     RDcenterOfRotationIndex[ i ]       = 0;
     RDcenterOfRotationPoint[ i ]       = 0.0;
-    centerOfRotationPoint[ i ]         = 0.0;
-    TransformedCenterOfRotation[ i ]   = 0.0;
+    //centerOfRotationPoint[ i ]         = 0.0;
+    //TransformedCenterOfRotation[ i ]   = 0.0;
     RDTransformedCenterOfRotation[ i ] = 0.0;
 
     /** Check COR index: Returns zero when parameter was in the parameter file. */
     bool foundI = this->m_Configuration->ReadParameter(
-      centerOfRotationIndex[ i ], "CenterOfRotation", i, false );
+      RDcenterOfRotationIndex[ i ], "CenterOfRotation", i, false );
     if( !foundI )
     {
       centerGivenAsIndex &= false;
@@ -199,7 +199,6 @@ AffineLogTransformOLastDimElastix< TElastix >
     {
       centerGivenAsPoint &= false;
     }
-
   } // end loop over SpaceDimension
 
   /** Check if user wants automatic transform initialization; false by default.
@@ -220,17 +219,17 @@ AffineLogTransformOLastDimElastix< TElastix >
   if( !centerGiven  )
   {
     /** Use center of image as default center of rotation */
-    for( unsigned int k = 0; k < SpaceDimension; k++ )
+    for( unsigned int k = 0; k < ReducedSpaceDimension; k++ )
     {
-      centerOfRotationIndex[ k ] = ( fixedImageSize[ k ] - 1.0 ) / 2.0;
+      RDcenterOfRotationIndex[ k ] = ( fixedImageSize[ k ] - 1.0 ) / 2.0;
     }
     /** Convert from continuous index to physical point */
     this->m_Registration->GetAsITKBaseType()->GetFixedImage()->
-      TransformContinuousIndexToPhysicalPoint( centerOfRotationIndex, TransformedCenterOfRotation );
+      TransformContinuousIndexToPhysicalPoint( RDcenterOfRotationIndex, RDTransformedCenterOfRotation );
 
     for( unsigned int k = 0; k < ReducedSpaceDimension; k++ )
     {
-      RDTransformedCenterOfRotation[ k ] = TransformedCenterOfRotation[ k ];
+      RDTransformedCenterOfRotation[ k ] = RDTransformedCenterOfRotation[ k ];
     }
 
     this->m_AffineLogTransformOLastDim->SetCenter( RDTransformedCenterOfRotation );
@@ -260,7 +259,7 @@ AffineLogTransformOLastDimElastix< TElastix >
   /** Set the translation to zero */
   ReducedDimensionOutputVectorType noTranslation;
   noTranslation.Fill( 0.0 );
-  this->m_AffineLogTransformOLastDIm->SetTranslation( noTranslation );
+  this->m_AffineLogTransformOLastDim->SetTranslation( noTranslation );
 
 
   /** Set the initial parameters in this->m_Registration. */
@@ -339,7 +338,7 @@ AffineLogTransformOLastDimElastix< TElastix >
    */
   ReducedDimensionInputPointType centerOfRotationPoint;
   bool           centerGivenAsPoint = true;
-  for( unsigned int i = 0; i < SpaceDimension; i++ )
+  for( unsigned int i = 0; i < ReducedSpaceDimension; i++ )
   {
     centerOfRotationPoint[ i ] = 0;
 
