@@ -19,7 +19,6 @@
 #define _ELXAFFINELOGTRANSFORMOLASTDIM_H_
 
 #include "itkAdvancedCombinationTransform.h"
-#include "itkAffineLogTransformOLastDim.h"
 #include "itkCenteredTransformInitializer.h"
 #include "../AffineLogTransform/itkAffineLogTransform.h"
 #include "elxIncludes.h"
@@ -58,12 +57,6 @@ public:
   typedef itk::SmartPointer< Self >                       Pointer;
   typedef itk::SmartPointer< const Self >                 ConstPointer;
 
-  /** The ITK-class that provides most of the functionality, and
-   * that is set as the "CurrentTransform" in the CombinationTransform */
-  typedef itk::AffineLogTransformOLastDim<
-    typename elx::TransformBase< TElastix >::CoordRepType,
-    elx::TransformBase< TElastix >::ReducedImageDimension >     AffineLogTransformOLastDimType;
-
   /** Method for creation through the object factory. */
   itkNewMacro( Self );
 
@@ -77,7 +70,7 @@ public:
   elxClassNameMacro( "AffineLogTransformOLastDim" );
 
   /** Dimension of the fixed image. */
-  //itkStaticConstMacro( SpaceDimension, unsigned int, Superclass2::FixedImageDimension );
+  itkStaticConstMacro( SpaceDimension, unsigned int, Superclass2::FixedImageDimension );
   itkStaticConstMacro( ReducedSpaceDimension, unsigned int, Superclass2::FixedImageDimension - 1 );
 
   typedef itk::AffineLogTransform< typename elx::TransformBase< TElastix >::CoordRepType,
@@ -99,18 +92,6 @@ public:
   typedef typename Superclass1::ParametersType         ParametersType;
   typedef typename Superclass1::NumberOfParametersType NumberOfParametersType;
   typedef typename Superclass1::JacobianType           JacobianType;
-
-  //typedef typename Superclass1::InputPointType            InputPointType;
-  //typedef typename Superclass1::OutputPointType           OutputPointType;
-  //typedef typename Superclass1::InputVectorType           InputVectorType;
-  //typedef typename Superclass1::OutputVectorType          OutputVectorType;
-  //typedef typename Superclass1::InputCovariantVectorType  InputCovariantVectorType;
-  //typedef typename Superclass1::OutputCovariantVectorType OutputCovariantVectorType;
-  //typedef typename Superclass1::InputVnlVectorType        InputVnlVectorType;
-  //typedef typename Superclass1::OutputVnlVectorType       OutputVnlVectorType;
-
-  typedef typename AffineLogTransformOLastDimType::Pointer    AffineLogTransformOLastDimPointer;
-  //typedef typename AffineLogTransformOLastDimType::OffsetType OffsetType;
 
   /** Typedef's inherited from TransformBase. */
   typedef typename Superclass2::ElastixType              ElastixType;
@@ -217,7 +198,7 @@ private:
   /** The private copy constructor. */
   void operator=( const Self & );         // purposely not implemented
 
-  AffineLogTransformOLastDimPointer m_AffineLogTransformOLastDim;
+  ReducedDimensionAffineLogTransformBasePointer m_AffineLogTransformOLastDim;
 
 };
 
