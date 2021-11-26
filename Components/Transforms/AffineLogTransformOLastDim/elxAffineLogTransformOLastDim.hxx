@@ -15,8 +15,8 @@
  *  limitations under the License.
  *
  *=========================================================================*/
-#ifndef __elxAffineLogTransformOLastDim_hxx
-#define __elxAffineLogTransformOLastDim_hxx
+#ifndef ELXAFFINELOGTRANSFORMOLASTDIM_HXX
+#define ELXAFFINELOGTRANSFORMOLASTDIM_HXX
 
 #include "elxAffineLogTransformOLastDim.h"
 #include "itkContinuousIndex.h"

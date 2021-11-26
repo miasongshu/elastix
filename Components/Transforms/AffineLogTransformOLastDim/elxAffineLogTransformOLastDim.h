@@ -15,8 +15,8 @@
  *  limitations under the License.
  *
  *=========================================================================*/
-#ifndef _ELXAFFINELOGTRANSFORMOLASTDIM_H_
-#define _ELXAFFINELOGTRANSFORMOLASTDIM_H_
+#ifndef ELXAFFINELOGTRANSFORMOLASTDIM_H
+#define ELXAFFINELOGTRANSFORMOLASTDIM_H
 
 #include "itkAdvancedCombinationTransform.h"
 #include "itkCenteredTransformInitializer.h"
@@ -132,10 +132,6 @@ public:
   typedef typename itk::ContinuousIndex< CoordRepType, ReducedSpaceDimension > ReducedDimensionContinuousIndexType;
   typedef typename itk::ContinuousIndex< CoordRepType, SpaceDimension >        ContinuousIndexType;
 
-  /** Execute stuff before anything else is done:*/
-
-  int BeforeAll( void ) override;
-
   /** Execute stuff before the actual registration:
    * \li Call InitializeTransform
    * \li Set the scales.
@@ -204,8 +200,9 @@ private:
 
 } // end namespace elastix
 
-#endif // ELXAffineLogTransformOLastDim_H
 
 #ifndef ITK_MANUAL_INSTANTIATION
 #include "elxAffineLogTransformOLastDim.hxx"
 #endif
+
+#endif // ELXAFFINELOGTRANSFORMOLASTDIM_H
