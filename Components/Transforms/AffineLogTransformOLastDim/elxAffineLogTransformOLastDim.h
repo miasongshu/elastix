@@ -80,7 +80,7 @@ public:
 
   /** The ITK-class for the sub transforms, which have a reduced dimension. */
   typedef itk::AffineLogTransform< typename elx::TransformBase< TElastix >::CoordRepType,
-    itkGetStaticConstMacro( ReducedSpaceDimension ) >                           ReducedDimensionAffineLogTransformBaseType;
+    itkGetStaticConstMacro( ReducedSpaceDimension ) >                  ReducedDimensionAffineLogTransformBaseType;
   typedef typename ReducedDimensionAffineLogTransformBaseType::Pointer ReducedDimensionAffineLogTransformBasePointer;
 
   typedef typename ReducedDimensionAffineLogTransformBaseType::OutputVectorType ReducedDimensionOutputVectorType;
@@ -134,7 +134,8 @@ public:
 
   /** Execute stuff before anything else is done:*/
 
-  int BeforeAll( void ) override;
+
+  int BeforeAll(void) override;
 
   /** Execute stuff before the actual registration:
    * \li Call InitializeTransform
@@ -198,7 +199,12 @@ private:
   /** The private copy constructor. */
   void operator=( const Self & );         // purposely not implemented
 
+   /** Initialize the affine transform. */
+  unsigned int InitializeAffineLogTransform();
+
+
   ReducedDimensionAffineLogTransformBasePointer m_AffineLogTransformOLastDim;
+
 
 };
 
