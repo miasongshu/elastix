@@ -37,6 +37,7 @@
 #include "itkMeshFileReader.h"
 #include "itkMeshFileWriter.h"
 #include "itkTransformMeshFilter.h"
+#include "itkMacro.h"
 
 namespace itk
 {
@@ -1910,6 +1911,8 @@ TransformBase< TElastix >
     const InputPointType & point = ( *iter ).Value().m_ImageCoordinates;
     //const JacobianType & jacobian = thisITK->GetJacobian( point );
     JacobianType jacobian; NonZeroJacobianIndicesType nzji;
+    itkWarningMacro(<< "Songshu 7 of AutomaticScalesEstimation "
+      << point.size() << ", " << jacobian.size() << ", " << nzji.size());
     thisITK->GetJacobian( point, jacobian, nzji );
 
     /** Square each element of the Jacobian and add each row
@@ -1924,6 +1927,7 @@ TransformBase< TElastix >
   scales /= static_cast< double >( nrofsamples );
 
 } // end AutomaticScalesEstimation()
+
 
 
 /**
@@ -2027,6 +2031,137 @@ TransformBase< TElastix >
   }
 
 } // end AutomaticScalesEstimationStackTransform()
+
+
+
+/**
+* ************** AutomaticScalesEstimationOLastDim ***************
+*/
+
+
+
+template< class TElastix >
+void
+TransformBase< TElastix >
+::AutomaticScalesEstimationOLastDim(ScalesType& scales) const
+{
+  typedef typename FixedImageType::RegionType FixedImageRegionType;
+  typedef typename FixedImageType::IndexType FixedImageIndexType;
+  typedef typename FixedImageType::SizeType SizeType;
+
+
+
+  typedef itk::ImageGridSampler< FixedImageType > ImageSamplerType;
+  typedef typename ImageSamplerType::Pointer ImageSamplerPointer;
+  typedef typename
+    ImageSamplerType::ImageSampleContainerType ImageSampleContainerType;
+  typedef typename ImageSampleContainerType::Pointer ImageSampleContainerPointer;
+  typedef typename ITKBaseType::JacobianType JacobianType;
+  typedef typename ITKBaseType::NonZeroJacobianIndicesType NonZeroJacobianIndicesType;
+
+  const ITKBaseType* const thisITK = this->GetAsITKBaseType();
+
+  const unsigned int outdim = ReducedImageDimension;
+  itkWarningMacro(<< "Songshu 1 of AutomaticScalesEstimationOLastDim");
+  const unsigned int N = ReducedImageDimension * ReducedImageDimension + ReducedImageDimension;
+  itkWarningMacro(<< "Songshu 2 of AutomaticScalesEstimationOLastDim, NumberOfParameters= " << N);
+
+
+  /** initialize */
+  scales = ScalesType(N);
+  itkWarningMacro(<< "Songshu 3 of AutomaticScalesEstimationOLastDim, dimensions: " 
+    << FixedImageDimension << " " << MovingImageDimension << " " << ReducedImageDimension);
+  scales.Fill(0.0);
+
+
+
+  /** Get fixed image region from registration. */
+  const FixedImageRegionType& inputRegion = this->GetRegistration()->GetAsITKBaseType()->GetFixedImageRegion();
+  SizeType size = inputRegion.GetSize();
+
+
+
+  /** Set desired extraction region. */
+  FixedImageIndexType start = inputRegion.GetIndex();
+  start[ReducedImageDimension] = size[ReducedImageDimension] - 1;
+
+
+
+  /** Set size of last dimension to 0. */
+  size[ReducedImageDimension] = 0;
+
+
+
+  elxout << "start region for scales: " << start << std::endl;
+  elxout << "size region for scales: " << size << std::endl;
+
+
+
+  FixedImageRegionType desiredRegion;
+  desiredRegion.SetSize(size);
+  desiredRegion.SetIndex(start);
+
+  itkWarningMacro(<< "Songshu 4 of AutomaticScalesEstimationOLastDim");
+
+  /** Set up the grid sampler. */
+  ImageSamplerPointer sampler = ImageSamplerType::New();
+  sampler->SetInput(this->GetRegistration()->GetAsITKBaseType()->GetFixedImage());
+  sampler->SetInputImageRegion(desiredRegion);
+
+
+
+  /** Compute the grid spacing. */
+  unsigned long nrofsamples = 10000;
+  sampler->SetNumberOfSamples(nrofsamples);
+
+
+  /** Get samples and check the actually obtained number of samples. */
+  sampler->Update();
+  ImageSampleContainerPointer sampleContainer = sampler->GetOutput();
+  nrofsamples = sampleContainer->Size();
+  if (nrofsamples == 0)
+  {
+    /** \todo: should we demand a minimum number (~100) of voxels? */
+    itkExceptionMacro(<< "No valid voxels found to estimate the scales.");
+  }
+
+
+
+  /** Create iterator over the sample container. */
+  typename ImageSampleContainerType::ConstIterator iter;
+  typename ImageSampleContainerType::ConstIterator begin = sampleContainer->Begin();
+  typename ImageSampleContainerType::ConstIterator end = sampleContainer->End();
+
+  itkWarningMacro(<< "Songshu 5 of AutomaticScalesEstimationOLastDim");
+
+  /** Read fixed coordinates and get Jacobian. */
+  JacobianType jacobian;
+  NonZeroJacobianIndicesType nzji;
+  for (iter = begin; iter != end; ++iter)
+  {
+    itkWarningMacro(<< "Songshu 6 of AutomaticScalesEstimationOLastDim");
+    const InputPointType& point = (*iter).Value().m_ImageCoordinates;
+    //const JacobianType & jacobian = thisITK->GetJacobian( point );
+
+    itkWarningMacro(<< "Songshu 7 of AutomaticScalesEstimationOLastDim " 
+      << point.size() << ", " << jacobian.size() << ", " << nzji.size());
+    thisITK->GetJacobian(point, jacobian, nzji);
+
+
+    itkWarningMacro(<< "Songshu 8 of AutomaticScalesEstimationOLastDim");
+
+    /** Square each element of the Jacobian and add each row to the new scales. */
+    for (unsigned int d = 0; d < outdim; ++d)
+    {
+      ScalesType jacd(jacobian[d], N, false);
+      scales += element_product(jacd, jacd);
+    }
+  }
+  scales /= static_cast<double>(nrofsamples);
+
+  itkWarningMacro(<< "Songshu 9 of AutomaticScalesEstimationOLastDim");
+
+} // end AutomaticScalesEstimationOLastDim()
 
 
 } // end namespace elastix

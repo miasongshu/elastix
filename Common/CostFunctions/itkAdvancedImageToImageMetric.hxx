@@ -792,6 +792,25 @@ AdvancedImageToImageMetric< TFixedImage, TMovingImage >
 } // end EvaluateTransformJacobian()
 
 
+
+template< class TFixedImage, class TMovingImage >
+bool
+AdvancedImageToImageMetric< TFixedImage, TMovingImage >
+::EvaluateTransformJacobianOLastDim(
+  const ReducedImagePointType& fixedImagePoint,
+  TransformJacobianType& jacobian,
+  NonZeroJacobianIndicesType& nzji) const
+{
+  /** Advanced transform: generic sparse Jacobian support */
+  this->m_AdvancedTransform->GetJacobian(
+    fixedImagePoint, jacobian, nzji);
+
+  /** For future use: return whether the sample is valid */
+  const bool valid = true;
+  return valid;
+
+} // end EvaluateTransformJacobian()
+
 /**
  * ************************** IsInsideMovingMask *************************
  */

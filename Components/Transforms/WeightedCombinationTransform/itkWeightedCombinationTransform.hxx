@@ -19,6 +19,7 @@
 #define _itkWeightedCombinationTransform_hxx
 
 #include "itkWeightedCombinationTransform.h"
+#include "itkMacro.h"
 
 namespace itk
 {
@@ -138,6 +139,7 @@ WeightedCombinationTransform< TScalarType, NInputDimensions, NOutputDimensions >
   JacobianType & jac,
   NonZeroJacobianIndicesType & nzji ) const
 {
+  itkWarningMacro(<< "Songshu in iktWeightedCombinationTransform GetJacobian 1");
   OutputPointType                tempopp;
   const TransformContainerType & tc    = this->m_TransformContainer;
   const unsigned int             N     = tc.size();

@@ -478,6 +478,13 @@ AdvNormCorrelationOLastDimImageToImageMetric< TFixedImage, TMovingImage >
       sampleOk = this->IsInsideMovingMask( mappedPoint );
     }
 
+    /** Convert to 3D point for Jacobian matrix computation. */
+    ReducedInputPointType RDFixedPoint;
+    for (unsigned int i = 0; i < FixedImageDimension - 1; i++)
+      RDFixedPoint[i] = fixedPointConst[i];
+
+    const ReducedInputPointType RDFixedPointConst = RDFixedPoint;
+    
     /** Compute the moving image value M(T(x)) and derivative dM/dx and check if
      * the point is inside the moving image buffer.
      */
@@ -496,7 +503,7 @@ AdvNormCorrelationOLastDimImageToImageMetric< TFixedImage, TMovingImage >
       const RealType & fixedImageValue = static_cast< RealType >( ( *fiter ).Value().m_ImageValue );
 
       /** Get the TransformJacobian dT/dmu. */
-      this->EvaluateTransformJacobian(fixedPointConst, jacobian, nzji );
+      this->EvaluateTransformJacobianOLastDim(RDFixedPointConst, jacobian, nzji );
 
       /** Compute the innerproducts (dM/dx)^T (dT/dmu) and (dMask/dx)^T (dT/dmu). */
       this->EvaluateTransformJacobianInnerProduct(
@@ -721,6 +728,16 @@ AdvNormCorrelationOLastDimImageToImageMetric< TFixedImage, TMovingImage >
       sampleOk = this->EvaluateMovingImageValueAndDerivative(
         mappedPoint, movingImageValue, &movingImageDerivative );
     }
+
+
+
+    /** Convert to 3D point for Jacobian matrix computation. */
+    ReducedInputPointType RDFixedPoint;
+    for (unsigned int i = 0; i < FixedImageDimension - 1; i++)
+      RDFixedPoint[i] = fixedPointConst[i];
+
+    const ReducedInputPointType RDFixedPointConst = RDFixedPoint;
+
 
     if( sampleOk )
     {

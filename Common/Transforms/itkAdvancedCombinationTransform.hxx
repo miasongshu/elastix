@@ -19,6 +19,7 @@
 #define __itkAdvancedCombinationTransform_hxx
 
 #include "itkAdvancedCombinationTransform.h"
+#include "itkMacro.h"
 
 namespace itk
 {
@@ -1624,6 +1625,7 @@ AdvancedCombinationTransform< TScalarType, NDimensions >
   JacobianType & j,
   NonZeroJacobianIndicesType & nonZeroJacobianIndices ) const
 {
+  //itkWarningMacro(<< "Songshu in AdvancedCombinationTransform Jacobian " << ipp.size() );
   /** Call the selected GetJacobian. */
   return ( ( *this ).*m_SelectedGetSparseJacobianFunction )(
     ipp, j, nonZeroJacobianIndices );
