@@ -15,13 +15,14 @@
  *  limitations under the License.
  *
  *=========================================================================*/
-#ifndef ELXAFFINELOGTRANSFORMOLASTDIM_H
-#define ELXAFFINELOGTRANSFORMOLASTDIM_H
+#ifndef _ELXAFFINELOGTRANSFORMOLASTDIM_H_
+#define _ELXAFFINELOGTRANSFORMOLASTDIM_H_
 
 #include "itkAdvancedCombinationTransform.h"
 #include "itkCenteredTransformInitializer.h"
 #include "../AffineLogTransform/itkAffineLogTransform.h"
 #include "elxIncludes.h"
+#include "itkMacro.h"
 
 namespace elastix
 {
@@ -132,8 +133,8 @@ public:
   typedef typename itk::ContinuousIndex< CoordRepType, ReducedSpaceDimension > ReducedDimensionContinuousIndexType;
   typedef typename itk::ContinuousIndex< CoordRepType, SpaceDimension >        ContinuousIndexType;
 
-
   /** Execute stuff before anything else is done:*/
+
 
   int BeforeAll(void) override;
 
@@ -180,6 +181,65 @@ public:
    */
   void WriteToFile( const ParametersType & param ) const override;
 
+
+  ///** Return the number of parameters that completely define the Transform. **********/
+  //NumberOfParametersType GetNumberOfParameters(void) const override
+  //{
+  //  itkWarningMacro(<< "Songshu in local GetNumberOfParameters");
+  //  return (ReducedSpaceDimension*ReducedSpaceDimension + ReducedSpaceDimension);
+  //}
+
+
+  ///** GetJacobian ****************************/
+  //void GetJacobian(
+  //    const InputPointType& ipp,
+  //    JacobianType& jac,
+  //    NonZeroJacobianIndicesType& nzji) const
+  //{
+
+  //  itkWarningMacro(<< "Songshu in local GetJacobian 1");
+  //  /** Reduce dimension of input point. */
+  // ReducedDimensionPointType ippr;
+  //  for (unsigned int d = 0; d < ReducedSpaceDimension; ++d)
+  //  {
+  //    ippr[d] = ipp[d];
+  //  }
+
+  //  itkWarningMacro(<< "Songshu in local GetJacobian 2");
+  //  ///** Get Jacobian from right subtransform. */
+  //  //const unsigned int subt
+  //  //  = std::min(this->m_NumberOfSubTransforms - 1, static_cast<unsigned int>(
+  //  //    std::max(0,
+  //  //      vnl_math::rnd((ipp[ReducedSpaceDimension] - m_StackOrigin) / m_StackSpacing))));
+  //  //JacobianType subjac;
+  //  //this->m_SubTransformContainer[subt]->GetJacobian(ippr, subjac, nzji);
+
+  //  itkWarningMacro(<< "Songshu in local GetJacobian 3");
+  //  this->m_AffineLogTransformOLastDim->GetJacobian(ippr, jac, nzji)
+  //  //((*this).*m_SelectedGetSparseJacobianFunction)(ippr, jac, nzji)
+
+  //  ///** Fill output Jacobian. */
+  //  //jac.set_size(InputSpaceDimension, nzji.size());
+  //  //jac.Fill(0.0);
+  //  //for (unsigned int d = 0; d < ReducedSpaceDimension; ++d)
+  //  //{
+  //  //  for (unsigned int n = 0; n < nzji.size(); ++n)
+  //  //  {
+  //  //    jac[d][n] = subjac[d][n];
+  //  //  }
+  //  //}
+
+  //  itkWarningMacro(<< "Songshu in local GetJacobian 4 ");
+  //  /** Update non zero Jacobian indices. */
+  //  for (unsigned int i = 0; i < nzji.size(); ++i)
+  //  {
+  //    nzji[i] += subt * this->m_AffineLogTransformOLastDim->GetNumberOfParameters();
+  //  }
+
+  //  itkWarningMacro(<< "Songshu in local GetJacobian 5");
+  //} // end GetJacobian()
+
+
 protected:
 
   /** The constructor. */
@@ -210,9 +270,8 @@ private:
 
 } // end namespace elastix
 
+#endif // ELXAffineLogTransformOLastDim_H
 
 #ifndef ITK_MANUAL_INSTANTIATION
 #include "elxAffineLogTransformOLastDim.hxx"
 #endif
-
-#endif // ELXAFFINELOGTRANSFORMOLASTDIM_H
