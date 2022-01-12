@@ -62,6 +62,8 @@ public:
   typedef AdvancedCombinationTransform Self;
   typedef AdvancedTransform< TScalarType,
     NDimensions, NDimensions >                Superclass;
+  typedef AdvancedTransform< TScalarType,
+    NDimensions+1, NDimensions+1 >            UnReducedSuperclass;
   typedef SmartPointer< Self >       Pointer;
   typedef SmartPointer< const Self > ConstPointer;
 
@@ -89,7 +91,9 @@ public:
   typedef typename Superclass::InputVnlVectorType            InputVnlVectorType;
   typedef typename Superclass::OutputVnlVectorType           OutputVnlVectorType;
   typedef typename Superclass::InputPointType                InputPointType;
+  typedef typename UnReducedSuperclass::InputPointType       UnReducedInputPointType;
   typedef typename Superclass::OutputPointType               OutputPointType;
+  typedef typename Superclass::ReducedPointType              ReducedPointType;
   typedef typename Superclass::NonZeroJacobianIndicesType    NonZeroJacobianIndicesType;
   typedef typename Superclass::SpatialJacobianType           SpatialJacobianType;
   typedef typename Superclass::JacobianOfSpatialJacobianType JacobianOfSpatialJacobianType;
@@ -243,6 +247,7 @@ public:
     const InputPointType & ipp,
     JacobianType & j,
     NonZeroJacobianIndicesType & nonZeroJacobianIndices ) const override;
+
 
   /** Compute the inner product of the Jacobian with the moving image gradient. */
   void EvaluateJacobianWithImageGradientProduct(

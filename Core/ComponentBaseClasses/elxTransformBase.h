@@ -173,7 +173,7 @@ public:
 
   /** Get a reduced dimension for multi image registration. */
   itkStaticConstMacro(ReducedImageDimension,
-    unsigned int, FixedImageType::ImageDimension-1);
+    unsigned int, FixedImageType::ImageDimension - 1);
 
   /** Other typedef's. */
   typedef itk::Object ObjectType;
@@ -185,10 +185,10 @@ public:
     itkGetStaticConstMacro( FixedImageDimension ) >   CombinationTransformType;
   typedef typename
     CombinationTransformType::InitialTransformType InitialTransformType;
-  typedef itk::AdvancedTransform<
-    CoordRepType,
-    itkGetStaticConstMacro(ReducedImageDimension),
-    itkGetStaticConstMacro(ReducedImageDimension) >  ReducedDimensionBaseType;
+  //typedef itk::AdvancedTransform<
+  //  CoordRepType,
+  //  itkGetStaticConstMacro(ReducedImageDimension),
+  //  itkGetStaticConstMacro(ReducedImageDimension) >  ReducedDimensionBaseType;
 
   /** Typedef's from Transform. */
   typedef typename ITKBaseType::ParametersType ParametersType;
@@ -197,7 +197,8 @@ public:
   /** Typedef's for TransformPoint. */
   typedef typename ITKBaseType::InputPointType  InputPointType;
   typedef typename ITKBaseType::OutputPointType OutputPointType;
-  typedef typename ReducedDimensionBaseType::InputPointType  ReducedDimensionPointType;
+  typedef typename ITKBaseType::ReducedPointType  ReducedPointType;
+  //typedef typename ReducedDimensionBaseType::InputPointType  ReducedDimensionPointType;
 
   /** Typedef's for TransformPointsAllPoints. */
   typedef itk::Vector<
@@ -356,7 +357,6 @@ protected:
   void AutomaticScalesEstimationStackTransform(
     const unsigned int & numSubTransforms, ScalesType & scales ) const;
 
-  void AutomaticScalesEstimationOLastDim(ScalesType& scales) const;
 
   /** Member variables. */
   ParametersType * m_TransformParametersPointer;

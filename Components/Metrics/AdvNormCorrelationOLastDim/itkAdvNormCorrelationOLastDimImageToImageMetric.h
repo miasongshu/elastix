@@ -165,9 +165,6 @@ public:
   itkStaticConstMacro( MovingImageDimension, unsigned int,
     MovingImageType::ImageDimension );
 
-
-  typedef typename Superclass::ReducedInputPointType    ReducedInputPointType;
-
   /** Get the value for single valued optimizers. */
   MeasureType GetValue( const TransformParametersType & parameters ) const override;
 
@@ -194,7 +191,6 @@ public:
   itkGetConstReferenceMacro( SubtractMean, bool );
   itkBooleanMacro( SubtractMean );
 
-
 protected:
 
   AdvNormCorrelationOLastDimImageToImageMetric();
@@ -215,7 +211,6 @@ protected:
   typedef typename Superclass::CentralDifferenceGradientFilterType CentralDifferenceGradientFilterType;
   typedef typename Superclass::MovingImageDerivativeType           MovingImageDerivativeType;
   typedef typename Superclass::NonZeroJacobianIndicesType          NonZeroJacobianIndicesType;
-
 
   /** Compute a pixel's contribution to the derivative terms;
    * Called by GetValueAndDerivative().

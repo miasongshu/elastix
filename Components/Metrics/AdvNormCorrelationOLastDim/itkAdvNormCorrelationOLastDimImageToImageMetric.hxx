@@ -19,6 +19,7 @@
 #define _itkAdvNormCorrelationOLastDimImageToImageMetric_hxx
 
 #include "itkAdvNormCorrelationOLastDimImageToImageMetric.h"
+#include "itkMacro.h"
 
 #ifdef ELASTIX_USE_OPENMP
 #include <omp.h>
@@ -478,13 +479,6 @@ AdvNormCorrelationOLastDimImageToImageMetric< TFixedImage, TMovingImage >
       sampleOk = this->IsInsideMovingMask( mappedPoint );
     }
 
-    /** Convert to 3D point for Jacobian matrix computation. */
-    ReducedInputPointType RDFixedPoint;
-    for (unsigned int i = 0; i < FixedImageDimension - 1; i++)
-      RDFixedPoint[i] = fixedPointConst[i];
-
-    const ReducedInputPointType RDFixedPointConst = RDFixedPoint;
-    
     /** Compute the moving image value M(T(x)) and derivative dM/dx and check if
      * the point is inside the moving image buffer.
      */
@@ -502,8 +496,10 @@ AdvNormCorrelationOLastDimImageToImageMetric< TFixedImage, TMovingImage >
       /** Get the fixed image value. */
       const RealType & fixedImageValue = static_cast< RealType >( ( *fiter ).Value().m_ImageValue );
 
+      itkWarningMacro(<< "Songshu in itkAdvNormCorrelationOLastDimImageToImageMetric.hxx *********");
+
       /** Get the TransformJacobian dT/dmu. */
-      this->EvaluateTransformJacobianOLastDim(RDFixedPointConst, jacobian, nzji );
+      this->EvaluateTransformJacobian(fixedPointConst, jacobian, nzji );
 
       /** Compute the innerproducts (dM/dx)^T (dT/dmu) and (dMask/dx)^T (dT/dmu). */
       this->EvaluateTransformJacobianInnerProduct(
@@ -729,16 +725,6 @@ AdvNormCorrelationOLastDimImageToImageMetric< TFixedImage, TMovingImage >
         mappedPoint, movingImageValue, &movingImageDerivative );
     }
 
-
-
-    /** Convert to 3D point for Jacobian matrix computation. */
-    ReducedInputPointType RDFixedPoint;
-    for (unsigned int i = 0; i < FixedImageDimension - 1; i++)
-      RDFixedPoint[i] = fixedPointConst[i];
-
-    const ReducedInputPointType RDFixedPointConst = RDFixedPoint;
-
-
     if( sampleOk )
     {
       numberOfPixelsCounted++;
@@ -760,6 +746,7 @@ AdvNormCorrelationOLastDimImageToImageMetric< TFixedImage, TMovingImage >
         fixedPointConst, movingImageDerivative, imageJacobian, nzji );
 #endif
 
+      itkWarningMacro(<< "Songshu2 in itkAdvNormCorrelationOLastDimImageToImageMetric.hxx *********");
       /** Update some sums needed to calculate the value of NC. */
       sff += fixedImageValue  * fixedImageValue;
       smm += movingImageValue * movingImageValue;

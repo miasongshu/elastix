@@ -19,8 +19,8 @@
 #define _ELXAFFINELOGTRANSFORMOLASTDIM_H_
 
 #include "itkAdvancedCombinationTransform.h"
+#include "itkAffineLogTransformOLastDim.h"
 #include "itkCenteredTransformInitializer.h"
-#include "../AffineLogTransform/itkAffineLogTransform.h"
 #include "elxIncludes.h"
 #include "itkMacro.h"
 
@@ -58,6 +58,12 @@ public:
   typedef itk::SmartPointer< Self >                       Pointer;
   typedef itk::SmartPointer< const Self >                 ConstPointer;
 
+  /** The ITK-class that provides most of the functionality, and
+   * that is set as the "CurrentTransform" in the CombinationTransform */
+  typedef itk::AffineLogTransformOLastDim<
+    typename elx::TransformBase< TElastix >::CoordRepType,
+    elx::TransformBase< TElastix >::ReducedImageDimension >  ReducedDimensionAffineLogTransformType;
+
   /** Method for creation through the object factory. */
   itkNewMacro( Self );
 
@@ -72,27 +78,20 @@ public:
 
   /** Dimension of the fixed image. */
   itkStaticConstMacro( SpaceDimension, unsigned int, Superclass2::FixedImageDimension );
-  itkStaticConstMacro( ReducedSpaceDimension, unsigned int, Superclass2::FixedImageDimension - 1 );
-
-  typedef itk::AffineLogTransform< typename elx::TransformBase< TElastix >::CoordRepType,
-    itkGetStaticConstMacro( SpaceDimension ) >            AffineLogTransformType;
-  typedef typename AffineLogTransformType::Pointer        AffineLogTransformPointer;
-  typedef typename AffineLogTransformType::InputPointType InputPointType;
-
-  /** The ITK-class for the sub transforms, which have a reduced dimension. */
-  typedef itk::AffineLogTransform< typename elx::TransformBase< TElastix >::CoordRepType,
-    itkGetStaticConstMacro( ReducedSpaceDimension ) >                  ReducedDimensionAffineLogTransformBaseType;
-  typedef typename ReducedDimensionAffineLogTransformBaseType::Pointer ReducedDimensionAffineLogTransformBasePointer;
-
-  typedef typename ReducedDimensionAffineLogTransformBaseType::OutputVectorType ReducedDimensionOutputVectorType;
-  typedef typename ReducedDimensionAffineLogTransformBaseType::InputPointType   ReducedDimensionInputPointType;
-
+  itkStaticConstMacro(ReducedSpaceDimension, unsigned int, Superclass2::FixedImageDimension - 1 );
 
   /** Typedefs inherited from the superclass. */
   typedef typename Superclass1::ScalarType             ScalarType;
   typedef typename Superclass1::ParametersType         ParametersType;
   typedef typename Superclass1::NumberOfParametersType NumberOfParametersType;
   typedef typename Superclass1::JacobianType           JacobianType;
+
+  typedef typename ReducedDimensionAffineLogTransformType::InputPointType   ReducedDimensionInputPointType;
+  typedef typename ReducedDimensionAffineLogTransformType::OutputVectorType ReducedDimensionOutputVectorType;
+  typedef typename ReducedDimensionAffineLogTransformType::UnReducedInputPointType   InputPointType;
+
+  typedef typename ReducedDimensionAffineLogTransformType::Pointer ReducedDimensionAffineLogTransformPointer;
+  typedef typename ReducedDimensionAffineLogTransformType::OffsetType OffsetType;
 
   /** Typedef's inherited from TransformBase. */
   typedef typename Superclass2::ElastixType              ElastixType;
@@ -109,19 +108,19 @@ public:
 
   /** Reduced Dimension typedef's. */
   typedef float PixelType;
+  typedef itk::ImageRegion<
+    itkGetStaticConstMacro(ReducedSpaceDimension) >         ReducedDimensionRegionType;
   typedef itk::Image< PixelType,
     itkGetStaticConstMacro( ReducedSpaceDimension ) >       ReducedDimensionImageType;
-  typedef itk::ImageRegion<
-    itkGetStaticConstMacro( ReducedSpaceDimension ) >         ReducedDimensionRegionType;
-  typedef typename ReducedDimensionImageType::PointType     ReducedDimensionPointType;
-  typedef typename ReducedDimensionImageType::SizeType      ReducedDimensionSizeType;
   typedef typename ReducedDimensionRegionType::IndexType    ReducedDimensionIndexType;
+  typedef typename ReducedDimensionImageType::SizeType      ReducedDimensionSizeType;
+  typedef typename ReducedDimensionImageType::PointType     ReducedDimensionPointType;
   typedef typename ReducedDimensionImageType::SpacingType   ReducedDimensionSpacingType;
+
   typedef typename ReducedDimensionImageType::DirectionType ReducedDimensionDirectionType;
+
   typedef typename ReducedDimensionImageType::PointType     ReducedDimensionOriginType;
 
-  /** For scales setting in the optimizer */
-  typedef typename Superclass2::ScalesType ScalesType;
 
   /** Other typedef's. */
   typedef typename FixedImageType::IndexType                                   IndexType;
@@ -133,10 +132,9 @@ public:
   typedef typename itk::ContinuousIndex< CoordRepType, ReducedSpaceDimension > ReducedDimensionContinuousIndexType;
   typedef typename itk::ContinuousIndex< CoordRepType, SpaceDimension >        ContinuousIndexType;
 
-  /** Execute stuff before anything else is done:*/
 
-
-  int BeforeAll(void) override;
+  /** For scales setting in the optimizer */
+  typedef typename Superclass2::ScalesType ScalesType;
 
   /** Execute stuff before the actual registration:
    * \li Call InitializeTransform
@@ -181,65 +179,6 @@ public:
    */
   void WriteToFile( const ParametersType & param ) const override;
 
-
-  ///** Return the number of parameters that completely define the Transform. **********/
-  //NumberOfParametersType GetNumberOfParameters(void) const override
-  //{
-  //  itkWarningMacro(<< "Songshu in local GetNumberOfParameters");
-  //  return (ReducedSpaceDimension*ReducedSpaceDimension + ReducedSpaceDimension);
-  //}
-
-
-  ///** GetJacobian ****************************/
-  //void GetJacobian(
-  //    const InputPointType& ipp,
-  //    JacobianType& jac,
-  //    NonZeroJacobianIndicesType& nzji) const
-  //{
-
-  //  itkWarningMacro(<< "Songshu in local GetJacobian 1");
-  //  /** Reduce dimension of input point. */
-  // ReducedDimensionPointType ippr;
-  //  for (unsigned int d = 0; d < ReducedSpaceDimension; ++d)
-  //  {
-  //    ippr[d] = ipp[d];
-  //  }
-
-  //  itkWarningMacro(<< "Songshu in local GetJacobian 2");
-  //  ///** Get Jacobian from right subtransform. */
-  //  //const unsigned int subt
-  //  //  = std::min(this->m_NumberOfSubTransforms - 1, static_cast<unsigned int>(
-  //  //    std::max(0,
-  //  //      vnl_math::rnd((ipp[ReducedSpaceDimension] - m_StackOrigin) / m_StackSpacing))));
-  //  //JacobianType subjac;
-  //  //this->m_SubTransformContainer[subt]->GetJacobian(ippr, subjac, nzji);
-
-  //  itkWarningMacro(<< "Songshu in local GetJacobian 3");
-  //  this->m_AffineLogTransformOLastDim->GetJacobian(ippr, jac, nzji)
-  //  //((*this).*m_SelectedGetSparseJacobianFunction)(ippr, jac, nzji)
-
-  //  ///** Fill output Jacobian. */
-  //  //jac.set_size(InputSpaceDimension, nzji.size());
-  //  //jac.Fill(0.0);
-  //  //for (unsigned int d = 0; d < ReducedSpaceDimension; ++d)
-  //  //{
-  //  //  for (unsigned int n = 0; n < nzji.size(); ++n)
-  //  //  {
-  //  //    jac[d][n] = subjac[d][n];
-  //  //  }
-  //  //}
-
-  //  itkWarningMacro(<< "Songshu in local GetJacobian 4 ");
-  //  /** Update non zero Jacobian indices. */
-  //  for (unsigned int i = 0; i < nzji.size(); ++i)
-  //  {
-  //    nzji[i] += subt * this->m_AffineLogTransformOLastDim->GetNumberOfParameters();
-  //  }
-
-  //  itkWarningMacro(<< "Songshu in local GetJacobian 5");
-  //} // end GetJacobian()
-
-
 protected:
 
   /** The constructor. */
@@ -259,12 +198,7 @@ private:
   /** The private copy constructor. */
   void operator=( const Self & );         // purposely not implemented
 
-   /** Initialize the affine transform. */
-  unsigned int InitializeAffineLogTransform();
-
-
-  ReducedDimensionAffineLogTransformBasePointer m_AffineLogTransformOLastDim;
-
+  ReducedDimensionAffineLogTransformPointer m_AffineLogTransformOLastDim;
 
 };
 

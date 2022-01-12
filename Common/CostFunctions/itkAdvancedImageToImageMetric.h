@@ -98,15 +98,6 @@ public:
   itkStaticConstMacro( FixedImageDimension, unsigned int,
     TFixedImage::ImageDimension );
 
-  /** The moving image dimension. */
-  itkStaticConstMacro(ReducedImageDimension, unsigned int,
-    itkGetStaticConstMacro(FixedImageDimension) - 1);
-
-  typedef itk::Image< FixedImagePixelType, itkGetStaticConstMacro(ReducedImageDimension) >
-    ReducedImageType;
-
-  typedef ImageToImageMetric< ReducedImageType, ReducedImageType > ReducedSuperclass;
-
   /** Typedefs from the superclass. */
   typedef typename Superclass::CoordinateRepresentationType CoordinateRepresentationType;
   typedef typename Superclass::MovingImageType              MovingImageType;
@@ -118,10 +109,8 @@ public:
   typedef typename Superclass::FixedImageConstPointer       FixedImageConstPointer;
   typedef typename Superclass::FixedImageRegionType         FixedImageRegionType;
   typedef typename Superclass::TransformType                TransformType;
-  typedef typename ReducedSuperclass::TransformType         ReducedTransformType;
   typedef typename Superclass::TransformPointer             TransformPointer;
   typedef typename Superclass::InputPointType               InputPointType;
-  typedef typename ReducedSuperclass::InputPointType        ReducedInputPointType;
   typedef typename Superclass::OutputPointType              OutputPointType;
   typedef typename Superclass::TransformParametersType      TransformParametersType;
   typedef typename Superclass::TransformJacobianType        TransformJacobianType;
@@ -320,7 +309,6 @@ protected:
   typedef typename FixedImageIndexType::IndexValueType   FixedImageIndexValueType;
   typedef typename MovingImageType::IndexType            MovingImageIndexType;
   typedef typename TransformType::InputPointType         FixedImagePointType;
-  typedef typename ReducedTransformType::InputPointType  ReducedImagePointType;
   typedef typename TransformType::OutputPointType        MovingImagePointType;
   typedef typename InterpolatorType::ContinuousIndexType MovingImageContinuousIndexType;
 
@@ -543,11 +531,6 @@ protected:
     const FixedImagePointType & fixedImagePoint,
     TransformJacobianType & jacobian,
     NonZeroJacobianIndicesType & nzji ) const;
-
-  virtual bool EvaluateTransformJacobianOLastDim(
-    const ReducedImagePointType& fixedImagePoint,
-    TransformJacobianType& jacobian,
-    NonZeroJacobianIndicesType& nzji) const;
 
   /** Convenience method: check if point is inside the moving mask. *****************/
   virtual bool IsInsideMovingMask( const MovingImagePointType & point ) const;

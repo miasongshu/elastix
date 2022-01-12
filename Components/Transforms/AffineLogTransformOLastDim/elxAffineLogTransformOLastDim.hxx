@@ -30,37 +30,13 @@ namespace elastix
 
 template< class TElastix >
 AffineLogTransformOLastDimElastix< TElastix >::AffineLogTransformOLastDimElastix()
-{} // end Constructor
-
-
-
-/**
-* ********************* InitializeAffineTransform ****************************
-*/
-template< class TElastix >
-unsigned int
-AffineLogTransformOLastDimElastix< TElastix >
-::InitializeAffineLogTransform()
 {
-  this->m_AffineLogTransformOLastDim = ReducedDimensionAffineLogTransformBaseType::New();
-  this->SetCurrentTransform(this->m_AffineLogTransformOLastDim);
+  elxout << "Constructor AffineLogTransformOLastDim" << std::endl;
+  this->m_AffineLogTransformOLastDim = ReducedDimensionAffineLogTransformType::New();
+  this->SetCurrentTransform( this->m_AffineLogTransformOLastDim );
 
-  return 0;
-}
+} // end Constructor
 
-
-/**
- * ******************* BeforeAll ***********************
- */
-
-template< class TElastix >
-int
-AffineLogTransformOLastDimElastix< TElastix >
-::BeforeAll(void)
-{
-  /** Initialize affine transform. */
-  return InitializeAffineLogTransform();
-}
 
 
 /**
@@ -179,7 +155,7 @@ void
 AffineLogTransformOLastDimElastix< TElastix >
 ::InitializeTransform( void )
 {
-  elxout << "InitializeTransform" << std::endl;
+  elxout << "InitializeTransformOLastDim" << std::endl;
   /** Set all parameters to zero (no rotations, no translation). */
   this->m_AffineLogTransformOLastDim->SetIdentity();
 
@@ -317,8 +293,9 @@ AffineLogTransformOLastDimElastix< TElastix >
   newscales.Fill( 1.0 );
 
   /** Always estimate scales automatically */
-  elxout << "Scales are estimated automatically." << std::endl;
-  this->AutomaticScalesEstimationOLastDim( newscales );
+  elxout << "Scales are estimated automatically. [AffineLogTransformOLastDim]" << std::endl;
+  //this->AutomaticScalesEstimationOLastDim( newscales );
+  this->AutomaticScalesEstimation(newscales);
 
   std::size_t count
     = this->m_Configuration->CountNumberOfParameterEntries( "Scales" );

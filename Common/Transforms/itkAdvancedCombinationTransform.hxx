@@ -32,6 +32,8 @@ template< typename TScalarType, unsigned int NDimensions >
 AdvancedCombinationTransform< TScalarType, NDimensions >
 ::AdvancedCombinationTransform() : Superclass( NDimensions )
 {
+
+  itkWarningMacro(<< "Songshu in AdvancedCombinationTransform Constructor " << NDimensions);
   /** Initialize. */
   this->m_InitialTransform = 0;
   this->m_CurrentTransform = 0;
@@ -1625,12 +1627,13 @@ AdvancedCombinationTransform< TScalarType, NDimensions >
   JacobianType & j,
   NonZeroJacobianIndicesType & nonZeroJacobianIndices ) const
 {
-  //itkWarningMacro(<< "Songshu in AdvancedCombinationTransform Jacobian " << ipp.size() );
+  itkWarningMacro(<< "Songshu in AdvancedCombinationTransform Jacobian " << ipp.size() );
   /** Call the selected GetJacobian. */
   return ( ( *this ).*m_SelectedGetSparseJacobianFunction )(
     ipp, j, nonZeroJacobianIndices );
 
 } // end GetJacobian()
+
 
 
 /**

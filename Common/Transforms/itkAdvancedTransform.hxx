@@ -35,6 +35,7 @@
 #define _itkAdvancedTransform_hxx
 
 #include "itkAdvancedTransform.h"
+#include "itkMacro.h"
 
 namespace itk
 {
@@ -64,7 +65,10 @@ AdvancedTransform< TScalarType, NInputDimensions, NOutputDimensions >
 {
   this->m_HasNonZeroSpatialHessian           = true;
   this->m_HasNonZeroJacobianOfSpatialHessian = true;
+  itkWarningMacro(<< "Songshu in AdvancedTransform constructor " 
+    << NInputDimensions << ", " << NOutputDimensions);
 } // end Constructor
+
 
 
 /**
