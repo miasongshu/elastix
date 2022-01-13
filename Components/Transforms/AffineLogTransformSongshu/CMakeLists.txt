@@ -1,0 +1,10 @@
+
+ADD_ELXCOMPONENT( AffineLogTransformSongshuElastix
+ elxAffineLogTransformSongshu.h
+ elxAffineLogTransformSongshu.hxx
+ elxAffineLogTransformSongshu.cxx
+ itkAffineLogTransformSongshu.h
+ itkAffineLogTransformSongshu.hxx
+ itkCenteredTransformInitializerSongshu.h
+ itkCenteredTransformInitializerSongshu.hxx )
+
