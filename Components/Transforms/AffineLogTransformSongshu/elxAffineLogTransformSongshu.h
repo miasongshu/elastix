@@ -44,7 +44,7 @@ template< class TElastix >
 class AffineLogTransformSongshuElastix :
   public itk::AdvancedCombinationTransform<
     typename elx::TransformBase< TElastix >::CoordRepType,
-    elx::TransformBase< TElastix >::FixedImageDimension >,
+    elx::TransformBase< TElastix >::ReducedImageDimension >,
   public elx::TransformBase< TElastix >
 {
 public:
@@ -53,7 +53,7 @@ public:
   typedef AffineLogTransformSongshuElastix                       Self;
   typedef itk::AdvancedCombinationTransform<
     typename elx::TransformBase< TElastix >::CoordRepType,
-    elx::TransformBase< TElastix >::FixedImageDimension > Superclass1;
+    elx::TransformBase< TElastix >:: ReducedImageDimension > Superclass1;
   typedef elx::TransformBase< TElastix >                  Superclass2;
   typedef itk::SmartPointer< Self >                       Pointer;
   typedef itk::SmartPointer< const Self >                 ConstPointer;
@@ -62,7 +62,7 @@ public:
    * that is set as the "CurrentTransform" in the CombinationTransform */
   typedef itk::AffineLogTransformSongshu<
     typename elx::TransformBase< TElastix >::CoordRepType,
-    elx::TransformBase< TElastix >::FixedImageDimension >     AffineLogTransformType;
+    elx::TransformBase< TElastix >::ReducedImageDimension >     AffineLogTransformType;
 
   /** Method for creation through the object factory. */
   itkNewMacro( Self );
@@ -78,6 +78,7 @@ public:
 
   /** Dimension of the fixed image. */
   itkStaticConstMacro( SpaceDimension, unsigned int, Superclass2::FixedImageDimension );
+  itkStaticConstMacro(ReducedSpaceDimension, unsigned int, Superclass2::FixedImageDimension - 1 );
 
   /** Typedefs inherited from the superclass. */
   typedef typename Superclass1::ScalarType             ScalarType;
@@ -85,7 +86,10 @@ public:
   typedef typename Superclass1::NumberOfParametersType NumberOfParametersType;
   typedef typename Superclass1::JacobianType           JacobianType;
 
-  typedef typename Superclass1::InputPointType            InputPointType;
+  typedef typename AffineLogTransformType::InputPointType   ReducedDimensionInputPointType;
+  typedef typename AffineLogTransformType::OutputVectorType ReducedDimensionOutputVectorType;
+  typedef typename AffineLogTransformType::UnReducedInputPointType   InputPointType;
+ 
   typedef typename Superclass1::OutputPointType           OutputPointType;
   typedef typename Superclass1::InputVectorType           InputVectorType;
   typedef typename Superclass1::OutputVectorType          OutputVectorType;
@@ -110,6 +114,22 @@ public:
   typedef typename Superclass2::ITKBaseType              ITKBaseType;
   typedef typename Superclass2::CombinationTransformType CombinationTransformType;
 
+  /** Reduced Dimension typedef's. */
+  typedef float PixelType;
+  typedef itk::ImageRegion<
+    itkGetStaticConstMacro(ReducedSpaceDimension) >         ReducedDimensionRegionType;
+  typedef itk::Image< PixelType,
+    itkGetStaticConstMacro( ReducedSpaceDimension ) >       ReducedDimensionImageType;
+  typedef typename ReducedDimensionRegionType::IndexType    ReducedDimensionIndexType;
+  typedef typename ReducedDimensionImageType::SizeType      ReducedDimensionSizeType;
+  typedef typename ReducedDimensionImageType::PointType     ReducedDimensionPointType;
+  typedef typename ReducedDimensionImageType::SpacingType   ReducedDimensionSpacingType;
+
+  typedef typename ReducedDimensionImageType::DirectionType ReducedDimensionDirectionType;
+
+  typedef typename ReducedDimensionImageType::PointType     ReducedDimensionOriginType;
+
+
   /** Other typedef's. */
   typedef typename FixedImageType::IndexType     IndexType;
   typedef typename IndexType::IndexValueType     IndexValueType;
@@ -118,6 +138,8 @@ public:
   typedef typename FixedImageType::SpacingType   SpacingType;
   typedef typename FixedImageType::RegionType    RegionType;
   typedef typename FixedImageType::DirectionType DirectionType;
+  typedef typename itk::ContinuousIndex< CoordRepType, ReducedSpaceDimension > ReducedDimensionContinuousIndexType;
+  typedef typename itk::ContinuousIndex< CoordRepType, SpaceDimension >        ContinuousIndexType;
 
   typedef itk::CenteredTransformInitializerSongshu<
     AffineLogTransformType, FixedImageType, MovingImageType >  TransformInitializerType;
@@ -179,7 +201,7 @@ protected:
 
   /** Try to read the CenterOfRotationPoint from the transform parameter file
    * The CenterOfRotationPoint is already in world coordinates. */
-  virtual bool ReadCenterOfRotationPoint( InputPointType & rotationPoint ) const;
+  virtual bool ReadCenterOfRotationPoint( ReducedDimensionInputPointType & rotationPoint ) const;
 
 private:
 

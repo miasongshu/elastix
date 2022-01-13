@@ -61,7 +61,7 @@ CenteredTransformInitializerSongshu<TTransform, TFixedImage, TMovingImage>::Init
     m_MovingImage->GetSource()->Update();
   }
 
-  InputPointType   rotationCenter;
+  ReducedDimensionInputPointType   rotationCenter;
   OutputVectorType translationVector;
 
   if (m_UseMoments)
@@ -76,7 +76,7 @@ CenteredTransformInitializerSongshu<TTransform, TFixedImage, TMovingImage>::Init
 
     typename MovingImageCalculatorType::VectorType movingCenter = m_MovingCalculator->GetCenterOfGravity();
 
-    for (unsigned int i = 0; i < InputSpaceDimension; i++)
+    for (unsigned int i = 0; i < ReducedSpaceDimension; i++)
     {
       rotationCenter[i] = fixedCenter[i];
       translationVector[i] = movingCenter[i] - fixedCenter[i];
@@ -90,17 +90,17 @@ CenteredTransformInitializerSongshu<TTransform, TFixedImage, TMovingImage>::Init
     const typename FixedImageType::IndexType &  fixedIndex = fixedRegion.GetIndex();
     const typename FixedImageType::SizeType &   fixedSize = fixedRegion.GetSize();
 
-    InputPointType centerFixedPoint;
+    ReducedDimensionInputPointType centerFixedPoint;
 
-    using CoordRepType = typename InputPointType::ValueType;
+    using CoordRepType = typename ReducedDimensionInputPointType::ValueType;
 
-    using ContinuousIndexType = ContinuousIndex<CoordRepType, InputSpaceDimension>;
+    using ContinuousIndexType = ContinuousIndex<CoordRepType, ReducedSpaceDimension>;
 
     using ContinuousIndexValueType = typename ContinuousIndexType::ValueType;
 
     ContinuousIndexType centerFixedIndex;
 
-    for (unsigned int k = 0; k < InputSpaceDimension; k++)
+    for (unsigned int k = 0; k < ReducedSpaceDimension; k++)
     {
       centerFixedIndex[k] = static_cast<ContinuousIndexValueType>(fixedIndex[k]) +
                             static_cast<ContinuousIndexValueType>(fixedSize[k] - 1) / 2.0;
@@ -112,9 +112,9 @@ CenteredTransformInitializerSongshu<TTransform, TFixedImage, TMovingImage>::Init
     const typename MovingImageType::IndexType &  movingIndex = movingRegion.GetIndex();
     const typename MovingImageType::SizeType &   movingSize = movingRegion.GetSize();
 
-    InputPointType centerMovingPoint;
+    ReducedDimensionInputPointType centerMovingPoint;
 
-    ContinuousIndexType centerMovingIndex;
+    ReducedDimensionContinuousIndexType centerMovingIndex;
 
     for (unsigned int m = 0; m < InputSpaceDimension; m++)
     {
