@@ -47,7 +47,7 @@ void
 AffineLogTransformSongshuElastix< TElastix >
 ::BeforeRegistration( void )
 {
-  elxout << "BeforeRegistration" << std::endl;
+  elxout << "BeforeRegistration _Songshu_" << std::endl;
   /** Set center of rotation and initial translation. */
   this->InitializeTransform();
 
@@ -148,11 +148,14 @@ AffineLogTransformSongshuElastix< TElastix >
 /**
  * ************************* InitializeTransform *********************
  */
+ /**
+  * ************************* InitializeTransform *********************
+  */
 
 template< class TElastix >
 void
 AffineLogTransformSongshuElastix< TElastix >
-::InitializeTransform( void )
+::InitializeTransform(void)
 {
   elxout << "InitializeTransform" << std::endl;
   /** Set all parameters to zero (no rotations, no translation). */
@@ -161,119 +164,179 @@ AffineLogTransformSongshuElastix< TElastix >
   /** Try to read CenterOfRotationIndex from parameter file,
    * which is the rotationPoint, expressed in index-values.
    */
-
-  ContinuousIndexType                 centerOfRotationIndex;
-  InputPointType                      centerOfRotationPoint;
-  ReducedDimensionContinuousIndexType RDcenterOfRotationIndex;
-  ReducedDimensionInputPointType      RDcenterOfRotationPoint;
-  InputPointType                      TransformedCenterOfRotation;
-  ReducedDimensionInputPointType      RDTransformedCenterOfRotation;
-
-  bool     centerGivenAsIndex = true;
-  bool     centerGivenAsPoint = true;
-  SizeType fixedImageSize     = this->m_Registration->GetAsITKBaseType()->
-    GetFixedImage()->GetLargestPossibleRegion().GetSize();
-
-  for( unsigned int i = 0; i < ReducedSpaceDimension; i++ )
+  IndexType      centerOfRotationIndex;
+  ReducedDimensionIndexType RDcenterOfRotationIndex;
+  InputPointType centerOfRotationPoint;
+  ReducedDimensionInputPointType RDcenterOfRotationPoint;
+  bool           centerGivenAsIndex = true;
+  bool           centerGivenAsPoint = true;
+  //SizeType fixedImageSize = this->m_Registration->GetAsITKBaseType()
+  //  ->GetFixedImage()->GetLargestPossibleRegion().GetSize();
+  for (unsigned int i = 0; i < SpaceDimension; i++)
   {
     /** Initialize. */
-    centerOfRotationIndex[ i ]         = 0;
-    RDcenterOfRotationIndex[ i ]       = 0;
-    RDcenterOfRotationPoint[ i ]       = 0.0;
-    centerOfRotationPoint[ i ]         = 0.0;
-    TransformedCenterOfRotation[ i ]   = 0.0;
-    RDTransformedCenterOfRotation[ i ] = 0.0;
+    centerOfRotationIndex[i] = 0;
+    centerOfRotationPoint[i] = 0.0;
+  }
+  for (unsigned int i = 0; i < ReducedSpaceDimension; i++)
+  {
+    /** Initialize. */
+    RDcenterOfRotationIndex[i] = 0;
+    RDcenterOfRotationPoint[i] = 0.0;
 
     /** Check COR index: Returns zero when parameter was in the parameter file. */
     bool foundI = this->m_Configuration->ReadParameter(
-      RDcenterOfRotationIndex[ i ], "CenterOfRotation", i, false );
-    if( !foundI )
+      RDcenterOfRotationIndex[i], "CenterOfRotation", i, false);
+    if (!foundI)
     {
       centerGivenAsIndex &= false;
     }
 
     /** Check COR point: Returns zero when parameter was in the parameter file. */
     bool foundP = this->m_Configuration->ReadParameter(
-      RDcenterOfRotationPoint[ i ], "CenterOfRotationPoint", i, false );
-    if( !foundP )
+      RDcenterOfRotationPoint[i], "CenterOfRotationPoint", i, false);
+    if (!foundP)
     {
       centerGivenAsPoint &= false;
     }
-    centerOfRotationPoint[i] = RDcenterOfRotationPoint[i];
     centerOfRotationIndex[i] = RDcenterOfRotationIndex[i];
-  } // end loop over ReducedSpaceDimension
+    centerOfRotationPoint[i] = RDcenterOfRotationPoint[i];
+  } // end loop over SpaceDimension
 
-  // force 4D point for after
-  centerOfRotationPoint[SpaceDimension - 1] = 0.0;
-  centerOfRotationIndex[SpaceDimension - 1] = 0;
-  TransformedCenterOfRotation[SpaceDimension - 1] = 0.0;
+  /** Check if CenterOfRotation has index-values within image. */
+  bool CORIndexInImage = true;
+  bool CORPointInImage = true;
+  if (centerGivenAsIndex)
+  {
+    CORIndexInImage = this->m_Registration->GetAsITKBaseType()
+      ->GetFixedImage()->GetLargestPossibleRegion().IsInside(
+        centerOfRotationIndex);
+    for (unsigned int i = 0; i < ReducedSpaceDimension; i++)
+      RDcenterOfRotationIndex[i] = centerOfRotationIndex[i];
+  }
+
+  if (centerGivenAsPoint)
+  {
+    //typedef itk::ContinuousIndex< double, SpaceDimension > ContinuousIndexType;
+    ContinuousIndexType cindex;
+    //ReducedDimensionContinuousIndexType RDcindex;
+    CORPointInImage = this->m_Registration->GetAsITKBaseType()
+      ->GetFixedImage()->TransformPhysicalPointToContinuousIndex(
+        centerOfRotationPoint, cindex);
+    for (unsigned int i = 0; i < ReducedSpaceDimension; i++)
+      RDcenterOfRotationPoint[i] = centerOfRotationPoint[i];
+  }
+
+
+  /** Give a warning if necessary. */
+  if (!CORIndexInImage && centerGivenAsIndex)
+  {
+    xl::xout["warning"] << "WARNING: Center of Rotation (index) is not "
+      << "within image boundaries!" << std::endl;
+  }
+
+  /** Give a warning if necessary. */
+  if (!CORPointInImage && centerGivenAsPoint && !centerGivenAsIndex)
+  {
+    xl::xout["warning"] << "WARNING: Center of Rotation (point) is not "
+      << "within image boundaries!" << std::endl;
+  }
 
   /** Check if user wants automatic transform initialization; false by default.
    * If an initial transform is given, automatic transform initialization is
    * not possible.
    */
   bool automaticTransformInitialization = false;
-  bool tmpBool                          = false;
-  this->m_Configuration->ReadParameter( tmpBool,
-    "AutomaticTransformInitialization", 0 );
-  if( tmpBool && this->Superclass1::GetInitialTransform() == 0 )
+  bool tmpBool = false;
+  this->m_Configuration->ReadParameter(tmpBool,
+    "AutomaticTransformInitialization", 0);
+  if (tmpBool && this->Superclass1::GetInitialTransform() == 0)
   {
     automaticTransformInitialization = true;
   }
 
-  /** Set the center of rotation to the center of the image if no center was given */
+  /**
+   * Run the itkTransformInitializer if:
+   * - No center of rotation was given, or
+   * - The user asked for AutomaticTransformInitialization
+   */
   bool centerGiven = centerGivenAsIndex || centerGivenAsPoint;
-  if( !centerGiven || automaticTransformInitialization )
+  if (!centerGiven || automaticTransformInitialization)
   {
-    /** Use center of image as default center of rotation */
-    for( unsigned int k = 0; k < ReducedSpaceDimension; k++ )
-    {
-      centerOfRotationIndex[ k ] = ( fixedImageSize[ k ] - 1.0 ) / 2.0;
-    }
-    /** Convert from continuous index to physical point */
-    this->m_Registration->GetAsITKBaseType()->GetFixedImage()->
-      TransformContinuousIndexToPhysicalPoint( centerOfRotationIndex, TransformedCenterOfRotation );
+    itkWarningMacro(<< "_Songshu_ automaticTransformInitialization ");
+    /** Use the TransformInitializer to determine a center of
+     * of rotation and an initial translation.
+     */
+    TransformInitializerPointer transformInitializer
+      = TransformInitializerType::New();
+    transformInitializer->SetFixedImage(
+      this->m_Registration->GetAsITKBaseType()->GetFixedImage());
+    transformInitializer->SetMovingImage(
+      this->m_Registration->GetAsITKBaseType()->GetMovingImage());
+    transformInitializer->SetTransform(this->m_AffineLogTransform);
 
-    for( unsigned int k = 0; k < ReducedSpaceDimension; k++ )
+    /** Select the method of initialization. Default: "GeometricalCenter". */
+    transformInitializer->GeometryOn();
+    std::string method = "GeometricalCenter";
+    this->m_Configuration->ReadParameter(method,
+      "AutomaticTransformInitializationMethod", 0);
+    if (method == "CenterOfGravity")
     {
-      RDTransformedCenterOfRotation[ k ] = TransformedCenterOfRotation[ k ];
+      transformInitializer->MomentsOn();
     }
 
-    this->m_AffineLogTransform->SetCenter( RDTransformedCenterOfRotation );
+    transformInitializer->InitializeTransform();
   }
 
   /** Set the translation to zero, if no AutomaticTransformInitialization
    * was desired.
    */
-  if( !automaticTransformInitialization )
+  if (!automaticTransformInitialization)
   {
     OutputVectorType noTranslation;
-    noTranslation.Fill( 0.0 );
-    this->m_AffineLogTransform->SetTranslation( noTranslation );
+    noTranslation.Fill(0.0);
+    this->m_AffineLogTransform->SetTranslation(noTranslation);
   }
-  if( centerGivenAsIndex )
+
+  /** Set the center of rotation if it was entered by the user. */
+  if (centerGiven)
   {
-    this->m_Registration->GetAsITKBaseType()->GetFixedImage()
-      ->TransformContinuousIndexToPhysicalPoint(
-      centerOfRotationIndex, TransformedCenterOfRotation );
-    for( unsigned int k = 0; k < ReducedSpaceDimension; k++ )
+    if (centerGivenAsIndex)
     {
-      RDTransformedCenterOfRotation[ k ] = TransformedCenterOfRotation[ k ];
+      /** Convert from index-value to physical-point-value. */
+      this->m_Registration->GetAsITKBaseType()->GetFixedImage()
+        ->TransformIndexToPhysicalPoint(
+          centerOfRotationIndex, centerOfRotationPoint);
+      for (unsigned int i = 0; i < ReducedSpaceDimension; i++)
+        RDcenterOfRotationPoint[i] = centerOfRotationPoint[i];
+      
     }
-    this->m_AffineLogTransform->SetCenter( RDTransformedCenterOfRotation );
+    elxout << "cor: " << RDcenterOfRotationPoint << std::endl;
+    for (unsigned int i = 0; i < ReducedSpaceDimension; i++)
+      itkWarningMacro(<< "_Songshu_ RDcenterOfRotationPoint " << RDcenterOfRotationPoint[i]);
+
+    this->m_AffineLogTransform->SetCenter(RDcenterOfRotationPoint);
   }
 
-  /** Set the translation to zero */
-  ReducedDimensionOutputVectorType noTranslation;
-  noTranslation.Fill( 0.0 );
-  this->m_AffineLogTransform->SetTranslation( noTranslation );
-
+  /** Apply the initial transform to the center of rotation, if
+   * composition is used to combine the initial transform with the
+   * the current (euler) transform.
+   */
+  if (this->GetUseComposition()
+    && this->Superclass1::GetInitialTransform() != 0)
+  {
+    ReducedDimensionInputPointType RDtransformedCenterOfRotationPoint
+      = this->Superclass1::GetInitialTransform()->TransformPoint(
+        this->m_AffineLogTransform->GetCenter());
+    this->m_AffineLogTransform->SetCenter(RDtransformedCenterOfRotationPoint);
+  }
 
   /** Set the initial parameters in this->m_Registration. */
   this->m_Registration->GetAsITKBaseType()
-  ->SetInitialTransformParameters( this->GetParameters() );
+    ->SetInitialTransformParameters(this->GetParameters());
 
 } // end InitializeTransform()
+
 
 
 /**
@@ -293,7 +356,7 @@ AffineLogTransformSongshuElastix< TElastix >
 
   /** Always estimate scales automatically */
   elxout << "Scales are estimated automatically. [AffineLogTransformSongshu]" << std::endl;
-  this->AutomaticScalesEstimation( newscales );
+  this->RDAutomaticScalesEstimation( newscales );
 
   std::size_t count
     = this->m_Configuration->CountNumberOfParameterEntries( "Scales" );

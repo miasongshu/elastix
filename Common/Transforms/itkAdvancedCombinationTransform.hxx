@@ -274,6 +274,7 @@ const typename AdvancedCombinationTransform< TScalarType, NDimensions >::Paramet
 & AdvancedCombinationTransform< TScalarType, NDimensions >
 ::GetParameters( void ) const
 {
+  itkWarningMacro(<< "_Songshu_ in itkAdvancedCombinationTransform GetParameters");
   /** Return the parameters that completely define the m_CurrentTransform. */
   if( this->m_CurrentTransform.IsNotNull() )
   {
@@ -1627,7 +1628,7 @@ AdvancedCombinationTransform< TScalarType, NDimensions >
   JacobianType & j,
   NonZeroJacobianIndicesType & nonZeroJacobianIndices ) const
 {
-  itkWarningMacro(<< "Songshu in AdvancedCombinationTransform Jacobian " << ipp.size() );
+  itkWarningMacro(<< "Songshu in AdvancedCombinationTransform Jacobian ");
   /** Call the selected GetJacobian. */
   return ( ( *this ).*m_SelectedGetSparseJacobianFunction )(
     ipp, j, nonZeroJacobianIndices );

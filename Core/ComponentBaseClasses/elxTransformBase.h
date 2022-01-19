@@ -181,6 +181,10 @@ public:
     CoordRepType,
     itkGetStaticConstMacro( FixedImageDimension ),
     itkGetStaticConstMacro( MovingImageDimension ) >  ITKBaseType;
+  typedef itk::AdvancedTransform<
+    CoordRepType,
+    itkGetStaticConstMacro(ReducedImageDimension),
+    itkGetStaticConstMacro(ReducedImageDimension) >  RDITKBaseType;
   typedef itk::AdvancedCombinationTransform< CoordRepType,
     itkGetStaticConstMacro( FixedImageDimension ) >   CombinationTransformType;
   typedef typename
@@ -197,7 +201,9 @@ public:
   /** Typedef's for TransformPoint. */
   typedef typename ITKBaseType::InputPointType  InputPointType;
   typedef typename ITKBaseType::OutputPointType OutputPointType;
-  typedef typename ITKBaseType::ReducedPointType  ReducedPointType;
+  //typedef typename ITKBaseType::ReducedPointType  ReducedPointType;
+  typedef typename RDITKBaseType::InputPointType  ReducedDimensionPointType;
+
   //typedef typename ReducedDimensionBaseType::InputPointType  ReducedDimensionPointType;
 
   /** Typedef's for TransformPointsAllPoints. */
@@ -217,6 +223,7 @@ public:
   /** Cast to ITKBaseType. */
   virtual ITKBaseType * GetAsITKBaseType( void )
   {
+    itkWarningMacro(<< "_Songshu_ of GetAsITKBaseType ");
     return dynamic_cast< ITKBaseType * >( this );
   }
 
@@ -224,9 +231,22 @@ public:
   /** Cast to ITKBaseType, to use in const functions. */
   virtual const ITKBaseType * GetAsITKBaseType( void ) const
   {
+    itkWarningMacro(<< "_Songshu_ of GetAsITKBaseType const ");
     return dynamic_cast< const ITKBaseType * >( this );
   }
 
+  /** Cast to ITKBaseType. */
+  RDITKBaseType* RDGetAsITKBaseType(void)
+  {
+    return dynamic_cast<RDITKBaseType*>(this);
+  }
+
+
+  /** Cast to ITKBaseType, to use in const functions. */
+  const RDITKBaseType* RDGetAsITKBaseType(void) const
+  {
+    return dynamic_cast<const RDITKBaseType*>(this);
+  }
 
   virtual const CombinationTransformType * GetAsCombinationTransform( void ) const
   {
@@ -346,6 +366,7 @@ protected:
    * \li Scales_i = 1/N sum_x || dT / dmu_i ||^2
    */
   void AutomaticScalesEstimation( ScalesType & scales ) const;
+  void RDAutomaticScalesEstimation(ScalesType& scales) const;
 
   /** Estimate a scales vector for a stack transform (elxTranslationStackTransform,
    * elxAffineStackTransform, ...) Instead of sampling along the n dimensions of the

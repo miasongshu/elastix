@@ -1931,6 +1931,92 @@ TransformBase< TElastix >
 
 
 
+
+/**
+ * ************** RDAutomaticScalesEstimation ***************
+ */ // reducedDimension 
+
+template< class TElastix >
+void
+TransformBase< TElastix >
+::RDAutomaticScalesEstimation(ScalesType& scales) const
+{
+  typedef itk::ImageGridSampler< FixedImageType > ImageSamplerType;
+  typedef typename ImageSamplerType::Pointer      ImageSamplerPointer;
+  typedef typename
+    ImageSamplerType::ImageSampleContainerType ImageSampleContainerType;
+  typedef typename ImageSampleContainerType::Pointer         ImageSampleContainerPointer;
+  typedef typename RDITKBaseType::JacobianType               JacobianType;
+  typedef typename RDITKBaseType::NonZeroJacobianIndicesType NonZeroJacobianIndicesType;
+
+  const RDITKBaseType* const thisITK = this->RDGetAsITKBaseType();
+  const unsigned int        outdim = ReducedImageDimension;
+  itkWarningMacro(<< "_Songshu_ 1 of AutomaticScalesEstimation " << outdim);
+  const unsigned int        N = thisITK->GetNumberOfParameters();
+  itkWarningMacro(<< "_Songshu_ 2 of AutomaticScalesEstimation ");
+  scales = ScalesType(N);
+
+  /** Set up grid sampler. */
+  ImageSamplerPointer sampler = ImageSamplerType::New();
+  sampler->SetInput(
+    this->GetRegistration()->GetAsITKBaseType()->GetFixedImage());
+  sampler->SetInputImageRegion(
+    this->GetRegistration()->GetAsITKBaseType()->GetFixedImageRegion());
+
+  /** Compute the grid spacing. */
+  unsigned long nrofsamples = 10000;
+  sampler->SetNumberOfSamples(nrofsamples);
+
+  /** Get samples and check the actually obtained number of samples. */
+  sampler->Update();
+  ImageSampleContainerPointer sampleContainer = sampler->GetOutput();
+  nrofsamples = sampleContainer->Size();
+  if (nrofsamples == 0)
+  {
+    /** \todo: should we demand a minimum number (~100) of voxels? */
+    itkExceptionMacro(<< "No valid voxels found to estimate the scales.");
+  }
+
+  /** Create iterator over the sample container. */
+  typename ImageSampleContainerType::ConstIterator iter;
+  typename ImageSampleContainerType::ConstIterator begin = sampleContainer->Begin();
+  typename ImageSampleContainerType::ConstIterator end = sampleContainer->End();
+
+  /** initialize */
+  scales.Fill(0.0);
+  itkWarningMacro(<< "_Songshu_ 3 of AutomaticScalesEstimation ");
+  /** Read fixed coordinates and get Jacobian. */
+  for (iter = begin; iter != end; ++iter)
+  {
+    const InputPointType& point = (*iter).Value().m_ImageCoordinates; // 4D !?
+    ReducedDimensionPointType dummyPoint;
+    for (unsigned int d = 0; d < outdim; ++d)
+      dummyPoint[d] = point[d];
+
+    const ReducedDimensionPointType& RDpoint = dummyPoint;
+
+    //const JacobianType & jacobian = thisITK->GetJacobian( point );
+    JacobianType jacobian; NonZeroJacobianIndicesType nzji;
+    itkWarningMacro(<< "_Songshu_ 4 of AutomaticScalesEstimation "
+      << point.size() << ", " << jacobian.size() << ", " << nzji.size());
+    thisITK->GetJacobian(RDpoint, jacobian, nzji);
+    itkWarningMacro(<< "_Songshu_ 5 of AutomaticScalesEstimation outdim=" << outdim);
+    /** Square each element of the Jacobian and add each row
+     * to the newscales.
+     */
+    for (unsigned int d = 0; d < outdim; ++d)
+    {
+      ScalesType jacd(jacobian[d], N, false);
+      scales += element_product(jacd, jacd);
+    }
+  }
+  itkWarningMacro(<< "_Songshu_ 6 of AutomaticScalesEstimation ");
+  scales /= static_cast<double>(nrofsamples);
+} // end RDAutomaticScalesEstimation()
+
+
+
+
 /**
  * ************** AutomaticScalesEstimationStackTransform ***************
  */

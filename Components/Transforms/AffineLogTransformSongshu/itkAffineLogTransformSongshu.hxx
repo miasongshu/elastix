@@ -157,7 +157,7 @@ AffineLogTransformSongshu< TScalarType, Dimension >::GetJacobian( const InputPoi
   JacobianType & j,
   NonZeroJacobianIndicesType & nzji ) const
 {
-  //itkWarningMacro(<< "Songshu in AffineLogTransformSongshu Jacobian " );
+  itkWarningMacro(<< "_Songshu_ in AffineLogTransformSongshu Jacobian " );
   unsigned int d = Dimension;
 
   j.SetSize( d, ParametersDimension );
@@ -182,7 +182,7 @@ AffineLogTransformSongshu< TScalarType, Dimension >::GetJacobian( const InputPoi
   }
 
   nzji = this->m_NonZeroJacobianIndices;
-
+  itkWarningMacro(<< "_Songshu_ in AffineLogTransformSongshu Jacobian END");
 }
 
 

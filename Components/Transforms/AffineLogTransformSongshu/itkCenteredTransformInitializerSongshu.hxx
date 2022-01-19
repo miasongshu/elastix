@@ -21,10 +21,11 @@
 #include "itkCenteredTransformInitializerSongshu.h"
 
 namespace itk
-{
+{ // it should be TTransform is reduced already to 3D, images should be 4D:
 template <typename TTransform, typename TFixedImage, typename TMovingImage>
 CenteredTransformInitializerSongshu<TTransform, TFixedImage, TMovingImage>::CenteredTransformInitializerSongshu()
 {
+  itkWarningMacro(<< "Songshu in Constructor itkCenteredTransformInitializer ITK ITK ITK");
   m_FixedCalculator = FixedImageCalculatorType::New();
   m_MovingCalculator = MovingImageCalculatorType::New();
   m_UseMoments = false;
@@ -34,6 +35,7 @@ template <typename TTransform, typename TFixedImage, typename TMovingImage>
 void
 CenteredTransformInitializerSongshu<TTransform, TFixedImage, TMovingImage>::InitializeTransform()
 {
+  itkWarningMacro(<< "Songshu in itkInitializeTransform ITK ITK ITK!! ");
   // Sanity check
   if (!m_FixedImage)
   {
@@ -61,7 +63,8 @@ CenteredTransformInitializerSongshu<TTransform, TFixedImage, TMovingImage>::Init
     m_MovingImage->GetSource()->Update();
   }
 
-  ReducedDimensionInputPointType   rotationCenter;
+  InputPointType   rotationCenter; // this should be already the reduced dimension one (3D)
+                                   // (the original is called "UnReducedInputPointType") 
   OutputVectorType translationVector;
 
   if (m_UseMoments)
@@ -76,7 +79,7 @@ CenteredTransformInitializerSongshu<TTransform, TFixedImage, TMovingImage>::Init
 
     typename MovingImageCalculatorType::VectorType movingCenter = m_MovingCalculator->GetCenterOfGravity();
 
-    for (unsigned int i = 0; i < ReducedSpaceDimension; i++)
+    for (unsigned int i = 0; i < InputSpaceDimension; i++)
     {
       rotationCenter[i] = fixedCenter[i];
       translationVector[i] = movingCenter[i] - fixedCenter[i];
@@ -90,21 +93,24 @@ CenteredTransformInitializerSongshu<TTransform, TFixedImage, TMovingImage>::Init
     const typename FixedImageType::IndexType &  fixedIndex = fixedRegion.GetIndex();
     const typename FixedImageType::SizeType &   fixedSize = fixedRegion.GetSize();
 
-    ReducedDimensionInputPointType centerFixedPoint;
+    UnReducedInputPointType centerFixedPoint; // 4D
 
-    using CoordRepType = typename ReducedDimensionInputPointType::ValueType;
+    using CoordRepType = typename InputPointType::ValueType;
 
-    using ContinuousIndexType = ContinuousIndex<CoordRepType, ReducedSpaceDimension>;
+    using ContinuousIndexType = ContinuousIndex<CoordRepType, UnReducedSpaceDimension>; // 4D now
 
     using ContinuousIndexValueType = typename ContinuousIndexType::ValueType;
 
+    //ContinuousIndexType centerFixedIndex;
     ContinuousIndexType centerFixedIndex;
 
-    for (unsigned int k = 0; k < ReducedSpaceDimension; k++)
+    for (unsigned int k = 0; k < InputSpaceDimension; k++)
     {
       centerFixedIndex[k] = static_cast<ContinuousIndexValueType>(fixedIndex[k]) +
                             static_cast<ContinuousIndexValueType>(fixedSize[k] - 1) / 2.0;
     }
+    // force 4D point for after
+    centerFixedIndex[InputSpaceDimension -1] = 0;
 
     m_FixedImage->TransformContinuousIndexToPhysicalPoint(centerFixedIndex, centerFixedPoint);
 
@@ -112,15 +118,16 @@ CenteredTransformInitializerSongshu<TTransform, TFixedImage, TMovingImage>::Init
     const typename MovingImageType::IndexType &  movingIndex = movingRegion.GetIndex();
     const typename MovingImageType::SizeType &   movingSize = movingRegion.GetSize();
 
-    ReducedDimensionInputPointType centerMovingPoint;
+    UnReducedInputPointType centerMovingPoint;
 
-    ReducedDimensionContinuousIndexType centerMovingIndex;
+    ContinuousIndexType centerMovingIndex;
 
     for (unsigned int m = 0; m < InputSpaceDimension; m++)
     {
       centerMovingIndex[m] = static_cast<ContinuousIndexValueType>(movingIndex[m]) +
                              static_cast<ContinuousIndexValueType>(movingSize[m] - 1) / 2.0;
     }
+    centerMovingIndex[InputSpaceDimension - 1] = 0;
 
     m_MovingImage->TransformContinuousIndexToPhysicalPoint(centerMovingIndex, centerMovingPoint);
 

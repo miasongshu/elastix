@@ -21,6 +21,7 @@
 #include "itkObject.h"
 #include "itkObjectFactory.h"
 #include "itkImageMomentsCalculator.h"
+#include "itkMacro.h"
 
 #include <iostream>
 
@@ -82,6 +83,7 @@ public:
   /** Dimension of parameters. */
   static constexpr unsigned int InputSpaceDimension = TransformType::InputSpaceDimension;
   static constexpr unsigned int OutputSpaceDimension = TransformType::OutputSpaceDimension;
+  static constexpr unsigned int UnReducedSpaceDimension = TransformType::InputSpaceDimension+1;
 
   /** Image Types to use in the initialization of the transform */
   using FixedImageType = TFixedImage;
@@ -102,6 +104,7 @@ public:
 
   /** Point type. */
   using InputPointType = typename TransformType::InputPointType;
+  using UnReducedInputPointType = typename FixedImageType::PointType;
 
   /** Vector type. */
   using OutputVectorType = typename TransformType::OutputVectorType;
