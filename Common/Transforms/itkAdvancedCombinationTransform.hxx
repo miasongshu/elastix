@@ -32,8 +32,6 @@ template< typename TScalarType, unsigned int NDimensions >
 AdvancedCombinationTransform< TScalarType, NDimensions >
 ::AdvancedCombinationTransform() : Superclass( NDimensions )
 {
-
-  itkWarningMacro(<< "Songshu in AdvancedCombinationTransform Constructor " << NDimensions);
   /** Initialize. */
   this->m_InitialTransform = 0;
   this->m_CurrentTransform = 0;
@@ -274,7 +272,6 @@ const typename AdvancedCombinationTransform< TScalarType, NDimensions >::Paramet
 & AdvancedCombinationTransform< TScalarType, NDimensions >
 ::GetParameters( void ) const
 {
-  itkWarningMacro(<< "_Songshu_ in itkAdvancedCombinationTransform GetParameters");
   /** Return the parameters that completely define the m_CurrentTransform. */
   if( this->m_CurrentTransform.IsNotNull() )
   {
@@ -547,6 +544,7 @@ void
 AdvancedCombinationTransform< TScalarType, NDimensions >
 ::SetInitialTransform( InitialTransformType * _arg )
 {
+  itkWarningMacro(<< "_Songshu_ in SetInitialTransform of itkAdvancedCombinationTransform.hxx ");
   /** Set the the initial transform and call the UpdateCombinationMethod. */
   if( this->m_InitialTransform != _arg )
   {
@@ -554,7 +552,6 @@ AdvancedCombinationTransform< TScalarType, NDimensions >
     this->Modified();
     this->UpdateCombinationMethod();
   }
-
 } // end SetInitialTransform()
 
 
@@ -1628,7 +1625,6 @@ AdvancedCombinationTransform< TScalarType, NDimensions >
   JacobianType & j,
   NonZeroJacobianIndicesType & nonZeroJacobianIndices ) const
 {
-  itkWarningMacro(<< "Songshu in AdvancedCombinationTransform Jacobian ");
   /** Call the selected GetJacobian. */
   return ( ( *this ).*m_SelectedGetSparseJacobianFunction )(
     ipp, j, nonZeroJacobianIndices );

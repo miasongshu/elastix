@@ -49,7 +49,7 @@ CenteredTransformInitializerSongshu<TTransform, TFixedImage, TMovingImage>::Init
   }
   if (!m_Transform)
   {
-    itkExceptionMacro("Transform has not been set");
+    itkExceptionMacro("Transform has not been set _Songshu_");
     return;
   }
 

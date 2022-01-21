@@ -333,6 +333,7 @@ void
 TransformBase< TElastix >
 ::SetInitialTransform( InitialTransformType * _arg )
 {
+  itkExceptionMacro(<< "_Songshu_ in SetInitialTransform of elxTransformBase.hxx ");
   /** Cast to a(n Advanced)CombinationTransform. */
   CombinationTransformType * thisAsGrouper
     = dynamic_cast< CombinationTransformType * >( this );
@@ -344,7 +345,6 @@ TransformBase< TElastix >
   }
 
   // \todo AdvancedCombinationTransformType
-
 } // end SetInitialTransform()
 
 
@@ -1951,9 +1951,7 @@ TransformBase< TElastix >
 
   const RDITKBaseType* const thisITK = this->RDGetAsITKBaseType();
   const unsigned int        outdim = ReducedImageDimension;
-  itkWarningMacro(<< "_Songshu_ 1 of AutomaticScalesEstimation " << outdim);
   const unsigned int        N = thisITK->GetNumberOfParameters();
-  itkWarningMacro(<< "_Songshu_ 2 of AutomaticScalesEstimation ");
   scales = ScalesType(N);
 
   /** Set up grid sampler. */
@@ -1984,7 +1982,6 @@ TransformBase< TElastix >
 
   /** initialize */
   scales.Fill(0.0);
-  itkWarningMacro(<< "_Songshu_ 3 of AutomaticScalesEstimation ");
   /** Read fixed coordinates and get Jacobian. */
   for (iter = begin; iter != end; ++iter)
   {
@@ -1997,10 +1994,7 @@ TransformBase< TElastix >
 
     //const JacobianType & jacobian = thisITK->GetJacobian( point );
     JacobianType jacobian; NonZeroJacobianIndicesType nzji;
-    itkWarningMacro(<< "_Songshu_ 4 of AutomaticScalesEstimation "
-      << point.size() << ", " << jacobian.size() << ", " << nzji.size());
     thisITK->GetJacobian(RDpoint, jacobian, nzji);
-    itkWarningMacro(<< "_Songshu_ 5 of AutomaticScalesEstimation outdim=" << outdim);
     /** Square each element of the Jacobian and add each row
      * to the newscales.
      */
@@ -2010,7 +2004,6 @@ TransformBase< TElastix >
       scales += element_product(jacd, jacd);
     }
   }
-  itkWarningMacro(<< "_Songshu_ 6 of AutomaticScalesEstimation ");
   scales /= static_cast<double>(nrofsamples);
 } // end RDAutomaticScalesEstimation()
 

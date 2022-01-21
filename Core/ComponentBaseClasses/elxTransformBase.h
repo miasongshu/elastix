@@ -223,7 +223,6 @@ public:
   /** Cast to ITKBaseType. */
   virtual ITKBaseType * GetAsITKBaseType( void )
   {
-    itkWarningMacro(<< "_Songshu_ of GetAsITKBaseType ");
     return dynamic_cast< ITKBaseType * >( this );
   }
 
@@ -231,7 +230,6 @@ public:
   /** Cast to ITKBaseType, to use in const functions. */
   virtual const ITKBaseType * GetAsITKBaseType( void ) const
   {
-    itkWarningMacro(<< "_Songshu_ of GetAsITKBaseType const ");
     return dynamic_cast< const ITKBaseType * >( this );
   }
 
