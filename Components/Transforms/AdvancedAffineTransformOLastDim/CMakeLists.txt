@@ -1,8 +1,0 @@
-
-ADD_ELXCOMPONENT( AdvancedAffineTransformOLastDimElastix
- elxAdvancedAffineTransformOLastDim.h
- elxAdvancedAffineTransformOLastDim.hxx
- elxAdvancedAffineTransformOLastDim.cxx
- itkCenteredTransformInitializer2OLastDim.h
- itkCenteredTransformInitializer2OLastDim.hxx )
-
