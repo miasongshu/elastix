@@ -59,10 +59,9 @@ namespace itk
  * \ingroup ITKTransform
  */
 template <typename TTransform, typename TFixedImage, typename TMovingImage>
-class ITK_TEMPLATE_EXPORT CenteredTransformInitializerSongshu : public Object
+class CenteredTransformInitializerSongshu : public Object
 {
 public:
-  ITK_DISALLOW_COPY_AND_MOVE(CenteredTransformInitializerSongshu);
 
   /** Standard class type aliases. */
   using Self = CenteredTransformInitializerSongshu;
