@@ -331,7 +331,7 @@ AffineLogTransformElastix< TElastix >
   newscales.Fill( 1.0 );
 
   /** Always estimate scales automatically */
-  elxout << "Scales are estimated automatically. [AffineLogTransform]" << std::endl;
+  elxout << "Scales are estimated automatically." << std::endl;
   this->AutomaticScalesEstimation( newscales );
 
   std::size_t count

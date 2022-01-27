@@ -35,7 +35,7 @@ template <typename TTransform, typename TFixedImage, typename TMovingImage>
 void
 CenteredTransformInitializerSongshu<TTransform, TFixedImage, TMovingImage>::InitializeTransform()
 {
-  itkWarningMacro(<< "Songshu in itkInitializeTransform ITK ITK ITK!! ");
+  itkWarningMacro(<< "_Songshu_ in itkInitializeTransform ITK ITK ITK!! ");
   // Sanity check
   if (!m_FixedImage)
   {
@@ -52,7 +52,7 @@ CenteredTransformInitializerSongshu<TTransform, TFixedImage, TMovingImage>::Init
     itkExceptionMacro("Transform has not been set _Songshu_");
     return;
   }
-
+  
   // If images come from filters, then update those filters.
   if (m_FixedImage->GetSource())
   {
@@ -62,7 +62,7 @@ CenteredTransformInitializerSongshu<TTransform, TFixedImage, TMovingImage>::Init
   {
     m_MovingImage->GetSource()->Update();
   }
-
+  
   InputPointType   rotationCenter; // this should be already the reduced dimension one (3D)
                                    // (the original is called "UnReducedInputPointType") 
   OutputVectorType translationVector;
@@ -109,6 +109,7 @@ CenteredTransformInitializerSongshu<TTransform, TFixedImage, TMovingImage>::Init
       centerFixedIndex[k] = static_cast<ContinuousIndexValueType>(fixedIndex[k]) +
                             static_cast<ContinuousIndexValueType>(fixedSize[k] - 1) / 2.0;
     }
+    
     // force 4D point for after
     centerFixedIndex[InputSpaceDimension -1] = 0;
 
@@ -130,7 +131,7 @@ CenteredTransformInitializerSongshu<TTransform, TFixedImage, TMovingImage>::Init
     centerMovingIndex[InputSpaceDimension - 1] = 0;
 
     m_MovingImage->TransformContinuousIndexToPhysicalPoint(centerMovingIndex, centerMovingPoint);
-
+   
     for (unsigned int i = 0; i < InputSpaceDimension; i++)
     {
       rotationCenter[i] = centerFixedPoint[i];
@@ -141,6 +142,7 @@ CenteredTransformInitializerSongshu<TTransform, TFixedImage, TMovingImage>::Init
   m_Transform->SetCenter(rotationCenter);
 
   m_Transform->SetTranslation(translationVector);
+  itkWarningMacro(<< "Songshu in itkInitializeTransform END ITK ITK ITK!! ");
 }
 
 template <typename TTransform, typename TFixedImage, typename TMovingImage>

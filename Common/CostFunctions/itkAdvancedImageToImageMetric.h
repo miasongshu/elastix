@@ -182,7 +182,7 @@ public:
   /** Set the transform, of advanced type. */
   virtual void SetTransform( AdvancedTransformType * arg )
   {
-    itkExceptionMacro(<< "_Songshu_ in SetTransform of itkAdvancedImageToImageMetric.h ");
+    itkWarningMacro(<< "_Songshu_ in SetTransform of itkAdvancedImageToImageMetric.h ");
     this->Superclass::SetTransform( arg );
     if( this->m_AdvancedTransform != arg )
     {

@@ -552,6 +552,7 @@ AdvancedCombinationTransform< TScalarType, NDimensions >
     this->Modified();
     this->UpdateCombinationMethod();
   }
+
 } // end SetInitialTransform()
 
 
@@ -1630,7 +1631,6 @@ AdvancedCombinationTransform< TScalarType, NDimensions >
     ipp, j, nonZeroJacobianIndices );
 
 } // end GetJacobian()
-
 
 
 /**

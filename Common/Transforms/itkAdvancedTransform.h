@@ -123,7 +123,6 @@ public:
   typedef typename Superclass::OutputVnlVectorType OutputVnlVectorType;
   typedef typename Superclass::InputPointType      InputPointType;
   typedef typename Superclass::OutputPointType     OutputPointType;
-  //typedef typename Superclass::ReducedPointType    ReducedPointType;
 
   typedef typename Superclass::InverseTransformBaseType    InverseTransformBaseType;
   typedef typename Superclass::InverseTransformBasePointer InverseTransformBasePointer;
@@ -191,12 +190,11 @@ public:
    * \f]
    * with \f$m\f$ the number of parameters, i.e. the size of \f$\mu\f$, and \f$d\f$
    * the dimension of the image.
-   */ 
+   */
   virtual void GetJacobian(
     const InputPointType & ipp,
     JacobianType & j,
     NonZeroJacobianIndicesType & nonZeroJacobianIndices ) const = 0;
-
 
   /** Compute the inner product of the Jacobian with the moving image gradient.
    * The Jacobian is (partially) constructed inside this function, but not returned.

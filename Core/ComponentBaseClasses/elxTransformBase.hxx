@@ -333,7 +333,6 @@ void
 TransformBase< TElastix >
 ::SetInitialTransform( InitialTransformType * _arg )
 {
-  itkExceptionMacro(<< "_Songshu_ in SetInitialTransform of elxTransformBase.hxx ");
   /** Cast to a(n Advanced)CombinationTransform. */
   CombinationTransformType * thisAsGrouper
     = dynamic_cast< CombinationTransformType * >( this );
@@ -1873,7 +1872,6 @@ TransformBase< TElastix >
 
   const ITKBaseType * const thisITK = this->GetAsITKBaseType();
   const unsigned int        outdim  = MovingImageDimension;
-  itkWarningMacro(<< "Songshu 1 of AutomaticScalesEstimation ");
   const unsigned int        N       = thisITK->GetNumberOfParameters();
   scales = ScalesType( N );
 
@@ -1912,8 +1910,6 @@ TransformBase< TElastix >
     const InputPointType & point = ( *iter ).Value().m_ImageCoordinates;
     //const JacobianType & jacobian = thisITK->GetJacobian( point );
     JacobianType jacobian; NonZeroJacobianIndicesType nzji;
-    itkWarningMacro(<< "Songshu 7 of AutomaticScalesEstimation "
-      << point.size() << ", " << jacobian.size() << ", " << nzji.size());
     thisITK->GetJacobian( point, jacobian, nzji );
 
     /** Square each element of the Jacobian and add each row

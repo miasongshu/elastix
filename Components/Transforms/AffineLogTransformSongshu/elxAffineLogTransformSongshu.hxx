@@ -335,6 +335,7 @@ AffineLogTransformSongshuElastix< TElastix >
   this->m_Registration->GetAsITKBaseType()
     ->SetInitialTransformParameters(this->GetParameters());
 
+  itkWarningMacro(<< "_Songshu_ end of InitializeTransform !!!!!!");
 } // end InitializeTransform()
 
 

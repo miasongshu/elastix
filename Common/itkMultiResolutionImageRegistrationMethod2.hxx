@@ -86,7 +86,7 @@ MultiResolutionImageRegistrationMethod2< TFixedImage, TMovingImage >
     this->MakeOutput( 0 ).GetPointer() );
 
   this->ProcessObject::SetNthOutput( 0, transformDecorator.GetPointer() );
-
+  itkWarningMacro(<< "_Songshu_ in MultiResolutionImageRegistrationMethod2 END CONSTRUCTOR");
 } // end Constructor
 
 
@@ -98,7 +98,7 @@ void
 MultiResolutionImageRegistrationMethod2< TFixedImage, TMovingImage >
 ::Initialize( void )
 {
-
+  itkWarningMacro(<< "_Songshu_ in MultiResolutionImageRegistrationMethod2 ***************");
   // Sanity checks
   if( !this->m_Metric )
   {
@@ -112,14 +112,14 @@ MultiResolutionImageRegistrationMethod2< TFixedImage, TMovingImage >
 
   if( !this->m_Transform )
   {
-    itkExceptionMacro( << "Transform is not present" );
+    itkExceptionMacro( << "Transform is not present _Songshu_" );
   }
 
   if( !this->m_Interpolator )
   {
     itkExceptionMacro( << "Interpolator is not present" );
   }
-
+  itkWarningMacro(<< "_Songshu_2 in MultiResolutionImageRegistrationMethod2");
   // Setup the metric
   this->m_Metric->SetMovingImage( this->m_MovingImagePyramid->GetOutput( this->m_CurrentLevel ) );
   this->m_Metric->SetFixedImage( this->m_FixedImagePyramid->GetOutput( this->m_CurrentLevel ) );
@@ -127,7 +127,7 @@ MultiResolutionImageRegistrationMethod2< TFixedImage, TMovingImage >
   this->m_Metric->SetInterpolator( this->m_Interpolator );
   this->m_Metric->SetFixedImageRegion( this->m_FixedImageRegionPyramid[ this->m_CurrentLevel ] );
   this->m_Metric->Initialize();
-
+  itkWarningMacro(<< "_Songshu_3 in MultiResolutionImageRegistrationMethod2");
   // Setup the optimizer
   this->m_Optimizer->SetCostFunction( this->m_Metric );
   this->m_Optimizer->SetInitialPosition( this->m_InitialTransformParametersOfNextLevel );
@@ -165,7 +165,7 @@ MultiResolutionImageRegistrationMethod2< TFixedImage, TMovingImage >
 {
   if( !this->m_Transform )
   {
-    itkExceptionMacro( << "Transform is not present" );
+    itkExceptionMacro( << "Transform is not present _Songshu_2" );
   }
 
   this->m_InitialTransformParametersOfNextLevel = this->m_InitialTransformParameters;
@@ -295,6 +295,7 @@ MultiResolutionImageRegistrationMethod2< TFixedImage, TMovingImage >
   // StartRegistration()).
   if( !this->m_Updating )
   {
+    itkWarningMacro(<< "Before Update _Songshu_ !!!");
     this->Update();
   }
   else

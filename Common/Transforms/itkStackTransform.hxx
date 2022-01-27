@@ -19,7 +19,6 @@
 #define _itkStackTransform_hxx
 
 #include "itkStackTransform.h"
-#include "itkMacro.h"
 
 namespace itk
 {
@@ -146,7 +145,6 @@ StackTransform< TScalarType, NInputDimensions, NOutputDimensions >
   JacobianType & jac,
   NonZeroJacobianIndicesType & nzji ) const
 {
-  itkWarningMacro(<< "Songshu in StackTransform Jacobian " << ipp.size());
   /** Reduce dimension of input point. */
   SubTransformInputPointType ippr;
   for( unsigned int d = 0; d < ReducedInputSpaceDimension; ++d )

@@ -189,10 +189,6 @@ public:
     itkGetStaticConstMacro( FixedImageDimension ) >   CombinationTransformType;
   typedef typename
     CombinationTransformType::InitialTransformType InitialTransformType;
-  //typedef itk::AdvancedTransform<
-  //  CoordRepType,
-  //  itkGetStaticConstMacro(ReducedImageDimension),
-  //  itkGetStaticConstMacro(ReducedImageDimension) >  ReducedDimensionBaseType;
 
   /** Typedef's from Transform. */
   typedef typename ITKBaseType::ParametersType ParametersType;
@@ -201,7 +197,6 @@ public:
   /** Typedef's for TransformPoint. */
   typedef typename ITKBaseType::InputPointType  InputPointType;
   typedef typename ITKBaseType::OutputPointType OutputPointType;
-  //typedef typename ITKBaseType::ReducedPointType  ReducedPointType;
   typedef typename RDITKBaseType::InputPointType  ReducedDimensionPointType;
 
   //typedef typename ReducedDimensionBaseType::InputPointType  ReducedDimensionPointType;
