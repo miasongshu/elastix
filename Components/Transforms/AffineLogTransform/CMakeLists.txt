@@ -1,5 +1,5 @@
 
-ADD_ELXCOMPONENT( AffineLogTransformElastix
+ADD_ELXCOMPONENT( AffineLogTransformElastix OFF
  elxAffineLogTransform.h
  elxAffineLogTransform.hxx
  elxAffineLogTransform.cxx

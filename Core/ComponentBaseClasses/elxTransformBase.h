@@ -199,7 +199,6 @@ public:
   typedef typename ITKBaseType::OutputPointType OutputPointType;
   typedef typename RDITKBaseType::InputPointType  ReducedDimensionPointType;
 
-  //typedef typename ReducedDimensionBaseType::InputPointType  ReducedDimensionPointType;
 
   /** Typedef's for TransformPointsAllPoints. */
   typedef itk::Vector<

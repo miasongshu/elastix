@@ -36,10 +36,10 @@
      PURPOSE.  See the above copyright notices for more information.
 
 =========================================================================*/
-#ifndef _itkMultiResolutionImageRegistrationMethod2_hxx
-#define _itkMultiResolutionImageRegistrationMethod2_hxx
+#ifndef _itkMultiResolutionImageRegistrationMethodRD_hxx
+#define _itkMultiResolutionImageRegistrationMethodRD_hxx
 
-#include "itkMultiResolutionImageRegistrationMethod2.h"
+#include "itkMultiResolutionImageRegistrationMethodRD.h"
 #include "itkRecursiveMultiResolutionPyramidImageFilter.h"
 #include "itkContinuousIndex.h"
 #include "vnl/vnl_math.h"
@@ -51,8 +51,8 @@ namespace itk
  * Constructor
  */
 template< typename TFixedImage, typename TMovingImage >
-MultiResolutionImageRegistrationMethod2< TFixedImage, TMovingImage >
-::MultiResolutionImageRegistrationMethod2()
+MultiResolutionImageRegistrationMethodRD< TFixedImage, TMovingImage >
+::MultiResolutionImageRegistrationMethodRD()
 {
   this->SetNumberOfRequiredOutputs( 1 );  // for the Transform
 
@@ -86,7 +86,7 @@ MultiResolutionImageRegistrationMethod2< TFixedImage, TMovingImage >
     this->MakeOutput( 0 ).GetPointer() );
 
   this->ProcessObject::SetNthOutput( 0, transformDecorator.GetPointer() );
-  itkWarningMacro(<< "_Songshu_ in MultiResolutionImageRegistrationMethod2 END CONSTRUCTOR");
+  itkWarningMacro(<< "_Songshu_ in MultiResolutionImageRegistrationMethodRD END CONSTRUCTOR");
 } // end Constructor
 
 
@@ -95,10 +95,10 @@ MultiResolutionImageRegistrationMethod2< TFixedImage, TMovingImage >
  */
 template< typename TFixedImage, typename TMovingImage >
 void
-MultiResolutionImageRegistrationMethod2< TFixedImage, TMovingImage >
+MultiResolutionImageRegistrationMethodRD< TFixedImage, TMovingImage >
 ::Initialize( void )
 {
-  itkWarningMacro(<< "_Songshu_ in MultiResolutionImageRegistrationMethod2 ***************");
+  itkWarningMacro(<< "_Songshu_ in MultiResolutionImageRegistrationMethodRD ***************");
   // Sanity checks
   if( !this->m_Metric )
   {
@@ -119,7 +119,7 @@ MultiResolutionImageRegistrationMethod2< TFixedImage, TMovingImage >
   {
     itkExceptionMacro( << "Interpolator is not present" );
   }
-  itkWarningMacro(<< "_Songshu_2 in MultiResolutionImageRegistrationMethod2");
+  itkWarningMacro(<< "_Songshu_2 in MultiResolutionImageRegistrationMethodRD");
   // Setup the metric
   this->m_Metric->SetMovingImage( this->m_MovingImagePyramid->GetOutput( this->m_CurrentLevel ) );
   this->m_Metric->SetFixedImage( this->m_FixedImagePyramid->GetOutput( this->m_CurrentLevel ) );
@@ -127,7 +127,7 @@ MultiResolutionImageRegistrationMethod2< TFixedImage, TMovingImage >
   this->m_Metric->SetInterpolator( this->m_Interpolator );
   this->m_Metric->SetFixedImageRegion( this->m_FixedImageRegionPyramid[ this->m_CurrentLevel ] );
   this->m_Metric->Initialize();
-  itkWarningMacro(<< "_Songshu_3 in MultiResolutionImageRegistrationMethod2");
+  itkWarningMacro(<< "_Songshu_3 in MultiResolutionImageRegistrationMethodRD");
   // Setup the optimizer
   this->m_Optimizer->SetCostFunction( this->m_Metric );
   this->m_Optimizer->SetInitialPosition( this->m_InitialTransformParametersOfNextLevel );
@@ -148,7 +148,7 @@ MultiResolutionImageRegistrationMethod2< TFixedImage, TMovingImage >
  */
 template< typename TFixedImage, typename TMovingImage >
 void
-MultiResolutionImageRegistrationMethod2< TFixedImage, TMovingImage >
+MultiResolutionImageRegistrationMethodRD< TFixedImage, TMovingImage >
 ::StopRegistration( void )
 {
   this->m_Stop = true;
@@ -160,7 +160,7 @@ MultiResolutionImageRegistrationMethod2< TFixedImage, TMovingImage >
  */
 template< typename TFixedImage, typename TMovingImage >
 void
-MultiResolutionImageRegistrationMethod2< TFixedImage, TMovingImage >
+MultiResolutionImageRegistrationMethodRD< TFixedImage, TMovingImage >
 ::PreparePyramids( void )
 {
   if( !this->m_Transform )
@@ -278,7 +278,7 @@ MultiResolutionImageRegistrationMethod2< TFixedImage, TMovingImage >
  */
 template< typename TFixedImage, typename TMovingImage >
 void
-MultiResolutionImageRegistrationMethod2< TFixedImage, TMovingImage >
+MultiResolutionImageRegistrationMethodRD< TFixedImage, TMovingImage >
 ::StartRegistration( void )
 {
 
@@ -369,7 +369,7 @@ MultiResolutionImageRegistrationMethod2< TFixedImage, TMovingImage >
  */
 template< typename TFixedImage, typename TMovingImage >
 void
-MultiResolutionImageRegistrationMethod2< TFixedImage, TMovingImage >
+MultiResolutionImageRegistrationMethodRD< TFixedImage, TMovingImage >
 ::PrintSelf( std::ostream & os, Indent indent ) const
 {
   Superclass::PrintSelf( os, indent );
@@ -410,7 +410,7 @@ MultiResolutionImageRegistrationMethod2< TFixedImage, TMovingImage >
  */
 template< typename TFixedImage, typename TMovingImage >
 void
-MultiResolutionImageRegistrationMethod2< TFixedImage, TMovingImage >
+MultiResolutionImageRegistrationMethodRD< TFixedImage, TMovingImage >
 ::GenerateData( void )
 {
   this->StartRegistration();
@@ -419,7 +419,7 @@ MultiResolutionImageRegistrationMethod2< TFixedImage, TMovingImage >
 
 template< typename TFixedImage, typename TMovingImage >
 ModifiedTimeType
-MultiResolutionImageRegistrationMethod2< TFixedImage, TMovingImage >
+MultiResolutionImageRegistrationMethodRD< TFixedImage, TMovingImage >
 ::GetMTime( void ) const
 {
   ModifiedTimeType mtime = Superclass::GetMTime();
@@ -473,8 +473,8 @@ MultiResolutionImageRegistrationMethod2< TFixedImage, TMovingImage >
  *  Get Output
  */
 template< typename TFixedImage, typename TMovingImage >
-const typename MultiResolutionImageRegistrationMethod2< TFixedImage, TMovingImage >::TransformOutputType
-* MultiResolutionImageRegistrationMethod2< TFixedImage, TMovingImage >
+const typename MultiResolutionImageRegistrationMethodRD< TFixedImage, TMovingImage >::TransformOutputType
+* MultiResolutionImageRegistrationMethodRD< TFixedImage, TMovingImage >
 ::GetOutput() const
 {
   return static_cast< const TransformOutputType * >( this->ProcessObject::GetOutput( 0 ) );
@@ -482,7 +482,7 @@ const typename MultiResolutionImageRegistrationMethod2< TFixedImage, TMovingImag
 
 template< typename TFixedImage, typename TMovingImage >
 DataObject::Pointer
-MultiResolutionImageRegistrationMethod2< TFixedImage, TMovingImage >
+MultiResolutionImageRegistrationMethodRD< TFixedImage, TMovingImage >
 ::MakeOutput( unsigned int output )
 {
   if (output > 0)

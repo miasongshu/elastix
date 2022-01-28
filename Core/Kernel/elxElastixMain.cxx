@@ -129,6 +129,7 @@ xoutSetup( const char * logfilename, bool setupLogging, bool setupCout )
 
 ElastixMain::ElastixMain()
 {
+  itkWarningMacro(<< "In elxElastixMain.cxx in Constructor _Songshu_ !!!");
   /** Initialize the components. */
   this->m_Configuration = ConfigurationType::New();
 
@@ -264,7 +265,7 @@ ElastixMain
 int
 ElastixMain::Run( void )
 {
-
+  itkWarningMacro(<< "In elxElastixMain.cxx Run _Songshu_ !!!");
   /** Set process properties. */
   this->SetProcessPriority();
   this->SetMaximumNumberOfThreads();
@@ -392,6 +393,7 @@ ElastixMain::Run( void )
   /** Run elastix! */
   try
   {
+    itkWarningMacro(<< "In elxElastixMain.cxx call to Run _Songshu_ !!!");
     errorCode = this->GetElastixBase()->Run();
   }
   catch( itk::ExceptionObject & excp1 )

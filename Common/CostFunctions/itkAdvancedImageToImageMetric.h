@@ -158,6 +158,8 @@ public:
   typedef typename TransformType::ScalarType ScalarType;
   typedef AdvancedTransform<
     ScalarType, FixedImageDimension, MovingImageDimension >      AdvancedTransformType;
+  typedef AdvancedTransform<
+    ScalarType, FixedImageDimension-1, MovingImageDimension-1 >  RDAdvancedTransformType;
   typedef typename AdvancedTransformType::NumberOfParametersType NumberOfParametersType;
 
   /** Typedef's for the B-spline transform. */

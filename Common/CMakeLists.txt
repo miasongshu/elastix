@@ -42,6 +42,8 @@ set( CommonFiles
   itkMultiResolutionGaussianSmoothingPyramidImageFilter.hxx
   itkMultiResolutionImageRegistrationMethod2.h
   itkMultiResolutionImageRegistrationMethod2.hxx
+  itkMultiResolutionImageRegistrationMethodRD.h
+  itkMultiResolutionImageRegistrationMethodRD.hxx
   itkMultiResolutionShrinkPyramidImageFilter.h
   itkMultiResolutionShrinkPyramidImageFilter.hxx
   itkNDImageBase.h

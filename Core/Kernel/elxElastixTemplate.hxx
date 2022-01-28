@@ -19,6 +19,7 @@
 #define __elxElastixTemplate_hxx
 
 #include "elxElastixTemplate.h"
+#include "itkMacro.h"
 
 #define elxCheckAndSetComponentMacro( _name ) \
   _name##BaseType * base = this->GetElx##_name##Base( i ); \
@@ -219,6 +220,7 @@ int
 ElastixTemplate< TFixedImage, TMovingImage >
 ::Run( void )
 {
+  itkWarningMacro(<< "In elxElastixTemplate.hxx Run _Songshu_ !!!");
   /** Tell all components where to find the ElastixTemplate and
    * set there ComponentLabel.
    */
@@ -307,7 +309,10 @@ ElastixTemplate< TFixedImage, TMovingImage >
   /** START! */
   try
   {
+    if (FixedDimension < 4)
     ( this->GetElxRegistrationBase()->GetAsITKBaseType() )->StartRegistration();
+    else
+      (this->GetElxRegistrationBase()->RDGetAsITKBaseType())->StartRegistration();
   }
   catch( itk::ExceptionObject & excp )
   {
@@ -533,6 +538,7 @@ int
 ElastixTemplate< TFixedImage, TMovingImage >
 ::BeforeAll( void )
 {
+  itkWarningMacro(<< "In elxElastixTemplate BeforeAll _Songshu_ !!!");
   /** Declare the return value and initialize it. */
   int returndummy = 0;
 
@@ -1124,6 +1130,7 @@ void
 ElastixTemplate< TFixedImage, TMovingImage >
 ::ConfigureComponents( Self * This )
 {
+  itkWarningMacro(<< "In elxElastixTemplate ConfigureComponents _Songshu_ !!!");
   this->GetConfiguration()->SetComponentLabel( "Configuration", 0 );
 
   for( unsigned int i = 0; i < this->GetNumberOfRegistrations(); ++i )
