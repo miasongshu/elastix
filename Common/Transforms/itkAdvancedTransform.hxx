@@ -44,8 +44,9 @@ namespace itk
  * ********************* Constructor ****************************
  */
 
-template< class TScalarType, unsigned int NInputDimensions, unsigned int NOutputDimensions >
-AdvancedTransform< TScalarType, NInputDimensions, NOutputDimensions >
+template< class TScalarType, unsigned int NInputDimensions, unsigned int NOutputDimensions,
+                unsigned int NInputTransformDimension, unsigned int NOutputTransformDimension>
+AdvancedTransform< TScalarType, NInputDimensions, NOutputDimensions, NInputTransformDimension, NOutputTransformDimension >
 ::AdvancedTransform() : Superclass()
 {
   this->m_HasNonZeroSpatialHessian           = true;
@@ -58,8 +59,9 @@ AdvancedTransform< TScalarType, NInputDimensions, NOutputDimensions >
  * ********************* Constructor ****************************
  */
 
-template< class TScalarType, unsigned int NInputDimensions, unsigned int NOutputDimensions >
-AdvancedTransform< TScalarType, NInputDimensions, NOutputDimensions >
+template< class TScalarType, unsigned int NInputDimensions, unsigned int NOutputDimensions,
+  unsigned int NInputTransformDimension, unsigned int NOutputTransformDimension >
+AdvancedTransform< TScalarType, NInputDimensions, NOutputDimensions, NInputTransformDimension, NOutputTransformDimension >
 ::AdvancedTransform( NumberOfParametersType numberOfParameters ) :
   Superclass( numberOfParameters )
 {
@@ -72,9 +74,10 @@ AdvancedTransform< TScalarType, NInputDimensions, NOutputDimensions >
  * ********************* EvaluateJacobianWithImageGradientProduct ****************************
  */
 
-template< class TScalarType, unsigned int NInputDimensions, unsigned int NOutputDimensions >
+template< class TScalarType, unsigned int NInputDimensions, unsigned int NOutputDimensions,
+  unsigned int NInputTransformDimension, unsigned int NOutputTransformDimension >
 void
-AdvancedTransform< TScalarType, NInputDimensions, NOutputDimensions >
+AdvancedTransform< TScalarType, NInputDimensions, NOutputDimensions, NInputTransformDimension, NOutputTransformDimension >
 ::EvaluateJacobianWithImageGradientProduct(
   const InputPointType & ipp,
   const MovingImageGradientType & movingImageGradient,
@@ -112,9 +115,11 @@ AdvancedTransform< TScalarType, NInputDimensions, NOutputDimensions >
  * ********************* GetNumberOfNonZeroJacobianIndices ****************************
  */
 
-template< class TScalarType, unsigned int NInputDimensions, unsigned int NOutputDimensions >
-typename AdvancedTransform< TScalarType, NInputDimensions, NOutputDimensions >::NumberOfParametersType
-AdvancedTransform< TScalarType, NInputDimensions, NOutputDimensions >
+template< class TScalarType, unsigned int NInputDimensions, unsigned int NOutputDimensions,
+  unsigned int NInputTransformDimension, unsigned int NOutputTransformDimension >
+typename AdvancedTransform< TScalarType, NInputDimensions, NOutputDimensions,
+  NInputTransformDimension, NOutputTransformDimension >::NumberOfParametersType
+AdvancedTransform< TScalarType, NInputDimensions, NOutputDimensions, NInputTransformDimension, NOutputTransformDimension >
 ::GetNumberOfNonZeroJacobianIndices( void ) const
 {
   return this->GetNumberOfParameters();

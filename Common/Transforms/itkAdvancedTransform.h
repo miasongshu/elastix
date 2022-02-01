@@ -81,15 +81,18 @@ namespace itk
  */
 template< class TScalarType,
 unsigned int NInputDimensions  = 3,
-unsigned int NOutputDimensions = 3 >
+unsigned int NOutputDimensions = 3,
+unsigned int NInputTransformDimension =3,
+unsigned int NOutputTransformDimension =3 >
 class AdvancedTransform :
-  public Transform< TScalarType, NInputDimensions, NOutputDimensions >
+  public Transform< TScalarType, NInputDimensions, NOutputDimensions,
+                  NInputTransformDimension, NOutputTransformDimension >
 {
 public:
 
   /** Standard class typedefs. */
   typedef AdvancedTransform Self;
-  typedef Transform< TScalarType,
+  typedef Transform< TScalarType, 
     NInputDimensions,
     NOutputDimensions >               Superclass;
   typedef SmartPointer< Self >       Pointer;

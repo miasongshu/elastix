@@ -123,7 +123,7 @@ public:
 
   /**  Type of the metric. */
   typedef AdvancedImageToImageMetric<
-    FixedImageType, MovingImageType >                 MetricType;
+    FixedImageType, MovingImageType, NInputTransformDimension, NOutputTransformDimension > MetricType;
   typedef typename MetricType::Pointer MetricPointer;
 
   /**  Type of the Transform . */

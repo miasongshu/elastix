@@ -105,8 +105,6 @@ public:
   typedef itk::MultiResolutionImageRegistrationMethod2<
     FixedImageType, MovingImageType >       ITKBaseType;
 
-  typedef itk::MultiResolutionImageRegistrationMethodRD<
-    FixedImageType, MovingImageType >       RDITKBaseType;
 
   /** Typedef for mask erosion options */
   typedef std::vector< bool > UseMaskErosionArrayType;
@@ -122,20 +120,6 @@ public:
   virtual const ITKBaseType * GetAsITKBaseType( void ) const
   {
     return dynamic_cast< const ITKBaseType * >( this );
-  }
-
-
-  /** Cast to ITKBaseType of ReducedDimension??. */
-  RDITKBaseType* RDGetAsITKBaseType(void)
-  {
-    return dynamic_cast<RDITKBaseType*>(this);
-  }
-
-
-  /** Cast to ITKBaseType of ReducedDimension??, to use in const functions. */
-  const RDITKBaseType* RDGetAsITKBaseType(void) const
-  {
-    return dynamic_cast<const RDITKBaseType*>(this);
   }
 
 

@@ -309,10 +309,7 @@ ElastixTemplate< TFixedImage, TMovingImage >
   /** START! */
   try
   {
-    if (FixedDimension < 4)
     ( this->GetElxRegistrationBase()->GetAsITKBaseType() )->StartRegistration();
-    else
-      (this->GetElxRegistrationBase()->RDGetAsITKBaseType())->StartRegistration();
   }
   catch( itk::ExceptionObject & excp )
   {

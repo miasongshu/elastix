@@ -78,7 +78,7 @@ namespace itk
  *
  */
 
-template< class TFixedImage, class TMovingImage >
+template< class TFixedImage, class TMovingImage, unsigned int NInputTransformDimension, unsigned int NOutputTransformDimension >
 class AdvancedImageToImageMetric :
   public ImageToImageMetric< TFixedImage, TMovingImage >
 {
@@ -157,9 +157,8 @@ public:
   /** Advanced transform. */
   typedef typename TransformType::ScalarType ScalarType;
   typedef AdvancedTransform<
-    ScalarType, FixedImageDimension, MovingImageDimension >      AdvancedTransformType;
-  typedef AdvancedTransform<
-    ScalarType, FixedImageDimension-1, MovingImageDimension-1 >  RDAdvancedTransformType;
+    ScalarType, FixedImageDimension, MovingImageDimension,
+      NInputTransformDimension, NOutputTransformDimension >      AdvancedTransformType;
   typedef typename AdvancedTransformType::NumberOfParametersType NumberOfParametersType;
 
   /** Typedef's for the B-spline transform. */

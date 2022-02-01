@@ -36,8 +36,9 @@ namespace itk
  * ********************* Constructor ****************************
  */
 
-template< class TFixedImage, class TMovingImage >
-AdvancedImageToImageMetric< TFixedImage, TMovingImage >
+template< class TFixedImage, class TMovingImage, 
+  unsigned int NInputTransformDimension, unsigned int NOutputTransformDimension >
+AdvancedImageToImageMetric< TFixedImage, TMovingImage, NInputTransformDimension, NOutputTransformDimension >
 ::AdvancedImageToImageMetric()
 {
   /** Don't use the default gradient image as implemented by ITK.
@@ -114,8 +115,8 @@ AdvancedImageToImageMetric< TFixedImage, TMovingImage >
  * ********************* Destructor ****************************
  */
 
-template< class TFixedImage, class TMovingImage >
-AdvancedImageToImageMetric< TFixedImage, TMovingImage >
+template< class TFixedImage, class TMovingImage, unsigned int NInputTransformDimension, unsigned int NOutputTransformDimension>
+AdvancedImageToImageMetric< TFixedImage, TMovingImage, NInputTransformDimension, NOutputTransformDimension >
 ::~AdvancedImageToImageMetric()
 {
   delete[] this->m_GetValuePerThreadVariables;
@@ -127,9 +128,9 @@ AdvancedImageToImageMetric< TFixedImage, TMovingImage >
  * ********************* SetNumberOfWorkUnits ****************************
  */
 
-template< class TFixedImage, class TMovingImage >
+template< class TFixedImage, class TMovingImage, unsigned int NInputTransformDimension, unsigned int NOutputTransformDimension >
 void
-AdvancedImageToImageMetric< TFixedImage, TMovingImage >
+AdvancedImageToImageMetric< TFixedImage, TMovingImage, NInputTransformDimension, NOutputTransformDimension >
 ::SetNumberOfWorkUnits( ThreadIdType numberOfThreads )
 {
   // Note: This is a workaround for ITK5, which renamed NumberOfThreads
@@ -147,9 +148,9 @@ AdvancedImageToImageMetric< TFixedImage, TMovingImage >
  * ********************* Initialize ****************************
  */
 
-template< class TFixedImage, class TMovingImage >
+template< class TFixedImage, class TMovingImage, unsigned int NInputTransformDimension, unsigned int NOutputTransformDimension  >
 void
-AdvancedImageToImageMetric< TFixedImage, TMovingImage >
+AdvancedImageToImageMetric< TFixedImage, TMovingImage, NInputTransformDimension, NOutputTransformDimension>
 ::Initialize( void )
 {
   /** Initialize transform, interpolator, etc. */
@@ -183,9 +184,9 @@ AdvancedImageToImageMetric< TFixedImage, TMovingImage >
  * ********************* InitializeThreadingParameters ****************************
  */
 
-template< class TFixedImage, class TMovingImage >
+template< class TFixedImage, class TMovingImage, unsigned int NInputTransformDimension, unsigned int NOutputTransformDimension >
 void
-AdvancedImageToImageMetric< TFixedImage, TMovingImage >
+AdvancedImageToImageMetric< TFixedImage, TMovingImage, NInputTransformDimension, NOutputTransformDimension >
 ::InitializeThreadingParameters( void ) const
 {
   const ThreadIdType numberOfThreads = Self::GetNumberOfWorkUnits();
@@ -235,9 +236,9 @@ AdvancedImageToImageMetric< TFixedImage, TMovingImage >
  * ****************** InitializeLimiters *****************************
  */
 
-template< class TFixedImage, class TMovingImage >
+template< class TFixedImage, class TMovingImage, unsigned int NInputTransformDimension, unsigned int NOutputTransformDimension >
 void
-AdvancedImageToImageMetric< TFixedImage, TMovingImage >
+AdvancedImageToImageMetric< TFixedImage, TMovingImage, NInputTransformDimension, NOutputTransformDimension>
 ::InitializeLimiters( void )
 {
   /** Set up fixed limiter. */
@@ -356,9 +357,9 @@ AdvancedImageToImageMetric< TFixedImage, TMovingImage >
  * ********************* InitializeImageSampler ****************************
  */
 
-template< class TFixedImage, class TMovingImage >
+template< class TFixedImage, class TMovingImage, unsigned int NInputTransformDimension, unsigned int NOutputTransformDimension >
 void
-AdvancedImageToImageMetric< TFixedImage, TMovingImage >
+AdvancedImageToImageMetric< TFixedImage, TMovingImage, NInputTransformDimension, NOutputTransformDimension>
 ::InitializeImageSampler( void )
 {
   if( this->GetUseImageSampler() )
@@ -382,9 +383,9 @@ AdvancedImageToImageMetric< TFixedImage, TMovingImage >
  * ****************** CheckForBSplineInterpolator **********************
  */
 
-template< class TFixedImage, class TMovingImage >
+template< class TFixedImage, class TMovingImage, unsigned int NInputTransformDimension, unsigned int NOutputTransformDimension >
 void
-AdvancedImageToImageMetric< TFixedImage, TMovingImage >
+AdvancedImageToImageMetric< TFixedImage, TMovingImage, NInputTransformDimension, NOutputTransformDimension>
 ::CheckForBSplineInterpolator( void )
 {
   /** Check if the interpolator is of type BSplineInterpolateImageFunction,
@@ -501,9 +502,9 @@ AdvancedImageToImageMetric< TFixedImage, TMovingImage >
  * ****************** CheckForAdvancedTransform **********************
  */
 
-template< class TFixedImage, class TMovingImage >
+template< class TFixedImage, class TMovingImage, unsigned int NInputTransformDimension, unsigned int NOutputTransformDimension >
 void
-AdvancedImageToImageMetric< TFixedImage, TMovingImage >
+AdvancedImageToImageMetric< TFixedImage, TMovingImage, NInputTransformDimension, NOutputTransformDimension>
 ::CheckForAdvancedTransform( void )
 {
   /** Check if the transform is of type AdvancedTransform. */
@@ -531,9 +532,9 @@ AdvancedImageToImageMetric< TFixedImage, TMovingImage >
  * ****************** CheckForBSplineTransform **********************
  */
 
-template< class TFixedImage, class TMovingImage >
+template< class TFixedImage, class TMovingImage, unsigned int NInputTransformDimension, unsigned int NOutputTransformDimension >
 void
-AdvancedImageToImageMetric< TFixedImage, TMovingImage >
+AdvancedImageToImageMetric< TFixedImage, TMovingImage, NInputTransformDimension, NOutputTransformDimension>
 ::CheckForBSplineTransform( void ) const
 {
   /** Check if this transform is a combo transform. */
@@ -578,9 +579,9 @@ AdvancedImageToImageMetric< TFixedImage, TMovingImage >
  * ******************* EvaluateMovingImageValueAndDerivative ******************
  */
 
-template< class TFixedImage, class TMovingImage >
+template< class TFixedImage, class TMovingImage, unsigned int NInputTransformDimension, unsigned int NOutputTransformDimension >
 bool
-AdvancedImageToImageMetric< TFixedImage, TMovingImage >
+AdvancedImageToImageMetric< TFixedImage, TMovingImage, NInputTransformDimension, NOutputTransformDimension>
 ::EvaluateMovingImageValueAndDerivative(
   const MovingImagePointType & mappedPoint,
   RealType & movingImageValue,
@@ -690,9 +691,9 @@ AdvancedImageToImageMetric< TFixedImage, TMovingImage >
  * *************** EvaluateTransformJacobianInnerProduct ****************
  */
 
-template< class TFixedImage, class TMovingImage >
+template< class TFixedImage, class TMovingImage, unsigned int NInputTransformDimension, unsigned int NOutputTransformDimension>
 void
-AdvancedImageToImageMetric< TFixedImage, TMovingImage >
+AdvancedImageToImageMetric< TFixedImage, TMovingImage, NInputTransformDimension, NOutputTransformDimension >
 ::EvaluateTransformJacobianInnerProduct(
   const TransformJacobianType & jacobian,
   const MovingImageDerivativeType & movingImageDerivative,
@@ -753,9 +754,9 @@ AdvancedImageToImageMetric< TFixedImage, TMovingImage >
  * ********************** TransformPoint ************************
  */
 
-template< class TFixedImage, class TMovingImage >
+template< class TFixedImage, class TMovingImage, unsigned int NInputTransformDimension, unsigned int NOutputTransformDimension >
 bool
-AdvancedImageToImageMetric< TFixedImage, TMovingImage >
+AdvancedImageToImageMetric< TFixedImage, TMovingImage, NInputTransformDimension, NOutputTransformDimension>
 ::TransformPoint(
   const FixedImagePointType & fixedImagePoint,
   MovingImagePointType & mappedPoint ) const
@@ -773,9 +774,9 @@ AdvancedImageToImageMetric< TFixedImage, TMovingImage >
  * *************** EvaluateTransformJacobian ****************
  */
 
-template< class TFixedImage, class TMovingImage >
+template< class TFixedImage, class TMovingImage, unsigned int NInputTransformDimension, unsigned int NOutputTransformDimension >
 bool
-AdvancedImageToImageMetric< TFixedImage, TMovingImage >
+AdvancedImageToImageMetric< TFixedImage, TMovingImage, NInputTransformDimension, NOutputTransformDimension>
 ::EvaluateTransformJacobian(
   const FixedImagePointType & fixedImagePoint,
   TransformJacobianType & jacobian,
@@ -796,9 +797,9 @@ AdvancedImageToImageMetric< TFixedImage, TMovingImage >
  * ************************** IsInsideMovingMask *************************
  */
 
-template< class TFixedImage, class TMovingImage >
+template< class TFixedImage, class TMovingImage, unsigned int NInputTransformDimension, unsigned int NOutputTransformDimension >
 bool
-AdvancedImageToImageMetric< TFixedImage, TMovingImage >
+AdvancedImageToImageMetric< TFixedImage, TMovingImage, NInputTransformDimension, NOutputTransformDimension>
 ::IsInsideMovingMask( const MovingImagePointType & point ) const
 {
   /** If a mask has been set: */
@@ -817,9 +818,9 @@ AdvancedImageToImageMetric< TFixedImage, TMovingImage >
  * *********************** GetSelfHessian ***********************
  */
 
-template< class TFixedImage, class TMovingImage >
+template< class TFixedImage, class TMovingImage, unsigned int NInputTransformDimension, unsigned int NOutputTransformDimension >
 void
-AdvancedImageToImageMetric< TFixedImage, TMovingImage >
+AdvancedImageToImageMetric< TFixedImage, TMovingImage, NInputTransformDimension, NOutputTransformDimension>
 ::GetSelfHessian(
   const TransformParametersType & itkNotUsed( parameters ),
   HessianType & H ) const
@@ -843,9 +844,9 @@ AdvancedImageToImageMetric< TFixedImage, TMovingImage >
  * *********************** BeforeThreadedGetValueAndDerivative ***********************
  */
 
-template< class TFixedImage, class TMovingImage >
+template< class TFixedImage, class TMovingImage, unsigned int NInputTransformDimension, unsigned int NOutputTransformDimension >
 void
-AdvancedImageToImageMetric< TFixedImage, TMovingImage >
+AdvancedImageToImageMetric< TFixedImage, TMovingImage, NInputTransformDimension, NOutputTransformDimension>
 ::BeforeThreadedGetValueAndDerivative( const TransformParametersType & parameters ) const
 {
   /** In this function do all stuff that cannot be multi-threaded. */
@@ -865,9 +866,9 @@ AdvancedImageToImageMetric< TFixedImage, TMovingImage >
  * **************** GetValueThreaderCallback *******
  */
 
-template< class TFixedImage, class TMovingImage >
+template< class TFixedImage, class TMovingImage, unsigned int NInputTransformDimension, unsigned int NOutputTransformDimension >
 ITK_THREAD_RETURN_TYPE
-AdvancedImageToImageMetric< TFixedImage, TMovingImage >
+AdvancedImageToImageMetric< TFixedImage, TMovingImage, NInputTransformDimension, NOutputTransformDimension>
 ::GetValueThreaderCallback( void * arg )
 {
   ThreadInfoType * infoStruct = static_cast< ThreadInfoType * >( arg );
@@ -887,9 +888,9 @@ AdvancedImageToImageMetric< TFixedImage, TMovingImage >
  * *********************** LaunchGetValueThreaderCallback***************
  */
 
-template< class TFixedImage, class TMovingImage >
+template< class TFixedImage, class TMovingImage, unsigned int NInputTransformDimension, unsigned int NOutputTransformDimension >
 void
-AdvancedImageToImageMetric< TFixedImage, TMovingImage >
+AdvancedImageToImageMetric< TFixedImage, TMovingImage, NInputTransformDimension, NOutputTransformDimension>
 ::LaunchGetValueThreaderCallback( void ) const
 {
   /** Setup threader. */
@@ -906,9 +907,9 @@ AdvancedImageToImageMetric< TFixedImage, TMovingImage >
  * **************** GetValueAndDerivativeThreaderCallback *******
  */
 
-template< class TFixedImage, class TMovingImage >
+template< class TFixedImage, class TMovingImage, unsigned int NInputTransformDimension, unsigned int NOutputTransformDimension>
 ITK_THREAD_RETURN_TYPE
-AdvancedImageToImageMetric< TFixedImage, TMovingImage >
+AdvancedImageToImageMetric< TFixedImage, TMovingImage, NInputTransformDimension, NOutputTransformDimension>
 ::GetValueAndDerivativeThreaderCallback( void * arg )
 {
   ThreadInfoType * infoStruct = static_cast< ThreadInfoType * >( arg );
@@ -928,9 +929,9 @@ AdvancedImageToImageMetric< TFixedImage, TMovingImage >
  * *********************** LaunchGetValueAndDerivativeThreaderCallback***************
  */
 
-template< class TFixedImage, class TMovingImage >
+template< class TFixedImage, class TMovingImage, unsigned int NInputTransformDimension, unsigned int NOutputTransformDimension >
 void
-AdvancedImageToImageMetric< TFixedImage, TMovingImage >
+AdvancedImageToImageMetric< TFixedImage, TMovingImage, NInputTransformDimension, NOutputTransformDimension>
 ::LaunchGetValueAndDerivativeThreaderCallback( void ) const
 {
   /** Setup threader. */
@@ -947,9 +948,9 @@ AdvancedImageToImageMetric< TFixedImage, TMovingImage >
  *********** AccumulateDerivativesThreaderCallback *************
  */
 
-template< class TFixedImage, class TMovingImage >
+template< class TFixedImage, class TMovingImage, unsigned int NInputTransformDimension, unsigned int NOutputTransformDimension >
 ITK_THREAD_RETURN_TYPE
-AdvancedImageToImageMetric< TFixedImage, TMovingImage >
+AdvancedImageToImageMetric< TFixedImage, TMovingImage, NInputTransformDimension, NOutputTransformDimension>
 ::AccumulateDerivativesThreaderCallback( void * arg )
 {
   ThreadInfoType * infoStruct  = static_cast< ThreadInfoType * >( arg );
@@ -994,9 +995,9 @@ AdvancedImageToImageMetric< TFixedImage, TMovingImage >
  * *********************** CheckNumberOfSamples ***********************
  */
 
-template< class TFixedImage, class TMovingImage >
+template< class TFixedImage, class TMovingImage, unsigned int NInputTransformDimension, unsigned int NOutputTransformDimension >
 void
-AdvancedImageToImageMetric< TFixedImage, TMovingImage >
+AdvancedImageToImageMetric< TFixedImage, TMovingImage, NInputTransformDimension, NOutputTransformDimension>
 ::CheckNumberOfSamples(
   unsigned long wanted, unsigned long found ) const
 {
@@ -1014,9 +1015,9 @@ AdvancedImageToImageMetric< TFixedImage, TMovingImage >
  * ********************* PrintSelf ****************************
  */
 
-template< class TFixedImage, class TMovingImage >
+template< class TFixedImage, class TMovingImage, unsigned int NInputTransformDimension, unsigned int NOutputTransformDimension >
 void
-AdvancedImageToImageMetric< TFixedImage, TMovingImage >
+AdvancedImageToImageMetric< TFixedImage, TMovingImage, NInputTransformDimension, NOutputTransformDimension>
 ::PrintSelf( std::ostream & os, Indent indent ) const
 {
   Superclass::PrintSelf( os, indent );

@@ -86,7 +86,8 @@ namespace itk
  * \ingroup Metrics
  */
 
-template< class TFixedImage, class TMovingImage >
+template< class TFixedImage, class TMovingImage,
+  unsigned int NInputTransformDimension, unsigned int NOutputTransformDimension >
 class AdvNormCorrelationOLastDimImageToImageMetric :
   public AdvancedImageToImageMetric< TFixedImage, TMovingImage >
 {
@@ -95,7 +96,7 @@ public:
   /** Standard class typedefs. */
   typedef AdvNormCorrelationOLastDimImageToImageMetric Self;
   typedef AdvancedImageToImageMetric<
-    TFixedImage, TMovingImage >                         Superclass;
+    TFixedImage, TMovingImage, NInputTransformDimension, NOutputTransformDimension > Superclass;
   typedef SmartPointer< Self >       Pointer;
   typedef SmartPointer< const Self > ConstPointer;
 

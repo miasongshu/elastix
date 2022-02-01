@@ -54,7 +54,8 @@ public:
   typedef AdvNormCorrelationOLastDimMetric Self;
   typedef itk::AdvNormCorrelationOLastDimImageToImageMetric<
     typename MetricBase< TElastix >::FixedImageType,
-    typename MetricBase< TElastix >::MovingImageType >    Superclass1;
+    typename MetricBase< TElastix >::MovingImageType,
+    FixedImageDimension - 1, MovingImageDimension - 1>    Superclass1;
   typedef MetricBase< TElastix >          Superclass2;
   typedef itk::SmartPointer< Self >       Pointer;
   typedef itk::SmartPointer< const Self > ConstPointer;
