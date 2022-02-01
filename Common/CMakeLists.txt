@@ -57,7 +57,6 @@ set( CommonFiles
   itkReducedDimensionBSplineInterpolateImageFunction.hxx
   itkScaledSingleValuedNonLinearOptimizer.cxx
   itkScaledSingleValuedNonLinearOptimizer.h
-  itkTransform.h
   itkTransformixInputPointFileReader.h
   itkTransformixInputPointFileReader.hxx
   TypeList.h
