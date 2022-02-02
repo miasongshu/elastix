@@ -40,14 +40,14 @@ class TScalarType        = double,       // Data type for scalars
 unsigned int NDimensions = 3 >
 // Number of dimensions
 class AdvancedBSplineDeformableTransformBase :
-  public AdvancedTransform< TScalarType, NDimensions, NDimensions >
+  public AdvancedTransform< TScalarType, NDimensions, NDimensions, NDimensions, NDimensions >
 {
 public:
 
   /** Standard class typedefs. */
   typedef AdvancedBSplineDeformableTransformBase Self;
   typedef AdvancedTransform<
-    TScalarType, NDimensions, NDimensions >         Superclass;
+    TScalarType, NDimensions, NDimensions, NDimensions, NDimensions >  Superclass;
   typedef SmartPointer< Self >       Pointer;
   typedef SmartPointer< const Self > ConstPointer;
 

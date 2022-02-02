@@ -96,16 +96,21 @@ public:
   typedef typename MovingImageType::PointType   MovingPointType;
   typedef typename MovingPointType::ValueType   MovingPointValueType;
 
-  /** ITKBaseType. */
-  typedef itk::SingleValuedCostFunction ITKBaseType;
-  typedef itk::AdvancedImageToImageMetric<
-    FixedImageType, MovingImageType >                 AdvancedMetricType;
-  typedef typename AdvancedMetricType::MovingImageDerivativeScalesType MovingImageDerivativeScalesType;
-
   /** Get the dimension of the fixed image. */
   itkStaticConstMacro( FixedImageDimension, unsigned int, FixedImageType::ImageDimension );
   /** Get the dimension of the moving image. */
   itkStaticConstMacro( MovingImageDimension, unsigned int, MovingImageType::ImageDimension );
+
+  /** ITKBaseType. */
+  typedef itk::SingleValuedCostFunction ITKBaseType;
+  typedef itk::AdvancedImageToImageMetric<
+    FixedImageType, MovingImageType,
+    FixedImageDimension, MovingImageDimension  >           AdvancedMetricType;
+  typedef itk::AdvancedImageToImageMetric<
+    FixedImageType, MovingImageType,
+    FixedImageDimension -1, MovingImageDimension-1 >       RDAdvancedMetricType;
+  typedef typename AdvancedMetricType::MovingImageDerivativeScalesType MovingImageDerivativeScalesType;
+
 
   /** Typedefs for point sets. */
   typedef typename ITKBaseType::ParametersValueType CoordinateRepresentationType;

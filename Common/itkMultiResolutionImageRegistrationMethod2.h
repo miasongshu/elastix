@@ -94,7 +94,8 @@ namespace itk
  * \sa ImageRegistrationMethod
  * \ingroup RegistrationFilters
  */
-template< typename TFixedImage, typename TMovingImage >
+template< typename TFixedImage, typename TMovingImage,
+  unsigned int NInputTransformDimension, unsigned int NOutputTransformDimension >
 class MultiResolutionImageRegistrationMethod2 : public ProcessObject
 {
 public:
@@ -123,7 +124,8 @@ public:
 
   /**  Type of the metric. */
   typedef AdvancedImageToImageMetric<
-    FixedImageType, MovingImageType, NInputTransformDimension, NOutputTransformDimension > MetricType;
+    FixedImageType, MovingImageType, 
+    NInputTransformDimension, NOutputTransformDimension > MetricType;
   typedef typename MetricType::Pointer MetricPointer;
 
   /**  Type of the Transform . */

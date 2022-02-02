@@ -157,8 +157,10 @@ itkImplementationGetConstObjectMacro1( MovingImage, MovingImageType );
  * ********************* Constructor ****************************
  */
 
-template< class TFixedImage, class TMovingImage >
-CombinationImageToImageMetric< TFixedImage, TMovingImage >
+template< class TFixedImage, class TMovingImage,
+  unsigned int NInputTransformDimension, unsigned int NOutputTransformDimension >
+CombinationImageToImageMetric< TFixedImage, TMovingImage,
+  NInputTransformDimension, NOutputTransformDimension >
 ::CombinationImageToImageMetric()
 {
   this->m_NumberOfMetrics    = 0;
@@ -172,9 +174,11 @@ CombinationImageToImageMetric< TFixedImage, TMovingImage >
  * ********************* PrintSelf ****************************
  */
 
-template< class TFixedImage, class TMovingImage >
+template< class TFixedImage, class TMovingImage,
+  unsigned int NInputTransformDimension, unsigned int NOutputTransformDimension >
 void
-CombinationImageToImageMetric< TFixedImage, TMovingImage >
+CombinationImageToImageMetric< TFixedImage, TMovingImage,
+  NInputTransformDimension, NOutputTransformDimension  >
 ::PrintSelf( std::ostream & os, Indent indent ) const
 {
   /** Call the superclass' PrintSelf. */
@@ -202,9 +206,11 @@ CombinationImageToImageMetric< TFixedImage, TMovingImage >
  * ******************** SetFixedImageRegion ************************
  */
 
-template< class TFixedImage, class TMovingImage >
+template< class TFixedImage, class TMovingImage,
+  unsigned int NInputTransformDimension, unsigned int NOutputTransformDimension >
 void
-CombinationImageToImageMetric< TFixedImage, TMovingImage >
+CombinationImageToImageMetric< TFixedImage, TMovingImage,
+  NInputTransformDimension, NOutputTransformDimension  >
 ::SetFixedImageRegion( const FixedImageRegionType _arg, unsigned int pos )
 {
   if( pos == 0 )
@@ -225,9 +231,11 @@ CombinationImageToImageMetric< TFixedImage, TMovingImage >
  * ******************** SetFixedImageRegion ************************
  */
 
-template< class TFixedImage, class TMovingImage >
+template< class TFixedImage, class TMovingImage,
+  unsigned int NInputTransformDimension, unsigned int NOutputTransformDimension >
 void
-CombinationImageToImageMetric< TFixedImage, TMovingImage >
+CombinationImageToImageMetric< TFixedImage, TMovingImage,
+  NInputTransformDimension, NOutputTransformDimension  >
 ::SetFixedImageRegion( const FixedImageRegionType _arg )
 {
   for( unsigned int i = 0; i < this->GetNumberOfMetrics(); i++ )
@@ -242,8 +250,10 @@ CombinationImageToImageMetric< TFixedImage, TMovingImage >
  * ******************** GetFixedImageRegion ************************
  */
 
-template< class TFixedImage, class TMovingImage >
-const typename CombinationImageToImageMetric< TFixedImage, TMovingImage >
+template< class TFixedImage, class TMovingImage,
+  unsigned int NInputTransformDimension, unsigned int NOutputTransformDimension >
+  const typename CombinationImageToImageMetric< TFixedImage, TMovingImage,
+  NInputTransformDimension, NOutputTransformDimension  >
 ::FixedImageRegionType
 & CombinationImageToImageMetric< TFixedImage, TMovingImage >
 ::GetFixedImageRegion( unsigned int pos ) const
@@ -266,9 +276,11 @@ const typename CombinationImageToImageMetric< TFixedImage, TMovingImage >
  * ********************* SetNumberOfMetrics ****************************
  */
 
-template< class TFixedImage, class TMovingImage >
+template< class TFixedImage, class TMovingImage,
+  unsigned int NInputTransformDimension, unsigned int NOutputTransformDimension >
 void
-CombinationImageToImageMetric< TFixedImage, TMovingImage >
+CombinationImageToImageMetric< TFixedImage, TMovingImage,
+  NInputTransformDimension, NOutputTransformDimension  >
 ::SetNumberOfMetrics( unsigned int count )
 {
   if( count != this->m_Metrics.size() )
@@ -292,9 +304,11 @@ CombinationImageToImageMetric< TFixedImage, TMovingImage >
  * ********************* SetMetric ****************************
  */
 
-template< class TFixedImage, class TMovingImage >
+template< class TFixedImage, class TMovingImage,
+  unsigned int NInputTransformDimension, unsigned int NOutputTransformDimension >
 void
-CombinationImageToImageMetric< TFixedImage, TMovingImage >
+CombinationImageToImageMetric< TFixedImage, TMovingImage,
+  NInputTransformDimension, NOutputTransformDimension  >
 ::SetMetric( SingleValuedCostFunctionType * metric, unsigned int pos )
 {
   if( pos >= this->GetNumberOfMetrics() )
@@ -315,8 +329,10 @@ CombinationImageToImageMetric< TFixedImage, TMovingImage >
  * ********************* GetMetric ****************************
  */
 
-template< class TFixedImage, class TMovingImage >
-typename CombinationImageToImageMetric< TFixedImage, TMovingImage >
+template< class TFixedImage, class TMovingImage,
+  unsigned int NInputTransformDimension, unsigned int NOutputTransformDimension >
+  typename CombinationImageToImageMetric< TFixedImage, TMovingImage,
+  NInputTransformDimension, NOutputTransformDimension  >
 ::SingleValuedCostFunctionType
 * CombinationImageToImageMetric< TFixedImage, TMovingImage >
 ::GetMetric( unsigned int pos ) const
@@ -337,9 +353,11 @@ typename CombinationImageToImageMetric< TFixedImage, TMovingImage >
  * ********************* SetMetricWeight ****************************
  */
 
-template< class TFixedImage, class TMovingImage >
+template< class TFixedImage, class TMovingImage,
+  unsigned int NInputTransformDimension, unsigned int NOutputTransformDimension >
 void
-CombinationImageToImageMetric< TFixedImage, TMovingImage >
+CombinationImageToImageMetric< TFixedImage, TMovingImage,
+  NInputTransformDimension, NOutputTransformDimension  >
 ::SetMetricWeight( double weight, unsigned int pos )
 {
   if( pos >= this->GetNumberOfMetrics() )
@@ -360,9 +378,11 @@ CombinationImageToImageMetric< TFixedImage, TMovingImage >
  * ********************* GetMetricWeight ****************************
  */
 
-template< class TFixedImage, class TMovingImage >
+template< class TFixedImage, class TMovingImage,
+  unsigned int NInputTransformDimension, unsigned int NOutputTransformDimension >
 double
-CombinationImageToImageMetric< TFixedImage, TMovingImage >
+CombinationImageToImageMetric< TFixedImage, TMovingImage,
+  NInputTransformDimension, NOutputTransformDimension  >
 ::GetMetricWeight( unsigned int pos ) const
 {
   if( pos >= this->GetNumberOfMetrics() )
@@ -381,9 +401,11 @@ CombinationImageToImageMetric< TFixedImage, TMovingImage >
  * ********************* SetMetricRelativeWeight ****************************
  */
 
-template< class TFixedImage, class TMovingImage >
+template< class TFixedImage, class TMovingImage,
+  unsigned int NInputTransformDimension, unsigned int NOutputTransformDimension >
 void
-CombinationImageToImageMetric< TFixedImage, TMovingImage >
+CombinationImageToImageMetric< TFixedImage, TMovingImage,
+  NInputTransformDimension, NOutputTransformDimension  >
 ::SetMetricRelativeWeight( double weight, unsigned int pos )
 {
   if( pos >= this->GetNumberOfMetrics() )
@@ -404,9 +426,11 @@ CombinationImageToImageMetric< TFixedImage, TMovingImage >
  * ********************* GetMetricRelativeWeight ****************************
  */
 
-template< class TFixedImage, class TMovingImage >
+template< class TFixedImage, class TMovingImage,
+  unsigned int NInputTransformDimension, unsigned int NOutputTransformDimension >
 double
-CombinationImageToImageMetric< TFixedImage, TMovingImage >
+CombinationImageToImageMetric< TFixedImage, TMovingImage,
+  NInputTransformDimension, NOutputTransformDimension  >
 ::GetMetricRelativeWeight( unsigned int pos ) const
 {
   if( pos >= this->GetNumberOfMetrics() )
@@ -425,9 +449,11 @@ CombinationImageToImageMetric< TFixedImage, TMovingImage >
  * ********************* SetUseMetric ****************************
  */
 
-template< class TFixedImage, class TMovingImage >
+template< class TFixedImage, class TMovingImage,
+  unsigned int NInputTransformDimension, unsigned int NOutputTransformDimension >
 void
-CombinationImageToImageMetric< TFixedImage, TMovingImage >
+CombinationImageToImageMetric< TFixedImage, TMovingImage,
+  NInputTransformDimension, NOutputTransformDimension  >
 ::SetUseMetric( const bool use, const unsigned int pos )
 {
   if( pos >= this->GetNumberOfMetrics() )
@@ -448,9 +474,11 @@ CombinationImageToImageMetric< TFixedImage, TMovingImage >
  * ********************* SetUseAllMetrics ****************************
  */
 
-template< class TFixedImage, class TMovingImage >
+template< class TFixedImage, class TMovingImage,
+  unsigned int NInputTransformDimension, unsigned int NOutputTransformDimension >
 void
-CombinationImageToImageMetric< TFixedImage, TMovingImage >
+CombinationImageToImageMetric< TFixedImage, TMovingImage,
+  NInputTransformDimension, NOutputTransformDimension  >
 ::SetUseAllMetrics( void )
 {
   for( unsigned int pos = 0; pos < this->GetNumberOfMetrics(); ++pos )
@@ -469,9 +497,11 @@ CombinationImageToImageMetric< TFixedImage, TMovingImage >
  * ********************* GetUseMetric ****************************
  */
 
-template< class TFixedImage, class TMovingImage >
+template< class TFixedImage, class TMovingImage,
+  unsigned int NInputTransformDimension, unsigned int NOutputTransformDimension >
 bool
-CombinationImageToImageMetric< TFixedImage, TMovingImage >
+CombinationImageToImageMetric< TFixedImage, TMovingImage,
+  NInputTransformDimension, NOutputTransformDimension  >
 ::GetUseMetric( unsigned int pos ) const
 {
   if( pos >= this->GetNumberOfMetrics() )
@@ -490,9 +520,11 @@ CombinationImageToImageMetric< TFixedImage, TMovingImage >
  * ********************* GetMetricValue ****************************
  */
 
-template< class TFixedImage, class TMovingImage >
+template< class TFixedImage, class TMovingImage,
+  unsigned int NInputTransformDimension, unsigned int NOutputTransformDimension >
 typename CombinationImageToImageMetric< TFixedImage, TMovingImage >::MeasureType
-CombinationImageToImageMetric< TFixedImage, TMovingImage >
+CombinationImageToImageMetric< TFixedImage, TMovingImage,
+  NInputTransformDimension, NOutputTransformDimension  >
 ::GetMetricValue( unsigned int pos ) const
 {
   if( pos >= this->GetNumberOfMetrics() )
@@ -511,8 +543,10 @@ CombinationImageToImageMetric< TFixedImage, TMovingImage >
  * ********************* GetMetricDerivative ****************************
  */
 
-template< class TFixedImage, class TMovingImage >
-const typename CombinationImageToImageMetric< TFixedImage, TMovingImage >
+template< class TFixedImage, class TMovingImage,
+  unsigned int NInputTransformDimension, unsigned int NOutputTransformDimension >
+  const typename CombinationImageToImageMetric< TFixedImage, TMovingImage,
+  NInputTransformDimension, NOutputTransformDimension  >
 ::DerivativeType
 & CombinationImageToImageMetric< TFixedImage, TMovingImage >
 ::GetMetricDerivative( unsigned int pos ) const
@@ -533,9 +567,11 @@ const typename CombinationImageToImageMetric< TFixedImage, TMovingImage >
  * ********************* GetMetricDerivativeMagnitude ****************************
  */
 
-template< class TFixedImage, class TMovingImage >
+template< class TFixedImage, class TMovingImage,
+  unsigned int NInputTransformDimension, unsigned int NOutputTransformDimension >
 double
-CombinationImageToImageMetric< TFixedImage, TMovingImage >
+CombinationImageToImageMetric< TFixedImage, TMovingImage,
+  NInputTransformDimension, NOutputTransformDimension >
 ::GetMetricDerivativeMagnitude( unsigned int pos ) const
 {
   if( pos >= this->GetNumberOfMetrics() )
@@ -554,9 +590,11 @@ CombinationImageToImageMetric< TFixedImage, TMovingImage >
  * ********************* GetMetricComputationTime ****************************
  */
 
-template< class TFixedImage, class TMovingImage >
+template< class TFixedImage, class TMovingImage,
+  unsigned int NInputTransformDimension, unsigned int NOutputTransformDimension >
 double
-CombinationImageToImageMetric< TFixedImage, TMovingImage >
+CombinationImageToImageMetric< TFixedImage, TMovingImage,
+  NInputTransformDimension, NOutputTransformDimension  >
 ::GetMetricComputationTime( unsigned int pos ) const
 {
   if( pos >= this->GetNumberOfMetrics() )
@@ -575,9 +613,11 @@ CombinationImageToImageMetric< TFixedImage, TMovingImage >
  * **************** GetNumberOfPixelsCounted ************************
  */
 
-template< class TFixedImage, class TMovingImage >
+template< class TFixedImage, class TMovingImage,
+  unsigned int NInputTransformDimension, unsigned int NOutputTransformDimension >
 const SizeValueType &
-CombinationImageToImageMetric< TFixedImage, TMovingImage >
+CombinationImageToImageMetric< TFixedImage, TMovingImage,
+  NInputTransformDimension, NOutputTransformDimension  >
 ::GetNumberOfPixelsCounted( void ) const
 {
   unsigned long sum = 0;
@@ -601,9 +641,11 @@ CombinationImageToImageMetric< TFixedImage, TMovingImage >
  * ********************* Initialize ****************************
  */
 
-template< class TFixedImage, class TMovingImage >
+template< class TFixedImage, class TMovingImage,
+  unsigned int NInputTransformDimension, unsigned int NOutputTransformDimension >
 void
-CombinationImageToImageMetric< TFixedImage, TMovingImage >
+CombinationImageToImageMetric< TFixedImage, TMovingImage,
+  NInputTransformDimension, NOutputTransformDimension  >
 ::Initialize( void )
 {
   /** Check if transform, interpolator have been set. Effectively this
@@ -650,9 +692,11 @@ CombinationImageToImageMetric< TFixedImage, TMovingImage >
  * ******************* InitializeThreadingParameters *******************
  */
 
-template< class TFixedImage, class TMovingImage >
+template< class TFixedImage, class TMovingImage,
+  unsigned int NInputTransformDimension, unsigned int NOutputTransformDimension >
 void
-CombinationImageToImageMetric< TFixedImage, TMovingImage >
+CombinationImageToImageMetric< TFixedImage, TMovingImage,
+  NInputTransformDimension, NOutputTransformDimension  >
 ::InitializeThreadingParameters( void ) const
 {
   /** Initialize the derivatives. */
@@ -667,9 +711,11 @@ CombinationImageToImageMetric< TFixedImage, TMovingImage >
  * ******************* GetFinalMetricWeight *******************
  */
 
-template< class TFixedImage, class TMovingImage >
+template< class TFixedImage, class TMovingImage,
+  unsigned int NInputTransformDimension, unsigned int NOutputTransformDimension >
 double
-CombinationImageToImageMetric< TFixedImage, TMovingImage >
+CombinationImageToImageMetric< TFixedImage, TMovingImage,
+  NInputTransformDimension, NOutputTransformDimension  >
 ::GetFinalMetricWeight( unsigned int pos ) const
 {
   double weight = 1.0;
@@ -701,9 +747,11 @@ CombinationImageToImageMetric< TFixedImage, TMovingImage >
  * ********************* GetValue ****************************
  */
 
-template< class TFixedImage, class TMovingImage >
+template< class TFixedImage, class TMovingImage,
+  unsigned int NInputTransformDimension, unsigned int NOutputTransformDimension >
 typename CombinationImageToImageMetric< TFixedImage, TMovingImage >::MeasureType
-CombinationImageToImageMetric< TFixedImage, TMovingImage >
+CombinationImageToImageMetric< TFixedImage, TMovingImage,
+  NInputTransformDimension, NOutputTransformDimension  >
 ::GetValue( const ParametersType & parameters ) const
 {
   /** Initialise. */
@@ -761,9 +809,11 @@ CombinationImageToImageMetric< TFixedImage, TMovingImage >
  * ********************* GetDerivative ****************************
  */
 
-template< class TFixedImage, class TMovingImage >
+template< class TFixedImage, class TMovingImage,
+  unsigned int NInputTransformDimension, unsigned int NOutputTransformDimension >
 void
-CombinationImageToImageMetric< TFixedImage, TMovingImage >
+CombinationImageToImageMetric< TFixedImage, TMovingImage,
+  NInputTransformDimension, NOutputTransformDimension  >
 ::GetDerivative( const ParametersType & parameters,
   DerivativeType & derivative ) const
 {
@@ -823,9 +873,11 @@ CombinationImageToImageMetric< TFixedImage, TMovingImage >
  * ********************* GetValueAndDerivative ****************************
  */
 
-template< class TFixedImage, class TMovingImage >
+template< class TFixedImage, class TMovingImage,
+  unsigned int NInputTransformDimension, unsigned int NOutputTransformDimension >
 void
-CombinationImageToImageMetric< TFixedImage, TMovingImage >
+CombinationImageToImageMetric< TFixedImage, TMovingImage,
+  NInputTransformDimension, NOutputTransformDimension  >
 ::GetValueAndDerivative(
   const ParametersType & parameters,
   MeasureType & value,
@@ -917,9 +969,11 @@ CombinationImageToImageMetric< TFixedImage, TMovingImage >
  * ********************* GetSelfHessian ****************************
  */
 
-template< class TFixedImage, class TMovingImage >
+template< class TFixedImage, class TMovingImage,
+  unsigned int NInputTransformDimension, unsigned int NOutputTransformDimension >
 void
-CombinationImageToImageMetric< TFixedImage, TMovingImage >
+CombinationImageToImageMetric< TFixedImage, TMovingImage,
+  NInputTransformDimension, NOutputTransformDimension  >
 ::GetSelfHessian( const TransformParametersType & parameters,
   HessianType & H ) const
 {
@@ -972,9 +1026,11 @@ CombinationImageToImageMetric< TFixedImage, TMovingImage >
  * ********************* GetMTime ****************************
  */
 
-template< class TFixedImage, class TMovingImage >
+template< class TFixedImage, class TMovingImage,
+  unsigned int NInputTransformDimension, unsigned int NOutputTransformDimension >
 ModifiedTimeType
-CombinationImageToImageMetric< TFixedImage, TMovingImage >
+CombinationImageToImageMetric< TFixedImage, TMovingImage,
+  NInputTransformDimension, NOutputTransformDimension  >
 ::GetMTime( void ) const
 {
   ModifiedTimeType mtime = this->Superclass::GetMTime();

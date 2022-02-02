@@ -23,7 +23,6 @@
 
 #include "elxBaseComponentSE.h"
 #include "itkMultiResolutionImageRegistrationMethod2.h"
-#include "itkMultiResolutionImageRegistrationMethodRD.h"
 
 /** Mask support. */
 #include "itkImageMaskSpatialObject.h"
@@ -103,8 +102,12 @@ public:
 
   /** Typedef for ITKBaseType. */
   typedef itk::MultiResolutionImageRegistrationMethod2<
-    FixedImageType, MovingImageType >       ITKBaseType;
+      FixedImageType, MovingImageType,
+      FixedImageDimension, MovingImageDimension >             ITKBaseType;
 
+  typedef itk::MultiResolutionImageRegistrationMethod2<
+    FixedImageType, MovingImageType,
+    FixedImageDimension-1, MovingImageDimension-1 >           RDITKBaseType;
 
   /** Typedef for mask erosion options */
   typedef std::vector< bool > UseMaskErosionArrayType;
@@ -122,6 +125,19 @@ public:
     return dynamic_cast< const ITKBaseType * >( this );
   }
 
+
+  /** Cast to ITKBaseType. */
+  virtual RDITKBaseType* GetAsRDITKBaseType(void)
+  {
+    return dynamic_cast<RDITKBaseType*>(this);
+  }
+
+
+  /** Cast to ITKBaseType, to use in const functions. */
+  virtual const RDITKBaseType* GetAsRDITKBaseType(void) const
+  {
+    return dynamic_cast<const RDITKBaseType*>(this);
+  }
 
   /** Function to read the mask parameters from the configuration object.
    * \todo: move to RegistrationBase

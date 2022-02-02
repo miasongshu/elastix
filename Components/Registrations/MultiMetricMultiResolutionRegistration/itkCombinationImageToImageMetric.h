@@ -55,16 +55,19 @@ namespace itk
  *
  */
 
-template< class TFixedImage, class TMovingImage >
+template< class TFixedImage, class TMovingImage,
+  unsigned int NInputTransformDimension, unsigned int NOutputTransformDimension >
 class CombinationImageToImageMetric :
-  public AdvancedImageToImageMetric< TFixedImage, TMovingImage >
+  public AdvancedImageToImageMetric< TFixedImage, TMovingImage,
+  NInputTransformDimension, NOutputTransformDimension >
 {
 public:
 
   /** Standard class typedefs. */
   typedef CombinationImageToImageMetric Self;
   typedef AdvancedImageToImageMetric<
-    TFixedImage, TMovingImage >           Superclass;
+    TFixedImage, TMovingImage,
+    NInputTransformDimension, NOutputTransformDimension >  Superclass;
   typedef SmartPointer< Self >       Pointer;
   typedef SmartPointer< const Self > ConstPointer;
 

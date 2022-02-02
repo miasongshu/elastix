@@ -50,8 +50,10 @@ namespace itk
 /*
  * Constructor
  */
-template< typename TFixedImage, typename TMovingImage >
-MultiResolutionImageRegistrationMethod2< TFixedImage, TMovingImage >
+template< typename TFixedImage, typename TMovingImage,
+  unsigned int NInputTransformDimension, unsigned int NOutputTransformDimension >
+MultiResolutionImageRegistrationMethod2< TFixedImage, TMovingImage,
+                        NInputTransformDimension, NOutputTransformDimension >
 ::MultiResolutionImageRegistrationMethod2()
 {
   this->SetNumberOfRequiredOutputs( 1 );  // for the Transform
@@ -93,9 +95,11 @@ MultiResolutionImageRegistrationMethod2< TFixedImage, TMovingImage >
 /*
  * Initialize by setting the interconnects between components.
  */
-template< typename TFixedImage, typename TMovingImage >
+template< typename TFixedImage, typename TMovingImage,
+  unsigned int NInputTransformDimension, unsigned int NOutputTransformDimension  >
 void
-MultiResolutionImageRegistrationMethod2< TFixedImage, TMovingImage >
+MultiResolutionImageRegistrationMethod2< TFixedImage, TMovingImage,
+  NInputTransformDimension, NOutputTransformDimension  >
 ::Initialize( void )
 {
   itkWarningMacro(<< "_Songshu_ in MultiResolutionImageRegistrationMethod2 ***************");
@@ -146,9 +150,11 @@ MultiResolutionImageRegistrationMethod2< TFixedImage, TMovingImage >
 /*
  * Stop the Registration Process
  */
-template< typename TFixedImage, typename TMovingImage >
+template< typename TFixedImage, typename TMovingImage,
+  unsigned int NInputTransformDimension, unsigned int NOutputTransformDimension  >
 void
-MultiResolutionImageRegistrationMethod2< TFixedImage, TMovingImage >
+MultiResolutionImageRegistrationMethod2< TFixedImage, TMovingImage,
+  NInputTransformDimension, NOutputTransformDimension  >
 ::StopRegistration( void )
 {
   this->m_Stop = true;
@@ -158,9 +164,11 @@ MultiResolutionImageRegistrationMethod2< TFixedImage, TMovingImage >
 /*
  * Stop the Registration Process
  */
-template< typename TFixedImage, typename TMovingImage >
+template< typename TFixedImage, typename TMovingImage,
+  unsigned int NInputTransformDimension, unsigned int NOutputTransformDimension >
 void
-MultiResolutionImageRegistrationMethod2< TFixedImage, TMovingImage >
+MultiResolutionImageRegistrationMethod2< TFixedImage, TMovingImage,
+  NInputTransformDimension, NOutputTransformDimension  >
 ::PreparePyramids( void )
 {
   if( !this->m_Transform )
@@ -276,9 +284,11 @@ MultiResolutionImageRegistrationMethod2< TFixedImage, TMovingImage >
 /*
  * Starts the Registration Process
  */
-template< typename TFixedImage, typename TMovingImage >
+template< typename TFixedImage, typename TMovingImage,
+  unsigned int NInputTransformDimension, unsigned int NOutputTransformDimension >
 void
-MultiResolutionImageRegistrationMethod2< TFixedImage, TMovingImage >
+MultiResolutionImageRegistrationMethod2< TFixedImage, TMovingImage,
+  NInputTransformDimension, NOutputTransformDimension  >
 ::StartRegistration( void )
 {
 
@@ -367,9 +377,11 @@ MultiResolutionImageRegistrationMethod2< TFixedImage, TMovingImage >
 /*
  * PrintSelf
  */
-template< typename TFixedImage, typename TMovingImage >
+template< typename TFixedImage, typename TMovingImage,
+  unsigned int NInputTransformDimension, unsigned int NOutputTransformDimension >
 void
-MultiResolutionImageRegistrationMethod2< TFixedImage, TMovingImage >
+MultiResolutionImageRegistrationMethod2< TFixedImage, TMovingImage,
+  NInputTransformDimension, NOutputTransformDimension  >
 ::PrintSelf( std::ostream & os, Indent indent ) const
 {
   Superclass::PrintSelf( os, indent );
@@ -408,18 +420,22 @@ MultiResolutionImageRegistrationMethod2< TFixedImage, TMovingImage >
 /*
  * Generate Data
  */
-template< typename TFixedImage, typename TMovingImage >
+template< typename TFixedImage, typename TMovingImage,
+  unsigned int NInputTransformDimension, unsigned int NOutputTransformDimension >
 void
-MultiResolutionImageRegistrationMethod2< TFixedImage, TMovingImage >
+MultiResolutionImageRegistrationMethod2< TFixedImage, TMovingImage,
+  NInputTransformDimension, NOutputTransformDimension  >
 ::GenerateData( void )
 {
   this->StartRegistration();
 }
 
 
-template< typename TFixedImage, typename TMovingImage >
+template< typename TFixedImage, typename TMovingImage,
+  unsigned int NInputTransformDimension, unsigned int NOutputTransformDimension >
 ModifiedTimeType
-MultiResolutionImageRegistrationMethod2< TFixedImage, TMovingImage >
+MultiResolutionImageRegistrationMethod2< TFixedImage, TMovingImage,
+  NInputTransformDimension, NOutputTransformDimension  >
 ::GetMTime( void ) const
 {
   ModifiedTimeType mtime = Superclass::GetMTime();
@@ -472,17 +488,22 @@ MultiResolutionImageRegistrationMethod2< TFixedImage, TMovingImage >
 /*
  *  Get Output
  */
-template< typename TFixedImage, typename TMovingImage >
-const typename MultiResolutionImageRegistrationMethod2< TFixedImage, TMovingImage >::TransformOutputType
-* MultiResolutionImageRegistrationMethod2< TFixedImage, TMovingImage >
+template< typename TFixedImage, typename TMovingImage,
+  unsigned int NInputTransformDimension, unsigned int NOutputTransformDimension >
+const typename MultiResolutionImageRegistrationMethod2< TFixedImage, TMovingImage, 
+  NInputTransformDimension, NOutputTransformDimension >::TransformOutputType
+* MultiResolutionImageRegistrationMethod2< TFixedImage, TMovingImage,
+  NInputTransformDimension, NOutputTransformDimension  >
 ::GetOutput() const
 {
   return static_cast< const TransformOutputType * >( this->ProcessObject::GetOutput( 0 ) );
 }
 
-template< typename TFixedImage, typename TMovingImage >
+template< typename TFixedImage, typename TMovingImage,
+  unsigned int NInputTransformDimension, unsigned int NOutputTransformDimension >
 DataObject::Pointer
-MultiResolutionImageRegistrationMethod2< TFixedImage, TMovingImage >
+MultiResolutionImageRegistrationMethod2< TFixedImage, TMovingImage,
+  NInputTransformDimension, NOutputTransformDimension>
 ::MakeOutput( unsigned int output )
 {
   if (output > 0)

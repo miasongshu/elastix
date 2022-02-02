@@ -78,7 +78,8 @@ namespace itk
  *
  */
 
-template< class TFixedImage, class TMovingImage, unsigned int NInputTransformDimension, unsigned int NOutputTransformDimension >
+template< class TFixedImage, class TMovingImage, 
+  unsigned int NInputTransformDimension, unsigned int NOutputTransformDimension >
 class AdvancedImageToImageMetric :
   public ImageToImageMetric< TFixedImage, TMovingImage >
 {

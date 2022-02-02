@@ -93,8 +93,8 @@ public:
   /** Standard class typedefs. */
   typedef AdvancedTransform Self;
   typedef Transform< TScalarType, 
-    NInputDimensions,
-    NOutputDimensions >               Superclass;
+    NInputDimensions, NOutputDimensions,
+    NInputTransformDimension, NOutputTransformDimension>  Superclass;
   typedef SmartPointer< Self >       Pointer;
   typedef SmartPointer< const Self > ConstPointer;
 
