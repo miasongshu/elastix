@@ -328,6 +328,10 @@ protected:
   DataObjectContainerPointer m_ResultImageContainer;
   DataObjectContainerPointer m_ResultDeformationFieldContainer;
 
+  /** Dimensions of transform. */
+  ImageDimensionType       m_InputTransformDimension;
+  ImageDimensionType       m_OutputTransformDimension;
+
   /** A transform that is the result of registration. */
   ObjectPointer m_FinalTransform;
 

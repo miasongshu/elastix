@@ -151,6 +151,9 @@ ElastixMain::ElastixMain()
 
   this->m_ResultImageContainer = 0;
 
+  this->m_InputTransformDimension = 0;
+  this->m_OutputTransformDimension = 0;
+
   this->m_FinalTransform   = 0;
   this->m_InitialTransform = 0;
   this->m_TransformParametersMap.clear();
@@ -640,6 +643,21 @@ ElastixMain::InitDBIndex( void )
         xout[ "error" ] << "The MovingImageDimension is not given." << std::endl;
         return 1;
       }
+    }
+
+    /** Dimensions of Transform. */
+    if (this->m_InputTransformDimension == 0)
+    {
+      /** Try to read it from the parameter file. */
+      this->m_Configuration->ReadParameter(this->m_InputTransformDimension,
+        "InputTransformDimension", 0);
+    }
+
+    if (this->m_OutputTransformDimension == 0)
+    {
+      /** Try to read it from the parameter file. */
+      this->m_Configuration->ReadParameter(this->m_OutputTransformDimension,
+        "OutputTransformDimension", 0);
     }
 
     /** Load the components. */

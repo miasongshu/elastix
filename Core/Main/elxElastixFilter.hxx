@@ -212,6 +212,22 @@ ElastixFilter< TFixedImage, TMovingImage >
       = ParameterValueVectorType( 1, std::to_string( fixedImageDimension ) ) ;
     parameterMapVector[ i ][ "MovingImageDimension" ]
       = ParameterValueVectorType( 1, std::to_string( movingImageDimension ) );
+    //
+    if (parameterMapVector[i]["Metric"] == ParameterValueVectorType(1, "AdvNormCorrelationOLastDim"))
+    {
+      parameterMapVector[i]["InputTransformDimension"]
+        = ParameterValueVectorType(1, std::to_string(fixedImageDimension - 1));
+      parameterMapVector[i]["OutputTransformDimension"]
+        = ParameterValueVectorType(1, std::to_string(movingImageDimension - 1));
+    }
+    else
+    {
+      parameterMapVector[i]["InputTransformDimension"]
+        = ParameterValueVectorType(1, std::to_string(fixedImageDimension));
+      parameterMapVector[i]["OutputTransformDimension"]
+        = ParameterValueVectorType(1, std::to_string(movingImageDimension));
+    }
+
     parameterMapVector[ i ][ "ResultImagePixelType" ]
       = ParameterValueVectorType( 1, PixelType< typename TFixedImage::PixelType >::ToString() );
 

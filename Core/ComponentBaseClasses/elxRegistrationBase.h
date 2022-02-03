@@ -100,14 +100,19 @@ public:
   /** Get the dimension of the moving image. */
   itkStaticConstMacro( MovingImageDimension, unsigned int, MovingImageType::ImageDimension );
 
+  /** Get a reduced dimension for the transform in multi image registration. */
+  itkStaticConstMacro(InputTransformDimension,
+    unsigned int, FixedImageType::InputTransformDimension);
+
+  itkStaticConstMacro(OutputTransformDimension,
+    unsigned int, FixedImageType::InputTransformDimension);
+
+
+
   /** Typedef for ITKBaseType. */
   typedef itk::MultiResolutionImageRegistrationMethod2<
-      FixedImageType, MovingImageType,
-      FixedImageDimension, MovingImageDimension >             ITKBaseType;
+    FixedImageType, MovingImageType, InputTransformDimension, OutputTransformDimension >  ITKBaseType;
 
-  typedef itk::MultiResolutionImageRegistrationMethod2<
-    FixedImageType, MovingImageType,
-    FixedImageDimension-1, MovingImageDimension-1 >           RDITKBaseType;
 
   /** Typedef for mask erosion options */
   typedef std::vector< bool > UseMaskErosionArrayType;
@@ -125,19 +130,6 @@ public:
     return dynamic_cast< const ITKBaseType * >( this );
   }
 
-
-  /** Cast to ITKBaseType. */
-  virtual RDITKBaseType* GetAsRDITKBaseType(void)
-  {
-    return dynamic_cast<RDITKBaseType*>(this);
-  }
-
-
-  /** Cast to ITKBaseType, to use in const functions. */
-  virtual const RDITKBaseType* GetAsRDITKBaseType(void) const
-  {
-    return dynamic_cast<const RDITKBaseType*>(this);
-  }
 
   /** Function to read the mask parameters from the configuration object.
    * \todo: move to RegistrationBase

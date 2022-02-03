@@ -171,20 +171,21 @@ public:
   itkStaticConstMacro( MovingImageDimension,
     unsigned int, MovingImageType::ImageDimension );
 
-  /** Get a reduced dimension for multi image registration. */
-  itkStaticConstMacro(ReducedImageDimension,
-    unsigned int, FixedImageType::ImageDimension - 1);
+  /** Get a reduced dimension for the transform multi image registration. */
+  itkStaticConstMacro(InputTransformDimension,
+    unsigned int, RegistrationType::InputTransformDimension);
+
+  itkStaticConstMacro(OutputTransformDimension,
+    unsigned int, RegistrationType::OutputTransformDimension);
 
   /** Other typedef's. */
   typedef itk::Object ObjectType;
   typedef itk::AdvancedTransform<
     CoordRepType,
     itkGetStaticConstMacro( FixedImageDimension ),
-    itkGetStaticConstMacro( MovingImageDimension ) >  ITKBaseType;
-  typedef itk::AdvancedTransform<
-    CoordRepType,
-    itkGetStaticConstMacro(ReducedImageDimension),
-    itkGetStaticConstMacro(ReducedImageDimension) >  RDITKBaseType;
+    itkGetStaticConstMacro( MovingImageDimension ),
+    itkGetStaticConstMacro( InputTransformDimension ) ,
+    itkGetStaticConstMacro( OutputTransformDimension ) >  ITKBaseType;
   typedef itk::AdvancedCombinationTransform< CoordRepType,
     itkGetStaticConstMacro( FixedImageDimension ) >   CombinationTransformType;
   typedef typename
@@ -197,7 +198,6 @@ public:
   /** Typedef's for TransformPoint. */
   typedef typename ITKBaseType::InputPointType  InputPointType;
   typedef typename ITKBaseType::OutputPointType OutputPointType;
-  typedef typename RDITKBaseType::InputPointType  ReducedDimensionPointType;
 
 
   /** Typedef's for TransformPointsAllPoints. */
@@ -225,19 +225,6 @@ public:
   virtual const ITKBaseType * GetAsITKBaseType( void ) const
   {
     return dynamic_cast< const ITKBaseType * >( this );
-  }
-
-  /** Cast to ITKBaseType. */
-  RDITKBaseType* RDGetAsITKBaseType(void)
-  {
-    return dynamic_cast<RDITKBaseType*>(this);
-  }
-
-
-  /** Cast to ITKBaseType, to use in const functions. */
-  const RDITKBaseType* RDGetAsITKBaseType(void) const
-  {
-    return dynamic_cast<const RDITKBaseType*>(this);
   }
 
   virtual const CombinationTransformType * GetAsCombinationTransform( void ) const
