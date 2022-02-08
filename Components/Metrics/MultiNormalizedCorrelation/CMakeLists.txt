@@ -1,0 +1,8 @@
+
+ADD_ELXCOMPONENT( MultiNormalizedCorrelationMetric
+ elxMultiNormalizedCorrelationMetric.h
+ elxMultiNormalizedCorrelationMetric.hxx
+ elxMultiNormalizedCorrelationMetric.cxx
+ itkMultiNormalizedCorrelationImageToImageMetric.h
+ itkMultiNormalizedCorrelationImageToImageMetric.hxx )
+
