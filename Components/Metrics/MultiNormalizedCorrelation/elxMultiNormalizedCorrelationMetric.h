@@ -15,7 +15,7 @@
  *  limitations under the License.
  *
  *=========================================================================*/
-#ifndef __elxAdvancedNormalizedCorrelationMetric_H__
+#ifndef __elxMultiNormalizedCorrelationMetric_H__
 #define __elxMultiNormalizedCorrelationMetric_H__
 
 #include "elxIncludes.h" // include first to avoid MSVS warning

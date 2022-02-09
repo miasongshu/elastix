@@ -119,11 +119,26 @@ typename MultiNormalizedCorrelationImageToImageMetric< TFixedImage, TMovingImage
 MultiNormalizedCorrelationImageToImageMetric< TFixedImage, TMovingImage >
 ::GetValue( const TransformParametersType & parameters ) const
 {
-  itkDebugMacro( "GetValue( " << parameters << " ) " );
+  itkDebugMacro(<< "GetValue( " << parameters << " ) ");
 
-  /** Initialize some variables */
+  if (this->GetNumberOfFixedImages() != this->GetNumberOfMovingImages())
+    itkExceptionMacro(<< "MultiNormalizedCorrelationImageToImageMetric requires the same number of fixed and moving images");
+
+  /** Initialize some variables. */
   this->m_NumberOfPixelsCounted = 0;
   MeasureType measure = NumericTraits< MeasureType >::Zero;
+
+  /** Array that stores dM(x)/dmu, and the sparse Jacobian + indices. */
+  NonZeroJacobianIndicesType nzji(this->m_AdvancedTransform->GetNumberOfNonZeroJacobianIndices());
+  DerivativeType             imageJacobian(nzji.size());
+  TransformJacobianType      jacobian;
+
+  /** Initialize some variables for intermediate results. */
+  AccumulateType sff = NumericTraits< AccumulateType >::Zero;
+  AccumulateType smm = NumericTraits< AccumulateType >::Zero;
+  AccumulateType sfm = NumericTraits< AccumulateType >::Zero;
+  AccumulateType sf = NumericTraits< AccumulateType >::Zero;
+  AccumulateType sm = NumericTraits< AccumulateType >::Zero;
 
   /** Call non-thread-safe stuff, such as:
    *   this->SetTransformParameters( parameters );
@@ -138,87 +153,62 @@ MultiNormalizedCorrelationImageToImageMetric< TFixedImage, TMovingImage >
    * - switch the use of this function to off, using m_UseMetricSingleThreaded = false
    * - Now you can call GetValueAndDerivative multi-threaded.
    */
-  this->BeforeThreadedGetValueAndDerivative( parameters );
+  this->BeforeThreadedGetValueAndDerivative(parameters);
 
-  /** Get a handle to the sample container. */
-  ImageSampleContainerPointer sampleContainer = this->GetImageSampler()->GetOutput();
+  /** Create list samples. */
+  ListSamplePointer listSampleFixed = ListSampleType::New();
+  ListSamplePointer listSampleMoving = ListSampleType::New();
 
-  /** Create iterator over the sample container. */
-  typename ImageSampleContainerType::ConstIterator fiter;
-  typename ImageSampleContainerType::ConstIterator fbegin = sampleContainer->Begin();
-  typename ImageSampleContainerType::ConstIterator fend   = sampleContainer->End();
+  /** Compute the three list samples and the derivatives. */
+  TransformJacobianContainerType        jacobianContainer;
+  TransformJacobianIndicesContainerType jacobianIndicesContainer;
+  SpatialDerivativeContainerType        spatialDerivativesContainer;
+  this->ComputeListSampleValuesAndDerivativePlusJacobian(
+    listSampleFixed, listSampleMoving,
+    false, jacobianContainer, jacobianIndicesContainer, spatialDerivativesContainer);
 
-  /** Create variables to store intermediate results. */
-  AccumulateType sff = NumericTraits< AccumulateType >::Zero;
-  AccumulateType smm = NumericTraits< AccumulateType >::Zero;
-  AccumulateType sfm = NumericTraits< AccumulateType >::Zero;
-  AccumulateType sf  = NumericTraits< AccumulateType >::Zero;
-  AccumulateType sm  = NumericTraits< AccumulateType >::Zero;
-
-  /** Loop over the fixed image samples to calculate the mean squares. */
-  for( fiter = fbegin; fiter != fend; ++fiter )
-  {
-    /** Read fixed coordinates and initialize some variables. */
-    const FixedImagePointType & fixedPoint = ( *fiter ).Value().m_ImageCoordinates;
-    RealType                    movingImageValue;
-    MovingImagePointType        mappedPoint;
-
-    /** Transform point and check if it is inside the B-spline support region. */
-    bool sampleOk = this->TransformPoint( fixedPoint, mappedPoint );
-
-    /** Check if point is inside mask. */
-    if( sampleOk )
-    {
-      sampleOk = this->IsInsideMovingMask( mappedPoint );
-    }
-
-    /** Compute the moving image value and check if the point is
-    * inside the moving image buffer. */
-    if( sampleOk )
-    {
-      sampleOk = this->EvaluateMovingImageValueAndDerivative(
-        mappedPoint, movingImageValue, 0 );
-    }
-
-    if( sampleOk )
-    {
-      this->m_NumberOfPixelsCounted++;
-
-      /** Get the fixed image value. */
-      const RealType & fixedImageValue = static_cast< double >( ( *fiter ).Value().m_ImageValue );
-
-      /** Update some sums needed to calculate NC. */
-      sff += fixedImageValue  * fixedImageValue;
-      smm += movingImageValue * movingImageValue;
-      sfm += fixedImageValue  * movingImageValue;
-      if( this->m_SubtractMean )
-      {
-        sf += fixedImageValue;
-        sm += movingImageValue;
-      }
-
-    } // end if sampleOk
-
-  } // end for loop over the image sample container
+  /** Temporary variables. */
+  typedef typename NumericTraits< MeasureType >::AccumulateType AccumulateType;        // TODO probably do not need
+  MeasurementVectorType z_F, z_M;
 
   /** Check if enough samples were valid. */
-  this->CheckNumberOfSamples(
-    sampleContainer->Size(), this->m_NumberOfPixelsCounted );
+  unsigned long size = this->GetImageSampler()->GetOutput()->Size();
+  this->CheckNumberOfSamples(size, this->m_NumberOfPixelsCounted);
 
-  /** If SubtractMean, then subtract things from sff, smm and sfm. */
-  const RealType N = static_cast< RealType >( this->m_NumberOfPixelsCounted );
-  if( this->m_SubtractMean && this->m_NumberOfPixelsCounted > 0 )
+  /** Loop over all query points, i.e. all samples. */
+  for (unsigned long i = 0; i < this->m_NumberOfPixelsCounted; i++)
   {
-    sff -= ( sf * sf / N );
-    smm -= ( sm * sm / N );
-    sfm -= ( sf * sm / N );
+    /** Get the fixed image value. */
+    listSampleFixed->GetMeasurementVector(i, z_F);
+    listSampleMoving->GetMeasurementVector(i, z_M);
+
+    /** Update some sums needed to calculate the value of NC. */
+    for (unsigned int j = 1; j < this->GetNumberOfFixedImages(); j++)
+    {
+      sff += z_F[j] * z_F[j];
+      smm += z_M[j] * z_M[j];
+      sfm += z_F[j] * z_M[j];
+      sf += z_F[j];  // Only needed when m_SubtractMean == true
+      sm += z_M[j]; // Only needed when m_SubtractMean == true
+    }
+  } // end for loop over the image sample container
+
+  /** If SubtractMean, then subtract things from sff, smm, sfm,
+   * derivativeF and derivativeM.
+   */
+  const RealType N = static_cast<RealType>(this->m_NumberOfPixelsCounted);
+  if (this->m_SubtractMean && this->m_NumberOfPixelsCounted > 0)
+  {
+    sff -= (sf * sf / N);
+    smm -= (sm * sm / N);
+    sfm -= (sf * sm / N);
   }
 
-  /** The denominator of the NC. */
-  const RealType denom = -1.0 * std::sqrt( sff * smm );
+  /** The denominator of the value and the derivative. */
+  const RealType denom = -1.0 * std::sqrt(sff * smm);
 
-  /** Calculate the measure value. */
-  if( this->m_NumberOfPixelsCounted > 0 && denom < -1e-14 )
+  /** Calculate the value and the derivative. */
+  if (this->m_NumberOfPixelsCounted > 0 && denom < -1e-14)
   {
     measure = sfm / denom;
   }
@@ -266,6 +256,9 @@ MultiNormalizedCorrelationImageToImageMetric< TFixedImage, TMovingImage >
 {
   itkDebugMacro( << "GetValueAndDerivative( " << parameters << " ) " );
 
+  if (this->GetNumberOfFixedImages() != this->GetNumberOfMovingImages())
+    itkExceptionMacro(<< "MultiNormalizedCorrelationImageToImageMetric requires the same number of fixed and moving images");
+
   typedef typename DerivativeType::ValueType DerivativeValueType;
 
   /** Initialize some variables. */
@@ -306,74 +299,45 @@ MultiNormalizedCorrelationImageToImageMetric< TFixedImage, TMovingImage >
    */
   this->BeforeThreadedGetValueAndDerivative( parameters );
 
-  /** Get a handle to the sample container. */
-  ImageSampleContainerPointer sampleContainer = this->GetImageSampler()->GetOutput();
+  /** Create list samples. */
+  ListSamplePointer listSampleFixed = ListSampleType::New();
+  ListSamplePointer listSampleMoving = ListSampleType::New();
 
-  /** Create iterator over the sample container. */
-  typename ImageSampleContainerType::ConstIterator fiter;
-  typename ImageSampleContainerType::ConstIterator fbegin = sampleContainer->Begin();
-  typename ImageSampleContainerType::ConstIterator fend   = sampleContainer->End();
+  /** Compute the three list samples and the derivatives. */
+  TransformJacobianContainerType        jacobianContainer;
+  TransformJacobianIndicesContainerType jacobianIndicesContainer;
+  SpatialDerivativeContainerType        spatialDerivativesContainer;
+  this->ComputeListSampleValuesAndDerivativePlusJacobian(
+    listSampleFixed, listSampleMoving,
+    true, jacobianContainer, jacobianIndicesContainer, spatialDerivativesContainer);
 
-  /** Loop over the fixed image to calculate the correlation. */
-  for( fiter = fbegin; fiter != fend; ++fiter )
-  {
-    /** Read fixed coordinates and initialize some variables. */
-    const FixedImagePointType & fixedPoint = ( *fiter ).Value().m_ImageCoordinates;
-    RealType                    movingImageValue;
-    MovingImagePointType        mappedPoint;
-    MovingImageDerivativeType   movingImageDerivative;
-
-    /** Transform point and check if it is inside the B-spline support region. */
-    bool sampleOk = this->TransformPoint( fixedPoint, mappedPoint );
-
-    /** Check if point is inside mask. */
-    if( sampleOk )
-    {
-      sampleOk = this->IsInsideMovingMask( mappedPoint );
-    }
-
-    /** Compute the moving image value M(T(x)) and derivative dM/dx and check if
-     * the point is inside the moving image buffer.
-     */
-    if( sampleOk )
-    {
-      sampleOk = this->EvaluateMovingImageValueAndDerivative(
-        mappedPoint, movingImageValue, &movingImageDerivative );
-    }
-
-    if( sampleOk )
-    {
-      this->m_NumberOfPixelsCounted++;
-
-      /** Get the fixed image value. */
-      const RealType & fixedImageValue = static_cast< RealType >( ( *fiter ).Value().m_ImageValue );
-
-      /** Get the TransformJacobian dT/dmu. */
-      this->EvaluateTransformJacobian( fixedPoint, jacobian, nzji );
-
-      /** Compute the innerproducts (dM/dx)^T (dT/dmu) and (dMask/dx)^T (dT/dmu). */
-      this->EvaluateTransformJacobianInnerProduct(
-        jacobian, movingImageDerivative, imageJacobian );
-
-      /** Update some sums needed to calculate the value of NC. */
-      sff += fixedImageValue  * fixedImageValue;
-      smm += movingImageValue * movingImageValue;
-      sfm += fixedImageValue  * movingImageValue;
-      sf  += fixedImageValue;  // Only needed when m_SubtractMean == true
-      sm  += movingImageValue; // Only needed when m_SubtractMean == true
-
-      /** Compute this pixel's contribution to the derivative terms. */
-      this->UpdateDerivativeTerms(
-        fixedImageValue, movingImageValue, imageJacobian, nzji,
-        derivativeF, derivativeM, differential );
-
-    } // end if sampleOk
-
-  } // end for loop over the image sample container
+  /** Temporary variables. */
+  typedef typename NumericTraits< MeasureType >::AccumulateType AccumulateType;
+  MeasurementVectorType z_F, z_M;
 
   /** Check if enough samples were valid. */
-  this->CheckNumberOfSamples(
-    sampleContainer->Size(), this->m_NumberOfPixelsCounted );
+  unsigned long size = this->GetImageSampler()->GetOutput()->Size();
+  this->CheckNumberOfSamples(size, this->m_NumberOfPixelsCounted);
+
+  /** Loop over all query points, i.e. all samples. */
+  for (unsigned long i = 0; i < this->m_NumberOfPixelsCounted; i++)
+  {
+    /** Get the fixed image value. */
+    listSampleFixed->GetMeasurementVector(i, z_F);
+    listSampleMoving->GetMeasurementVector(i, z_M);
+
+    /** Update some sums needed to calculate the value of NC. */
+    sff += z_F[0] * z_F[0];
+    smm += z_M[0] * z_M[0];
+    sfm += z_F[0] * z_M[0];
+    sf += z_F[0];  // Only needed when m_SubtractMean == true
+    sm += z_M[0]; // Only needed when m_SubtractMean == true
+
+    /** Compute this pixel's contribution to the derivative terms. */
+    this->UpdateDerivativeTerms(
+      z_F[0], z_M[0], imageJacobian, nzji, derivativeF, derivativeM, differential );
+
+  } // end for loop over the image sample container
 
   /** If SubtractMean, then subtract things from sff, smm, sfm,
    * derivativeF and derivativeM.
@@ -423,7 +387,6 @@ MultiNormalizedCorrelationImageToImageMetric< TFixedImage, TMovingImage >
 ::ComputeListSampleValuesAndDerivativePlusJacobian(
   const ListSamplePointer& listSampleFixed,
   const ListSamplePointer& listSampleMoving,
-  const ListSamplePointer& listSampleJoint,
   const bool& doDerivative,
   TransformJacobianContainerType& jacobianContainer,
   TransformJacobianIndicesContainerType& jacobianIndicesContainer,
@@ -454,8 +417,6 @@ MultiNormalizedCorrelationImageToImageMetric< TFixedImage, TMovingImage >
   listSampleFixed->Resize(nrOfRequestedSamples);
   listSampleMoving->SetMeasurementVectorSize(movingSize);
   listSampleMoving->Resize(nrOfRequestedSamples);
-  listSampleJoint->SetMeasurementVectorSize(jointSize);
-  listSampleJoint->Resize(nrOfRequestedSamples);
 
   /** Potential speedup: it avoids re-allocations. I noticed performance
    * gains when nrOfRequestedSamples is about 10000 or higher.
@@ -522,10 +483,6 @@ MultiNormalizedCorrelationImageToImageMetric< TFixedImage, TMovingImage >
         fixedImageValue);
       listSampleMoving->SetMeasurement(this->m_NumberOfPixelsCounted, 0,
         movingImageValue);
-      listSampleJoint->SetMeasurement(this->m_NumberOfPixelsCounted, 0,
-        fixedImageValue);
-      listSampleJoint->SetMeasurement(this->m_NumberOfPixelsCounted,
-        this->GetNumberOfFixedImages(), movingImageValue);
 
       /** Get and set the values of the fixed feature images. */
       for (unsigned int j = 1; j < this->GetNumberOfFixedImages(); j++)
@@ -533,8 +490,6 @@ MultiNormalizedCorrelationImageToImageMetric< TFixedImage, TMovingImage >
         fixedFeatureValue = this->m_FixedImageInterpolatorVector[j]
           ->Evaluate(fixedPoint);
         listSampleFixed->SetMeasurement(
-          this->m_NumberOfPixelsCounted, j, fixedFeatureValue);
-        listSampleJoint->SetMeasurement(
           this->m_NumberOfPixelsCounted, j, fixedFeatureValue);
       }
 
@@ -546,10 +501,6 @@ MultiNormalizedCorrelationImageToImageMetric< TFixedImage, TMovingImage >
         listSampleMoving->SetMeasurement(
           this->m_NumberOfPixelsCounted,
           j,
-          movingFeatureValue);
-        listSampleJoint->SetMeasurement(
-          this->m_NumberOfPixelsCounted,
-          j + this->GetNumberOfFixedImages(),
           movingFeatureValue);
       }
 
@@ -599,9 +550,70 @@ MultiNormalizedCorrelationImageToImageMetric< TFixedImage, TMovingImage >
    */
   listSampleFixed->SetActualSize(this->m_NumberOfPixelsCounted);
   listSampleMoving->SetActualSize(this->m_NumberOfPixelsCounted);
-  listSampleJoint->SetActualSize(this->m_NumberOfPixelsCounted);
 
 } // end ComputeListSampleValuesAndDerivativePlusJacobian()
+
+/**
+ * ************************ EvaluateMovingFeatureImageDerivatives *************************
+ */
+
+template< class TFixedImage, class TMovingImage >
+void
+MultiNormalizedCorrelationImageToImageMetric< TFixedImage, TMovingImage >
+::EvaluateMovingFeatureImageDerivatives(
+  const MovingImagePointType& mappedPoint,
+  SpatialDerivativeType& featureGradients) const
+{
+  /** Convert point to a continous index. */
+  MovingImageContinuousIndexType cindex;
+  this->m_Interpolator->ConvertPointToContinuousIndex(mappedPoint, cindex);
+
+  /** Compute the spatial derivative for all feature images:
+   * - either by calling a special function that only B-spline
+   *   interpolators have,
+   * - or by using a finite difference approximation of the
+   *   pre-computed gradient images.
+   * \todo: for now we only implement the first option.
+   */
+  if (this->m_InterpolatorsAreBSpline && !this->GetComputeGradient())
+  {
+    /** Computed moving image gradient using derivative B-spline kernel. */
+    MovingImageDerivativeType gradient;
+    for (unsigned int i = 1; i < this->GetNumberOfMovingImages(); ++i)
+    {
+      /** Compute the gradient at feature image i. */
+      gradient = this->m_BSplineInterpolatorVector[i]
+        ->EvaluateDerivativeAtContinuousIndex(cindex);
+
+      /** Set the gradient into the Array2D. */
+      featureGradients.set_row(i - 1, gradient.GetDataPointer());
+    } // end for-loop
+  } // end if
+//  else
+//  {
+//  /** Get the gradient by NearestNeighboorInterpolation of the gradient image.
+//  * It is assumed that the gradient image is computed beforehand.
+//  */
+//
+//  /** Round the continuous index to the nearest neighbour. */
+//  MovingImageIndexType index;
+//  for ( unsigned int j = 0; j < MovingImageDimension; j++ )
+//  {
+//  index[ j ] = static_cast<long>( vnl_math::rnd( cindex[ j ] ) );
+//  }
+//
+//  MovingImageDerivativeType gradient;
+//  for ( unsigned int i = 0; i < this->m_NumberOfMovingFeatureImages; ++i )
+//  {
+//  /** Compute the gradient at feature image i. */
+//  gradient = this->m_GradientFeatureImage[ i ]->GetPixel( index );
+//
+//  /** Set the gradient into the Array2D. */
+//  featureGradients.set_column( i, gradient.GetDataPointer() );
+//  } // end for-loop
+//  } // end if
+
+} // end EvaluateMovingFeatureImageDerivatives()
 
 } // end namespace itk
 

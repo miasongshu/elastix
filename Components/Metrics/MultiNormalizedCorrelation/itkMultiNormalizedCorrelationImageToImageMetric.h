@@ -20,6 +20,12 @@
 
 #include "itkMultiInputImageToImageMetricBase.h"
 
+#include "itkArray.h"
+#include "../KNNGraphAlphaMutualInformation/KNN/itkListSampleCArray.h"
+
+ /** Include for the spatial derivatives. */
+#include "itkArray2D.h"
+
 namespace itk
 {
 /** \class MultiNormalizedCorrelationImageToImageMetric
@@ -220,15 +226,15 @@ protected:
   typedef typename Superclass::BSplineInterpolatorType             BSplineInterpolatorType;
   typedef typename Superclass::CentralDifferenceGradientFilterType CentralDifferenceGradientFilterType;
   typedef typename Superclass::MovingImageDerivativeType           MovingImageDerivativeType;
-  typedef std::vector< NonZeroJacobianIndicesType >               TransformJacobianIndicesContainerType;
-  // TODO probably incorrect
-  typedef std::vector< SpatialDerivativeType >                    SpatialDerivativeContainerType;
+  typedef std::vector< TransformJacobianType >                     TransformJacobianContainerType;
+  typedef std::vector< NonZeroJacobianIndicesType >                TransformJacobianIndicesContainerType;
+  typedef Array2D< double >                                        SpatialDerivativeType;
+  typedef std::vector< SpatialDerivativeType >                     SpatialDerivativeContainerType;
 
   /** This function takes the fixed image samples from the ImageSampler
    * and puts them in the listSampleFixed, together with the fixed feature
    * image samples. Also the corresponding moving image values and moving
-   * feature values are computed and put into listSampleMoving. The
-   * concatenation is put into listSampleJoint.
+   * feature values are computed and put into listSampleMoving. 
    * If desired, i.e. if doDerivative is true, then also things needed to
    * compute the derivative of the cost function to the transform parameters
    * are computed:
@@ -238,11 +244,18 @@ protected:
     virtual void ComputeListSampleValuesAndDerivativePlusJacobian(
       const ListSamplePointer& listSampleFixed,
       const ListSamplePointer& listSampleMoving,
-      const ListSamplePointer& listSampleJoint,
       const bool& doDerivative,
       TransformJacobianContainerType& jacobians,
       TransformJacobianIndicesContainerType& jacobiansIndices,
       SpatialDerivativeContainerType& spatialDerivatives) const;
+
+    /** This function calculates the spatial derivative of the
+     * featureNr feature image at the point mappedPoint.
+     * \todo move this to base class.
+     */
+    virtual void EvaluateMovingFeatureImageDerivatives(
+      const MovingImagePointType& mappedPoint,
+      SpatialDerivativeType& featureGradients) const;
 
   /** Compute a pixel's contribution to the derivative terms;
    * Called by GetValueAndDerivative().
