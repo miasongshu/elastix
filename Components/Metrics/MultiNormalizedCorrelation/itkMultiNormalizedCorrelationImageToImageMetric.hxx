@@ -326,17 +326,19 @@ MultiNormalizedCorrelationImageToImageMetric< TFixedImage, TMovingImage >
     listSampleFixed->GetMeasurementVector(i, z_F);
     listSampleMoving->GetMeasurementVector(i, z_M);
 
-    /** Update some sums needed to calculate the value of NC. */
-    sff += z_F[0] * z_F[0];
-    smm += z_M[0] * z_M[0];
-    sfm += z_F[0] * z_M[0];
-    sf += z_F[0];  // Only needed when m_SubtractMean == true
-    sm += z_M[0]; // Only needed when m_SubtractMean == true
+    for (unsigned int j = 1; j < this->GetNumberOfFixedImages(); j++)
+    {
+      /** Update some sums needed to calculate the value of NC. */
+      sff += z_F[j] * z_F[j];
+      smm += z_M[j] * z_M[j];
+      sfm += z_F[j] * z_M[j];
+      sf += z_F[j];  // Only needed when m_SubtractMean == true
+      sm += z_M[j]; // Only needed when m_SubtractMean == true
 
-    /** Compute this pixel's contribution to the derivative terms. */
-    this->UpdateDerivativeTerms(
-      z_F[0], z_M[0], imageJacobian, nzji, derivativeF, derivativeM, differential );
-
+      /** Compute this pixel's contribution to the derivative terms. */
+      this->UpdateDerivativeTerms(
+        z_F[j], z_M[j], imageJacobian, nzji, derivativeF, derivativeM, differential);
+    }
   } // end for loop over the image sample container
 
   /** If SubtractMean, then subtract things from sff, smm, sfm,
