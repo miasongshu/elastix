@@ -133,13 +133,6 @@ MultiNormalizedCorrelationImageToImageMetric< TFixedImage, TMovingImage >
   DerivativeType             imageJacobian(nzji.size());
   TransformJacobianType      jacobian;
 
-  /** Initialize some variables for intermediate results. */
-  AccumulateType sff = NumericTraits< AccumulateType >::Zero;
-  AccumulateType smm = NumericTraits< AccumulateType >::Zero;
-  AccumulateType sfm = NumericTraits< AccumulateType >::Zero;
-  AccumulateType sf = NumericTraits< AccumulateType >::Zero;
-  AccumulateType sm = NumericTraits< AccumulateType >::Zero;
-
   /** Call non-thread-safe stuff, such as:
    *   this->SetTransformParameters( parameters );
    *   this->GetImageSampler()->Update();
@@ -161,19 +154,24 @@ MultiNormalizedCorrelationImageToImageMetric< TFixedImage, TMovingImage >
 
   /** Compute the three list samples and the derivatives. */
   TransformJacobianContainerType        jacobianContainer;
-  TransformJacobianIndicesContainerType jacobianIndicesContainer;
   SpatialDerivativeContainerType        spatialDerivativesContainer;
   this->ComputeListSampleValuesAndDerivativePlusJacobian(
     listSampleFixed, listSampleMoving,
-    false, jacobianContainer, jacobianIndicesContainer, spatialDerivativesContainer);
+    false, jacobianContainer, spatialDerivativesContainer);
 
   /** Temporary variables. */
-  typedef typename NumericTraits< MeasureType >::AccumulateType AccumulateType;        // TODO probably do not need
   MeasurementVectorType z_F, z_M;
 
   /** Check if enough samples were valid. */
   unsigned long size = this->GetImageSampler()->GetOutput()->Size();
   this->CheckNumberOfSamples(size, this->m_NumberOfPixelsCounted);
+
+  /** Initialize some variables for intermediate results. */
+  AccumulateContainerType sff(this->GetNumberOfFixedImages(), NumericTraits< AccumulateType >::Zero);
+  AccumulateContainerType smm(this->GetNumberOfFixedImages(), NumericTraits< AccumulateType >::Zero);
+  AccumulateContainerType sfm(this->GetNumberOfFixedImages(), NumericTraits< AccumulateType >::Zero);
+  AccumulateContainerType sf(this->GetNumberOfFixedImages(), NumericTraits< AccumulateType >::Zero);
+  AccumulateContainerType sm(this->GetNumberOfFixedImages(), NumericTraits< AccumulateType >::Zero);
 
   /** Loop over all query points, i.e. all samples. */
   for (unsigned long i = 0; i < this->m_NumberOfPixelsCounted; i++)
@@ -185,11 +183,11 @@ MultiNormalizedCorrelationImageToImageMetric< TFixedImage, TMovingImage >
     /** Update some sums needed to calculate the value of NC. */
     for (unsigned int j = 1; j < this->GetNumberOfFixedImages(); j++)
     {
-      sff += z_F[j] * z_F[j];
-      smm += z_M[j] * z_M[j];
-      sfm += z_F[j] * z_M[j];
-      sf += z_F[j];  // Only needed when m_SubtractMean == true
-      sm += z_M[j]; // Only needed when m_SubtractMean == true
+      sff[j] += z_F[j] * z_F[j];
+      smm[j] += z_M[j] * z_M[j];
+      sfm[j] += z_F[j] * z_M[j];
+      sf[j] += z_F[j];  // Only needed when m_SubtractMean == true
+      sm[j] += z_M[j]; // Only needed when m_SubtractMean == true
     }
   } // end for loop over the image sample container
 
@@ -199,22 +197,28 @@ MultiNormalizedCorrelationImageToImageMetric< TFixedImage, TMovingImage >
   const RealType N = static_cast<RealType>(this->m_NumberOfPixelsCounted);
   if (this->m_SubtractMean && this->m_NumberOfPixelsCounted > 0)
   {
-    sff -= (sf * sf / N);
-    smm -= (sm * sm / N);
-    sfm -= (sf * sm / N);
+    for (unsigned int j = 1; j < this->GetNumberOfFixedImages(); j++)
+    {
+      sff[j] -= (sf[j] * sf[j] / N);
+      smm[j] -= (sm[j] * sm[j] / N);
+      sfm[j] -= (sf[j] * sm[j] / N);
+    }
   }
 
-  /** The denominator of the value and the derivative. */
-  const RealType denom = -1.0 * std::sqrt(sff * smm);
+  for (unsigned int j = 1; j < this->GetNumberOfFixedImages(); j++)
+  {
+    /** The denominator of the value and the derivative. */
+    const RealType denom = -1.0 * std::sqrt(sff[j] * smm[j]);
 
-  /** Calculate the value and the derivative. */
-  if (this->m_NumberOfPixelsCounted > 0 && denom < -1e-14)
-  {
-    measure = sfm / denom;
-  }
-  else
-  {
-    measure = NumericTraits< MeasureType >::Zero;
+    /** Calculate the value. */
+    if (this->m_NumberOfPixelsCounted > 0 && denom < -1e-14)
+    {
+      measure += sfm[j] / denom;
+    }
+    else
+    {
+      measure += NumericTraits< MeasureType >::Zero;
+    }
   }
 
   /** Return the NC measure value. */
@@ -277,13 +281,6 @@ MultiNormalizedCorrelationImageToImageMetric< TFixedImage, TMovingImage >
   DerivativeType             imageJacobian( nzji.size() );
   TransformJacobianType      jacobian;
 
-  /** Initialize some variables for intermediate results. */
-  AccumulateType sff = NumericTraits< AccumulateType >::Zero;
-  AccumulateType smm = NumericTraits< AccumulateType >::Zero;
-  AccumulateType sfm = NumericTraits< AccumulateType >::Zero;
-  AccumulateType sf  = NumericTraits< AccumulateType >::Zero;
-  AccumulateType sm  = NumericTraits< AccumulateType >::Zero;
-
   /** Call non-thread-safe stuff, such as:
    *   this->SetTransformParameters( parameters );
    *   this->GetImageSampler()->Update();
@@ -305,11 +302,10 @@ MultiNormalizedCorrelationImageToImageMetric< TFixedImage, TMovingImage >
 
   /** Compute the three list samples and the derivatives. */
   TransformJacobianContainerType        jacobianContainer;
-  TransformJacobianIndicesContainerType jacobianIndicesContainer;
   SpatialDerivativeContainerType        spatialDerivativesContainer;
   this->ComputeListSampleValuesAndDerivativePlusJacobian(
     listSampleFixed, listSampleMoving,
-    true, jacobianContainer, jacobianIndicesContainer, spatialDerivativesContainer);
+    true, jacobianContainer, spatialDerivativesContainer);
 
   /** Temporary variables. */
   typedef typename NumericTraits< MeasureType >::AccumulateType AccumulateType;
@@ -318,6 +314,13 @@ MultiNormalizedCorrelationImageToImageMetric< TFixedImage, TMovingImage >
   /** Check if enough samples were valid. */
   unsigned long size = this->GetImageSampler()->GetOutput()->Size();
   this->CheckNumberOfSamples(size, this->m_NumberOfPixelsCounted);
+
+  /** Initialize some variables for intermediate results. */
+  AccumulateContainerType sff(this->GetNumberOfFixedImages(), NumericTraits< AccumulateType >::Zero);
+  AccumulateContainerType smm(this->GetNumberOfFixedImages(), NumericTraits< AccumulateType >::Zero);
+  AccumulateContainerType sfm(this->GetNumberOfFixedImages(), NumericTraits< AccumulateType >::Zero);
+  AccumulateContainerType sf(this->GetNumberOfFixedImages(), NumericTraits< AccumulateType >::Zero);
+  AccumulateContainerType sm(this->GetNumberOfFixedImages(), NumericTraits< AccumulateType >::Zero);
 
   /** Loop over all query points, i.e. all samples. */
   for (unsigned long i = 0; i < this->m_NumberOfPixelsCounted; i++)
@@ -329,11 +332,11 @@ MultiNormalizedCorrelationImageToImageMetric< TFixedImage, TMovingImage >
     for (unsigned int j = 1; j < this->GetNumberOfFixedImages(); j++)
     {
       /** Update some sums needed to calculate the value of NC. */
-      sff += z_F[j] * z_F[j];
-      smm += z_M[j] * z_M[j];
-      sfm += z_F[j] * z_M[j];
-      sf += z_F[j];  // Only needed when m_SubtractMean == true
-      sm += z_M[j]; // Only needed when m_SubtractMean == true
+      sff[j] += z_F[j] * z_F[j];
+      smm[j] += z_M[j] * z_M[j];
+      sfm[j] += z_F[j] * z_M[j];
+      sf[j] += z_F[j];  // Only needed when m_SubtractMean == true
+      sm[j] += z_M[j]; // Only needed when m_SubtractMean == true
 
       /** Compute this pixel's contribution to the derivative terms. */
       this->UpdateDerivativeTerms(
@@ -347,34 +350,37 @@ MultiNormalizedCorrelationImageToImageMetric< TFixedImage, TMovingImage >
   const RealType N = static_cast< RealType >( this->m_NumberOfPixelsCounted );
   if( this->m_SubtractMean && this->m_NumberOfPixelsCounted > 0 )
   {
-    sff -= ( sf * sf / N );
-    smm -= ( sm * sm / N );
-    sfm -= ( sf * sm / N );
-
-    for( unsigned int i = 0; i < this->GetNumberOfParameters(); i++ )
+    for (unsigned int j = 1; j < this->GetNumberOfFixedImages(); j++)
     {
-      derivativeF[ i ] -= sf * differential[ i ] / N;
-      derivativeM[ i ] -= sm * differential[ i ] / N;
+      sff[j] -= (sf[j] * sf[j] / N);
+      smm[j] -= (sm[j] * sm[j] / N);
+      sfm[j] -= (sf[j] * sm[j] / N);
+
+      for (unsigned int i = 0; i < this->GetNumberOfParameters(); i++)
+      {
+        derivativeF[i] -= sf[j] * differential[i] / N;
+        derivativeM[i] -= sm[j] * differential[i] / N;
+      }
     }
   }
 
-  /** The denominator of the value and the derivative. */
-  const RealType denom = -1.0 * std::sqrt( sff * smm );
+  value = NumericTraits< MeasureType >::Zero;
+  derivative.Fill(NumericTraits< DerivativeValueType >::ZeroValue());
+  for (unsigned int j = 1; j < this->GetNumberOfFixedImages(); j++)
+  {
+    /** The denominator of the value and the derivative. */
+    const RealType denom = -1.0 * std::sqrt(sff[j] * smm[j]);
 
-  /** Calculate the value and the derivative. */
-  if( this->m_NumberOfPixelsCounted > 0 && denom < -1e-14 )
-  {
-    value = sfm / denom;
-    for( unsigned int i = 0; i < this->GetNumberOfParameters(); i++ )
+    /** Calculate the value and the derivative. */
+    if (this->m_NumberOfPixelsCounted > 0 && denom < -1e-14)
     {
-      derivative[ i ] = ( derivativeF[ i ] - ( sfm / smm ) * derivativeM[ i ] )
-        / denom;
+      value += sfm[j] / denom;
+      for (unsigned int i = 0; i < this->GetNumberOfParameters(); i++)
+      {
+        derivative[i] += (derivativeF[i] - (sfm[j] / smm[j]) * derivativeM[i])
+          / denom;
+      }
     }
-  }
-  else
-  {
-    value = NumericTraits< MeasureType >::Zero;
-    derivative.Fill( NumericTraits< DerivativeValueType >::ZeroValue() );
   }
 
 } // end GetValueAndDerivative()
@@ -391,13 +397,11 @@ MultiNormalizedCorrelationImageToImageMetric< TFixedImage, TMovingImage >
   const ListSamplePointer& listSampleMoving,
   const bool& doDerivative,
   TransformJacobianContainerType& jacobianContainer,
-  TransformJacobianIndicesContainerType& jacobianIndicesContainer,
   SpatialDerivativeContainerType& spatialDerivativesContainer) const
 {
   /** Initialize. */
   this->m_NumberOfPixelsCounted = 0;
   jacobianContainer.resize(0);
-  jacobianIndicesContainer.resize(0);
   spatialDerivativesContainer.resize(0);
 
   /** Get a handle to the sample container. */
@@ -412,7 +416,6 @@ MultiNormalizedCorrelationImageToImageMetric< TFixedImage, TMovingImage >
   /** Get the size of the feature vectors. */
   const unsigned int fixedSize = this->GetNumberOfFixedImages();
   const unsigned int movingSize = this->GetNumberOfMovingImages();
-  const unsigned int jointSize = fixedSize + movingSize;
 
   /** Resize the list samples so that enough memory is allocated. */
   listSampleFixed->SetMeasurementVectorSize(fixedSize);
@@ -424,14 +427,13 @@ MultiNormalizedCorrelationImageToImageMetric< TFixedImage, TMovingImage >
    * gains when nrOfRequestedSamples is about 10000 or higher.
    */
   jacobianContainer.reserve(nrOfRequestedSamples);
-  jacobianIndicesContainer.reserve(nrOfRequestedSamples);
   spatialDerivativesContainer.reserve(nrOfRequestedSamples);
 
   /** Create variables to store intermediate results. */
   RealType                   movingImageValue;
   MovingImagePointType       mappedPoint;
-  double                     fixedFeatureValue = 0.0;
-  double                     movingFeatureValue = 0.0;
+  double                     fixedValue = 0.0;
+  double                     movingValue = 0.0;
   NonZeroJacobianIndicesType nzji(
     this->m_AdvancedTransform->GetNumberOfNonZeroJacobianIndices());
   TransformJacobianType jacobian;
@@ -486,24 +488,24 @@ MultiNormalizedCorrelationImageToImageMetric< TFixedImage, TMovingImage >
       listSampleMoving->SetMeasurement(this->m_NumberOfPixelsCounted, 0,
         movingImageValue);
 
-      /** Get and set the values of the fixed feature images. */
+      /** Get and set the values of the additional fixed images. */
       for (unsigned int j = 1; j < this->GetNumberOfFixedImages(); j++)
       {
-        fixedFeatureValue = this->m_FixedImageInterpolatorVector[j]
+        fixedValue = this->m_FixedImageInterpolatorVector[j]
           ->Evaluate(fixedPoint);
         listSampleFixed->SetMeasurement(
-          this->m_NumberOfPixelsCounted, j, fixedFeatureValue);
+          this->m_NumberOfPixelsCounted, j, fixedValue);
       }
 
-      /** Get and set the values of the moving feature images. */
+      /** Get and set the values of the additional moving images. */
       for (unsigned int j = 1; j < this->GetNumberOfMovingImages(); j++)
       {
-        movingFeatureValue = this->m_InterpolatorVector[j]
+        movingValue = this->m_InterpolatorVector[j]
           ->Evaluate(mappedPoint);
         listSampleMoving->SetMeasurement(
           this->m_NumberOfPixelsCounted,
           j,
-          movingFeatureValue);
+          movingValue);
       }
 
       /** Compute additional stuff for the computation of the derivative, if necessary.
@@ -515,21 +517,12 @@ MultiNormalizedCorrelationImageToImageMetric< TFixedImage, TMovingImage >
         /** Get the TransformJacobian dT/dmu. */
         this->EvaluateTransformJacobian(fixedPoint, jacobian, nzji);
         jacobianContainer.push_back(jacobian);
-        jacobianIndicesContainer.push_back(nzji);
 
         /** Get the spatial derivative of the moving image. */
         SpatialDerivativeType spatialDerivatives(
           this->GetNumberOfMovingImages(),
           this->FixedImageDimension);
         spatialDerivatives.set_row(0, movingImageDerivative.GetDataPointer());
-
-        /** Get the spatial derivatives of the moving feature images. */
-        SpatialDerivativeType movingFeatureImageDerivatives(
-          this->GetNumberOfMovingImages() - 1,
-          this->FixedImageDimension);
-        this->EvaluateMovingFeatureImageDerivatives(
-          mappedPoint, movingFeatureImageDerivatives);
-        spatialDerivatives.update(movingFeatureImageDerivatives, 1, 0);
 
         /** Put the spatial derivatives of this sample into the container. */
         spatialDerivativesContainer.push_back(spatialDerivatives);

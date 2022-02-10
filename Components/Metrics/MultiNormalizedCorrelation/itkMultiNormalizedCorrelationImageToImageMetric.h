@@ -227,7 +227,6 @@ protected:
   typedef typename Superclass::CentralDifferenceGradientFilterType CentralDifferenceGradientFilterType;
   typedef typename Superclass::MovingImageDerivativeType           MovingImageDerivativeType;
   typedef std::vector< TransformJacobianType >                     TransformJacobianContainerType;
-  typedef std::vector< NonZeroJacobianIndicesType >                TransformJacobianIndicesContainerType;
   typedef Array2D< double >                                        SpatialDerivativeType;
   typedef std::vector< SpatialDerivativeType >                     SpatialDerivativeContainerType;
 
@@ -246,7 +245,6 @@ protected:
       const ListSamplePointer& listSampleMoving,
       const bool& doDerivative,
       TransformJacobianContainerType& jacobians,
-      TransformJacobianIndicesContainerType& jacobiansIndices,
       SpatialDerivativeContainerType& spatialDerivatives) const;
 
     /** This function calculates the spatial derivative of the
@@ -277,19 +275,8 @@ private:
   mutable bool m_SubtractMean;
 
   typedef typename NumericTraits< MeasureType >::AccumulateType AccumulateType;
+  typedef std::vector< AccumulateType >                     AccumulateContainerType;
 
-  struct CorrelationGetValueAndDerivativePerThreadStruct
-  {
-    SizeValueType  st_NumberOfPixelsCounted;
-    AccumulateType st_Sff;
-    AccumulateType st_Smm;
-    AccumulateType st_Sfm;
-    AccumulateType st_Sf;
-    AccumulateType st_Sm;
-    DerivativeType st_DerivativeF;
-    DerivativeType st_DerivativeM;
-    DerivativeType st_Differential;
-  };                     
 
 };
 
