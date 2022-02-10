@@ -247,14 +247,6 @@ protected:
       TransformJacobianContainerType& jacobians,
       SpatialDerivativeContainerType& spatialDerivatives) const;
 
-    /** This function calculates the spatial derivative of the
-     * featureNr feature image at the point mappedPoint.
-     * \todo move this to base class.
-     */
-    virtual void EvaluateMovingFeatureImageDerivatives(
-      const MovingImagePointType& mappedPoint,
-      SpatialDerivativeType& featureGradients) const;
-
   /** Compute a pixel's contribution to the derivative terms;
    * Called by GetValueAndDerivative().
    */

@@ -181,7 +181,7 @@ MultiNormalizedCorrelationImageToImageMetric< TFixedImage, TMovingImage >
     listSampleMoving->GetMeasurementVector(i, z_M);
 
     /** Update some sums needed to calculate the value of NC. */
-    for (unsigned int j = 1; j < this->GetNumberOfFixedImages(); j++)
+    for (unsigned int j = 0; j < this->GetNumberOfFixedImages(); j++)
     {
       sff[j] += z_F[j] * z_F[j];
       smm[j] += z_M[j] * z_M[j];
@@ -197,7 +197,7 @@ MultiNormalizedCorrelationImageToImageMetric< TFixedImage, TMovingImage >
   const RealType N = static_cast<RealType>(this->m_NumberOfPixelsCounted);
   if (this->m_SubtractMean && this->m_NumberOfPixelsCounted > 0)
   {
-    for (unsigned int j = 1; j < this->GetNumberOfFixedImages(); j++)
+    for (unsigned int j = 0; j < this->GetNumberOfFixedImages(); j++)
     {
       sff[j] -= (sf[j] * sf[j] / N);
       smm[j] -= (sm[j] * sm[j] / N);
@@ -205,7 +205,7 @@ MultiNormalizedCorrelationImageToImageMetric< TFixedImage, TMovingImage >
     }
   }
 
-  for (unsigned int j = 1; j < this->GetNumberOfFixedImages(); j++)
+  for (unsigned int j = 0; j < this->GetNumberOfFixedImages(); j++)
   {
     /** The denominator of the value and the derivative. */
     const RealType denom = -1.0 * std::sqrt(sff[j] * smm[j]);
@@ -329,7 +329,7 @@ MultiNormalizedCorrelationImageToImageMetric< TFixedImage, TMovingImage >
     listSampleFixed->GetMeasurementVector(i, z_F);
     listSampleMoving->GetMeasurementVector(i, z_M);
 
-    for (unsigned int j = 1; j < this->GetNumberOfFixedImages(); j++)
+    for (unsigned int j = 0; j < this->GetNumberOfFixedImages(); j++)
     {
       /** Update some sums needed to calculate the value of NC. */
       sff[j] += z_F[j] * z_F[j];
@@ -350,7 +350,7 @@ MultiNormalizedCorrelationImageToImageMetric< TFixedImage, TMovingImage >
   const RealType N = static_cast< RealType >( this->m_NumberOfPixelsCounted );
   if( this->m_SubtractMean && this->m_NumberOfPixelsCounted > 0 )
   {
-    for (unsigned int j = 1; j < this->GetNumberOfFixedImages(); j++)
+    for (unsigned int j = 0; j < this->GetNumberOfFixedImages(); j++)
     {
       sff[j] -= (sf[j] * sf[j] / N);
       smm[j] -= (sm[j] * sm[j] / N);
@@ -366,7 +366,7 @@ MultiNormalizedCorrelationImageToImageMetric< TFixedImage, TMovingImage >
 
   value = NumericTraits< MeasureType >::Zero;
   derivative.Fill(NumericTraits< DerivativeValueType >::ZeroValue());
-  for (unsigned int j = 1; j < this->GetNumberOfFixedImages(); j++)
+  for (unsigned int j = 0; j < this->GetNumberOfFixedImages(); j++)
   {
     /** The denominator of the value and the derivative. */
     const RealType denom = -1.0 * std::sqrt(sff[j] * smm[j]);
@@ -547,68 +547,6 @@ MultiNormalizedCorrelationImageToImageMetric< TFixedImage, TMovingImage >
   listSampleMoving->SetActualSize(this->m_NumberOfPixelsCounted);
 
 } // end ComputeListSampleValuesAndDerivativePlusJacobian()
-
-/**
- * ************************ EvaluateMovingFeatureImageDerivatives *************************
- */
-
-template< class TFixedImage, class TMovingImage >
-void
-MultiNormalizedCorrelationImageToImageMetric< TFixedImage, TMovingImage >
-::EvaluateMovingFeatureImageDerivatives(
-  const MovingImagePointType& mappedPoint,
-  SpatialDerivativeType& featureGradients) const
-{
-  /** Convert point to a continous index. */
-  MovingImageContinuousIndexType cindex;
-  this->m_Interpolator->ConvertPointToContinuousIndex(mappedPoint, cindex);
-
-  /** Compute the spatial derivative for all feature images:
-   * - either by calling a special function that only B-spline
-   *   interpolators have,
-   * - or by using a finite difference approximation of the
-   *   pre-computed gradient images.
-   * \todo: for now we only implement the first option.
-   */
-  if (this->m_InterpolatorsAreBSpline && !this->GetComputeGradient())
-  {
-    /** Computed moving image gradient using derivative B-spline kernel. */
-    MovingImageDerivativeType gradient;
-    for (unsigned int i = 1; i < this->GetNumberOfMovingImages(); ++i)
-    {
-      /** Compute the gradient at feature image i. */
-      gradient = this->m_BSplineInterpolatorVector[i]
-        ->EvaluateDerivativeAtContinuousIndex(cindex);
-
-      /** Set the gradient into the Array2D. */
-      featureGradients.set_row(i - 1, gradient.GetDataPointer());
-    } // end for-loop
-  } // end if
-//  else
-//  {
-//  /** Get the gradient by NearestNeighboorInterpolation of the gradient image.
-//  * It is assumed that the gradient image is computed beforehand.
-//  */
-//
-//  /** Round the continuous index to the nearest neighbour. */
-//  MovingImageIndexType index;
-//  for ( unsigned int j = 0; j < MovingImageDimension; j++ )
-//  {
-//  index[ j ] = static_cast<long>( vnl_math::rnd( cindex[ j ] ) );
-//  }
-//
-//  MovingImageDerivativeType gradient;
-//  for ( unsigned int i = 0; i < this->m_NumberOfMovingFeatureImages; ++i )
-//  {
-//  /** Compute the gradient at feature image i. */
-//  gradient = this->m_GradientFeatureImage[ i ]->GetPixel( index );
-//
-//  /** Set the gradient into the Array2D. */
-//  featureGradients.set_column( i, gradient.GetDataPointer() );
-//  } // end for-loop
-//  } // end if
-
-} // end EvaluateMovingFeatureImageDerivatives()
 
 } // end namespace itk
 
