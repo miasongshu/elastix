@@ -487,7 +487,7 @@ ParameterObject
   }
   else if (transformName == "affineMulti")
   {
-    parameterMap["Registration"]                = ParameterValueVectorType(1, "MultiResolutionRegistrationWithFeatures");
+    parameterMap["Registration"]                = ParameterValueVectorType(1, "MultiInputMultiResolutionRegistration");
     parameterMap["Transform"]                   = ParameterValueVectorType(1, "AffineTransform");
     parameterMap["Metric"]                      = ParameterValueVectorType(1, "MultiNormalizedCorrelation");
     parameterMap["MaximumNumberOfIterations"]   = ParameterValueVectorType(1, "256");

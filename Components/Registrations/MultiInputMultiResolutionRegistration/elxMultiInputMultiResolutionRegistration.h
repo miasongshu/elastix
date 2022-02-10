@@ -81,7 +81,7 @@ public:
    * Use this name in the parameter file to select this specific registration framework. \n
    * example: <tt>(Registration "MultiInputMultiResolutionImageRegistration")</tt>\n
    */
-  elxClassNameMacro( "MultiInputMultiResolutionImageRegistration" );
+  elxClassNameMacro( "MultiInputMultiResolutionRegistration" );
 
   /** Typedef's inherited from Superclass1. */
 
