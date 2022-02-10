@@ -1,0 +1,8 @@
+
+ADD_ELXCOMPONENT( MultiInputMultiResolutionRegistration
+ elxMultiInputMultiResolutionRegistration.h
+ elxMultiInputMultiResolutionRegistration.hxx
+ elxMultiInputMultiResolutionRegistration.cxx
+ itkMultiInputMultiResolutionImageRegistration.h
+ itkMultiInputMultiResolutionImageRegistration.hxx )
+
