@@ -108,24 +108,57 @@ MultiInputMultiResolutionRegistration< TElastix >
   }
 
   /** Set the fixed image pyramids. */
-  for( unsigned int i = 0; i < this->GetElastix()->GetNumberOfFixedImagePyramids(); ++i )
+  if (this->GetElastix()->GetNumberOfFixedImagePyramids() == 1)
   {
-    this->SetFixedImagePyramid( this->GetElastix()->
-      GetElxFixedImagePyramidBase( i )->GetAsITKBaseType(), i );
+    for (unsigned int i = 0; i < this->GetElastix()->GetNumberOfFixedImages(); ++i)
+    {
+      this->SetFixedImagePyramid(this->GetElastix()->
+        GetElxFixedImagePyramidBase(0)->GetAsITKBaseType(), i);
+    }
+  }
+  else
+  {
+    for (unsigned int i = 0; i < this->GetElastix()->GetNumberOfFixedImagePyramids(); ++i)
+    {
+      this->SetFixedImagePyramid(this->GetElastix()->
+        GetElxFixedImagePyramidBase(i)->GetAsITKBaseType(), i);
+    }
   }
 
   /** Set the moving image pyramids. */
-  for( unsigned int i = 0; i < this->GetElastix()->GetNumberOfMovingImagePyramids(); ++i )
+  if (this->GetElastix()->GetNumberOfMovingImagePyramids() == 1)
   {
-    this->SetMovingImagePyramid( this->GetElastix()->
-      GetElxMovingImagePyramidBase( i )->GetAsITKBaseType(), i );
+    for (unsigned int i = 0; i < this->GetElastix()->GetNumberOfMovingImages(); ++i)
+    {
+      this->SetMovingImagePyramid(this->GetElastix()->
+        GetElxMovingImagePyramidBase(0)->GetAsITKBaseType(), i);
+    }
+  }
+  else
+  {
+    for (unsigned int i = 0; i < this->GetElastix()->GetNumberOfMovingImagePyramids(); ++i)
+    {
+      this->SetMovingImagePyramid(this->GetElastix()->
+        GetElxMovingImagePyramidBase(i)->GetAsITKBaseType(), i);
+    }
   }
 
   /** Set the moving image interpolators. */
-  for( unsigned int i = 0; i < this->GetElastix()->GetNumberOfInterpolators(); ++i )
+  if (this->GetElastix()->GetNumberOfInterpolators() == 1)
   {
-    this->SetInterpolator( this->GetElastix()->
-      GetElxInterpolatorBase( i )->GetAsITKBaseType(), i );
+    for (unsigned int i = 0; i < this->GetElastix()->GetNumberOfMovingImages(); ++i)
+    {
+      this->SetInterpolator(this->GetElastix()->
+        GetElxInterpolatorBase(0)->GetAsITKBaseType(), i);
+    }
+  }
+  else
+  {
+    for (unsigned int i = 0; i < this->GetElastix()->GetNumberOfInterpolators(); ++i)
+    {
+      this->SetInterpolator(this->GetElastix()->
+        GetElxInterpolatorBase(i)->GetAsITKBaseType(), i);
+    }
   }
 
   /** Set the optimizer. */
