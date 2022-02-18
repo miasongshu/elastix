@@ -109,6 +109,11 @@ public:
   typedef std::vector< InterpolatorPointer >           InterpolatorVectorType;
   typedef std::vector< FixedImageInterpolatorPointer > FixedImageInterpolatorVectorType;
 
+  /** Typedef's for the moving image interpolators. */
+  typedef typename Superclass::BSplineInterpolatorType BSplineInterpolatorType;
+  typedef typename BSplineInterpolatorType::Pointer    BSplineInterpolatorPointer;
+  typedef std::vector< BSplineInterpolatorPointer >    BSplineInterpolatorVectorType;
+
   /** ******************** Fixed images ******************** */
 
   /** Set the fixed images. */
@@ -312,6 +317,14 @@ public:
   /** Get the number of fixed image interpolators. */
   itkGetConstMacro( NumberOfFixedImageInterpolators, unsigned int );
 
+
+
+  /** ******************** BSplineInterpolators ********************
+  /** Get the fixed image interpolators. */
+  virtual BSplineInterpolatorType* GetBSplineInterpolator(unsigned int pos) const;
+
+
+
   /** ******************** Other public functions ******************** */
 
   /** Initialisation. */
@@ -331,10 +344,6 @@ protected:
   typedef typename Superclass::MovingImageDerivativeType      MovingImageDerivativeType;
   typedef typename Superclass::MovingImageContinuousIndexType MovingImageContinuousIndexType;
 
-  /** Typedef's for the moving image interpolators. */
-  typedef typename Superclass::BSplineInterpolatorType BSplineInterpolatorType;
-  typedef typename BSplineInterpolatorType::Pointer    BSplineInterpolatorPointer;
-  typedef std::vector< BSplineInterpolatorPointer >    BSplineInterpolatorVectorType;
 
   /** Initialize variables related to the image sampler; called by Initialize. */
   void InitializeImageSampler( void ) override;
@@ -351,6 +360,13 @@ protected:
     const MovingImagePointType & mappedPoint,
     RealType & movingImageValue,
     MovingImageDerivativeType * gradient ) const override;
+
+  /* overloaded above method, to access different images in case of multi image input */
+  bool EvaluateMovingImageValueAndDerivative(
+    const MovingImagePointType& mappedPoint,
+    RealType& movingImageValue,
+    MovingImageDerivativeType* gradient, const unsigned int pos) const;
+
 
   /** IsInsideMovingMask: Returns the AND of all moving image masks. */
   bool IsInsideMovingMask(

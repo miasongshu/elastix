@@ -136,7 +136,7 @@ itkImplementationGetConstObjectMacro( MovingImage, MovingImageType );
 itkImplementationGetObjectMacro( MovingImageMask, MovingImageMaskType );
 itkImplementationGetObjectMacro( Interpolator, InterpolatorType );
 itkImplementationGetObjectMacro( FixedImageInterpolator, FixedImageInterpolatorType );
-
+itkImplementationGetObjectMacro( BSplineInterpolator, BSplineInterpolatorType );
 
 /**
  * ************************ SetFixedImageRegion *************************
@@ -320,6 +320,63 @@ MultiInputImageToImageMetricBase< TFixedImage, TMovingImage >
     mappedPoint, movingImageValue, gradient );
 
 } // end EvaluateMovingImageValueAndDerivative()
+
+
+/**
+ * ******************* EvaluateMovingImageValueAndDerivative ******************
+ */
+
+template< class TFixedImage, class TMovingImage >
+bool
+MultiInputImageToImageMetricBase< TFixedImage, TMovingImage >
+::EvaluateMovingImageValueAndDerivative(
+  const MovingImagePointType& mappedPoint,
+  RealType& movingImageValue,
+  MovingImageDerivativeType* gradient,
+  const unsigned int pos) const
+{
+
+  /** Check if mapped point inside image buffer. */
+  MovingImageContinuousIndexType cindex;
+  this->m_InterpolatorVector[pos]->ConvertPointToContinuousIndex(mappedPoint, cindex);
+  bool sampleOk = this->GetInterpolator(pos)->IsInsideBuffer(cindex);
+  if (sampleOk)
+  {
+    /** Compute value and possibly derivative. */
+    if (gradient)
+    {
+      if (this->m_InterpolatorsAreBSpline && !this->GetComputeGradient())
+      {
+        /** Compute moving image value and gradient using the B-spline kernel. */
+        this->GetBSplineInterpolator(pos)->EvaluateValueAndDerivativeAtContinuousIndex(
+          cindex, movingImageValue, *gradient);
+      }
+      else
+      {
+        /** Get the gradient by NearestNeighboorInterpolation of the gradient image.
+         * It is assumed that the gradient image is computed.
+         */
+        movingImageValue = this->GetInterpolator(pos)->EvaluateAtContinuousIndex(cindex);
+        MovingImageIndexType index;
+        for (unsigned int j = 0; j < MovingImageDimension; j++)
+        {
+          index[j] = static_cast<long>(Math::Round< double >(cindex[j]));
+        }
+        (*gradient) = this->m_GradientImage->GetPixel(index);
+      }
+    } // end if gradient
+    else
+    {
+      movingImageValue = this->GetInterpolator(pos)->EvaluateAtContinuousIndex(cindex);
+    }
+  } // end if sampleOk
+
+  return sampleOk;
+
+} // end EvaluateMovingImageValueAndDerivative()
+
+
+
 
 
 /**

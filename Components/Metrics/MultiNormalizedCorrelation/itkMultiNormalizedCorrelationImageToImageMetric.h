@@ -230,22 +230,6 @@ protected:
   typedef Array2D< double >                                        SpatialDerivativeType;
   typedef std::vector< SpatialDerivativeType >                     SpatialDerivativeContainerType;
 
-  /** This function takes the fixed image samples from the ImageSampler
-   * and puts them in the listSampleFixed, together with the fixed feature
-   * image samples. Also the corresponding moving image values and moving
-   * feature values are computed and put into listSampleMoving. 
-   * If desired, i.e. if doDerivative is true, then also things needed to
-   * compute the derivative of the cost function to the transform parameters
-   * are computed:
-   * - The sparse Jacobian of the transformation (dT/dmu).
-   * - The spatial derivatives of the moving (feature) images (dm/dx).
-   */
-    virtual void ComputeListSampleValuesAndDerivativePlusJacobian(
-      const ListSamplePointer& listSampleFixed,
-      const ListSamplePointer& listSampleMoving,
-      const bool& doDerivative,
-      TransformJacobianContainerType& jacobians,
-      SpatialDerivativeContainerType& spatialDerivatives) const;
 
   /** Compute a pixel's contribution to the derivative terms;
    * Called by GetValueAndDerivative().
