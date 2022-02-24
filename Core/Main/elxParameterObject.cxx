@@ -495,6 +495,16 @@ ParameterObject
     parameterMap["Interpolator"]                = ParameterValueVectorType(1, "BSplineInterpolator");
     parameterMap["ResampleInterpolator"]        = ParameterValueVectorType(1, "FinalBSplineInterpolator");
   }
+  else if (transformName == "BSplineMulti")
+  {
+    parameterMap["Registration"] = ParameterValueVectorType(1, "MultiInputMultiResolutionRegistration");
+    parameterMap["Transform"] = ParameterValueVectorType(1, "BSplineTransform");
+    parameterMap["Metric"] = ParameterValueVectorType(1, "MultiNormalizedCorrelation");
+    parameterMap["MaximumNumberOfIterations"] = ParameterValueVectorType(1, "256");
+    parameterMap["AutomaticScalesEstimation"] = ParameterValueVectorType(1, "true");
+    parameterMap["Interpolator"] = ParameterValueVectorType(1, "BSplineInterpolator");
+    parameterMap["ResampleInterpolator"] = ParameterValueVectorType(1, "FinalBSplineInterpolator");
+  }
   else
   {
     itkGenericExceptionMacro( "No default parameter map \"" << transformName << "\"." );
