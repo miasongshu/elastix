@@ -1,0 +1,10 @@
+
+ADD_ELXCOMPONENT( MultiMattesMutualInformationMetric
+ elxMultiMattesMutualInformationMetric.h
+ elxMultiMattesMutualInformationMetric.hxx
+ elxMultiMattesMutualInformationMetric.cxx
+ itkMultiPWHistogramImageToImageMetric.h
+ itkMultiPWHistogramImageToImageMetric.hxx
+ itkMultiPWMutualInformationImageToImageMetric.h
+ itkMultiPWMutualInformationImageToImageMetric.hxx )
+
