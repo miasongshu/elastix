@@ -20,6 +20,9 @@
 
 #include "itkMultiInputImageToImageMetricBase.h"
 
+#include "itkHardLimiterFunction.h"
+#include "itkExponentialLimiterFunction.h"
+
 /** Macros to reduce some copy-paste work.
  * These macros provide the implementation of
  * all Set/GetFixedImage, Set/GetInterpolator etc methods
@@ -115,6 +118,8 @@ MultiInputImageToImageMetricBase< TFixedImage, TMovingImage >
   this->m_NumberOfMovingImageMasks        = 0;
   this->m_NumberOfInterpolators           = 0;
   this->m_NumberOfFixedImageInterpolators = 0;
+  this->m_NumberOfFixedImageLimiters      = 0;
+  this->m_NumberOfMovingImageLimiters     = 0;
 
   this->m_InterpolatorsAreBSpline = false;
 
@@ -128,6 +133,9 @@ itkImplementationSetObjectMacro( MovingImage, const MovingImageType );
 itkImplementationSetObjectMacro( MovingImageMask, MovingImageMaskType );
 itkImplementationSetObjectMacro( Interpolator, InterpolatorType );
 itkImplementationSetObjectMacro2( FixedImageInterpolator, FixedImageInterpolatorType );
+itkImplementationSetObjectMacro( FixedImageLimiter, FixedImageLimiterType );
+itkImplementationSetObjectMacro( MovingImageLimiter, MovingImageLimiterType );
+
 
 /** Get components. */
 itkImplementationGetConstObjectMacro( FixedImage, FixedImageType );
@@ -137,6 +145,8 @@ itkImplementationGetObjectMacro( MovingImageMask, MovingImageMaskType );
 itkImplementationGetObjectMacro( Interpolator, InterpolatorType );
 itkImplementationGetObjectMacro( FixedImageInterpolator, FixedImageInterpolatorType );
 itkImplementationGetObjectMacro( BSplineInterpolator, BSplineInterpolatorType );
+itkImplementationGetConstObjectMacro( FixedImageLimiter, FixedImageLimiterType );
+itkImplementationGetConstObjectMacro( MovingImageLimiter, MovingImageLimiterType );
 
 /**
  * ************************ SetFixedImageRegion *************************
@@ -253,6 +263,147 @@ MultiInputImageToImageMetricBase< TFixedImage, TMovingImage >
 
 } // end Initialize()
 
+/**
+ * ****************** InitializeLimiters *****************************
+ */
+
+template< class TFixedImage, class TMovingImage >
+void
+MultiInputImageToImageMetricBase< TFixedImage, TMovingImage >
+::InitializeLimiters(void)
+{
+  /** Set up fixed limiter. */
+  if (this->GetUseFixedImageLimiter())
+  {
+    if (this->GetFixedImageLimiter() == 0)
+    {
+      itkExceptionMacro(<< "No fixed image limiter has been set!");
+    }
+
+    for (unsigned int i = 0; i < this->GetNumberOfFixedImages(); ++i)
+    {
+      itk::TimeProbe timer;
+      timer.Start();
+
+      typedef typename itk::ComputeImageExtremaFilter<FixedImageType> ComputeFixedImageExtremaFilterType;
+      typename ComputeFixedImageExtremaFilterType::Pointer computeFixedImageExtrema
+        = ComputeFixedImageExtremaFilterType::New();
+      computeFixedImageExtrema->SetInput(this->GetFixedImage(i));
+      computeFixedImageExtrema->SetImageRegion(this->GetFixedImageRegion(i));
+      if (this->m_FixedImageMaskVector[i].IsNotNull())
+      {
+        computeFixedImageExtrema->SetUseMask(true);
+
+        const FixedImageMaskSpatialObject2Type* fMask
+          = dynamic_cast<const FixedImageMaskSpatialObject2Type*>(this->m_FixedImageMaskVector[i].GetPointer());
+        if (fMask)
+        {
+          computeFixedImageExtrema->SetImageSpatialMask(fMask);
+        }
+        else
+        {
+          computeFixedImageExtrema->SetImageMask(this->GetFixedImageMask(i));
+        }
+      }
+
+      computeFixedImageExtrema->Update();
+      timer.Stop();
+      elxout << "  Computing the fixed image #" << i << "  extrema took "
+        << static_cast<long>(timer.GetMean() * 1000) << " ms." << std::endl;
+
+      // TODO Those are temp? only used to initialize limiter. If not, need to extend MultiInput...
+      this->m_FixedImageTrueMax = computeFixedImageExtrema->GetMaximum();
+      this->m_FixedImageTrueMin = computeFixedImageExtrema->GetMinimum();
+
+      this->m_FixedImageMinLimit = static_cast<FixedImageLimiterOutputType>(
+        this->m_FixedImageTrueMin - this->m_FixedLimitRangeRatio * (this->m_FixedImageTrueMax - this->m_FixedImageTrueMin));
+      this->m_FixedImageMaxLimit = static_cast<FixedImageLimiterOutputType>(
+        this->m_FixedImageTrueMax + this->m_FixedLimitRangeRatio * (this->m_FixedImageTrueMax - this->m_FixedImageTrueMin));
+
+      if (i > 0)
+      {
+        /** Initialize limiter. */
+        typedef itk::HardLimiterFunction< RealType, FixedImageDimension >         FixedLimiterType;
+        this->SetFixedImageLimiter(FixedLimiterType::New(), i);
+      }
+
+      this->m_FixedImageLimiterVector[i]->SetLowerThreshold(
+        static_cast<RealType>(this->m_FixedImageTrueMin));
+      this->m_FixedImageLimiterVector[i]->SetUpperThreshold(
+        static_cast<RealType>(this->m_FixedImageTrueMax));
+      this->m_FixedImageLimiterVector[i]->SetLowerBound(this->m_FixedImageMinLimit);
+      this->m_FixedImageLimiterVector[i]->SetUpperBound(this->m_FixedImageMaxLimit);
+
+      this->m_FixedImageLimiterVector[i]->Initialize();
+    }
+  }
+
+  /** Set up moving limiter. */
+  if (this->GetUseMovingImageLimiter())
+  {
+    if (this->GetMovingImageLimiter() == 0)
+    {
+      itkExceptionMacro(<< "No moving image limiter has been set!");
+    }
+
+    for (unsigned int i = 0; i < this->GetNumberOfMovingImages(); ++i)
+    {
+      itk::TimeProbe timer;
+      timer.Start();
+
+      typedef typename itk::ComputeImageExtremaFilter<MovingImageType> ComputeMovingImageExtremaFilterType;
+      typename ComputeMovingImageExtremaFilterType::Pointer computeMovingImageExtrema
+        = ComputeMovingImageExtremaFilterType::New();
+      computeMovingImageExtrema->SetInput(this->GetMovingImage(i));
+      computeMovingImageExtrema->SetImageRegion(this->GetMovingImage(i)->GetBufferedRegion());
+      if (this->m_MovingImageMaskVector[i].IsNotNull())
+      {
+        computeMovingImageExtrema->SetUseMask(true);
+        const MovingImageMaskSpatialObject2Type* mMask
+          = dynamic_cast<const MovingImageMaskSpatialObject2Type*>(this->m_MovingImageMaskVector[i].GetPointer());
+        if (mMask)
+        {
+          computeMovingImageExtrema->SetImageSpatialMask(mMask);
+        }
+        else
+        {
+          computeMovingImageExtrema->SetImageMask(this->GetMovingImageMask(i));
+        }
+      }
+      computeMovingImageExtrema->Update();
+
+      timer.Stop();
+      elxout << "  Computing the moving image #" << i << " extrema took "
+        << static_cast<long>(timer.GetMean() * 1000) << " ms." << std::endl;
+
+      // TODO see comment above
+      this->m_MovingImageTrueMax = computeMovingImageExtrema->GetMaximum();
+      this->m_MovingImageTrueMin = computeMovingImageExtrema->GetMinimum();
+
+      this->m_MovingImageMinLimit = static_cast<MovingImageLimiterOutputType>(
+        this->m_MovingImageTrueMin - this->m_MovingLimitRangeRatio * (this->m_MovingImageTrueMax - this->m_MovingImageTrueMin));
+      this->m_MovingImageMaxLimit = static_cast<MovingImageLimiterOutputType>(
+        this->m_MovingImageTrueMax + this->m_MovingLimitRangeRatio * (this->m_MovingImageTrueMax - this->m_MovingImageTrueMin));
+
+      if (i > 0)
+      {
+        /** Initialize limiter. */
+        typedef itk::ExponentialLimiterFunction< RealType, MovingImageDimension > MovingLimiterType;
+        this->SetMovingImageLimiter(MovingLimiterType::New(), i);
+      }
+
+      this->m_MovingImageLimiterVector[i]->SetLowerThreshold(
+        static_cast<RealType>(this->m_MovingImageTrueMin));
+      this->m_MovingImageLimiterVector[i]->SetUpperThreshold(
+        static_cast<RealType>(this->m_MovingImageTrueMax));
+      this->m_MovingImageLimiterVector[i]->SetLowerBound(this->m_MovingImageMinLimit);
+      this->m_MovingImageLimiterVector[i]->SetUpperBound(this->m_MovingImageMaxLimit);
+
+      this->m_MovingImageLimiterVector[i]->Initialize();
+    }
+  }
+
+} // end InitializeLimiters()
 
 /**
  * ********************* InitializeImageSampler ****************************

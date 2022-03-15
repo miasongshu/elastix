@@ -389,9 +389,9 @@ MultiPWMutualInformationImageToImageMetric< TFixedImage, TMovingImage >
         RealType fixedImageValue = static_cast<RealType>((*fiter).Value().m_ImageValue);
 
         /** Make sure the values fall within the histogram range. */
-        fixedImageValue = this->GetFixedImageLimiter()
+        fixedImageValue = this->GetFixedImageLimiter(pos)
           ->Evaluate(fixedImageValue);
-        movingImageValue = this->GetMovingImageLimiter()
+        movingImageValue = this->GetMovingImageLimiter(pos)
           ->Evaluate(movingImageValue, movingImageDerivative);
 
         /** Get the transform Jacobian dT/dmu. */
@@ -565,8 +565,8 @@ MultiPWMutualInformationImageToImageMetric< TFixedImage, TMovingImage >
         RealType fixedImageValue = static_cast<RealType>((*fiter).Value().m_ImageValue);
 
         /** Make sure the values fall within the histogram range. */
-        fixedImageValue = this->GetFixedImageLimiter()->Evaluate(fixedImageValue);
-        movingImageValue = this->GetMovingImageLimiter()
+        fixedImageValue = this->GetFixedImageLimiter(pos)->Evaluate(fixedImageValue);
+        movingImageValue = this->GetMovingImageLimiter(pos)
           ->Evaluate(movingImageValue, movingImageDerivative);
 
 #if 0

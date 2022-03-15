@@ -108,6 +108,8 @@ public:
   typedef std::vector< MovingImageMaskPointer >        MovingImageMaskVectorType;
   typedef std::vector< InterpolatorPointer >           InterpolatorVectorType;
   typedef std::vector< FixedImageInterpolatorPointer > FixedImageInterpolatorVectorType;
+  typedef std::vector< FixedImageLimiterPointer >      FixedImageLimiterVectorType;
+  typedef std::vector< MovingImageLimiterPointer >     MovingImageLimiterVectorType;
 
   /** Typedef's for the moving image interpolators. */
   typedef typename Superclass::BSplineInterpolatorType BSplineInterpolatorType;
@@ -318,11 +320,64 @@ public:
   itkGetConstMacro( NumberOfFixedImageInterpolators, unsigned int );
 
 
-
   /** ******************** BSplineInterpolators ********************
   /** Get the fixed image interpolators. */
   virtual BSplineInterpolatorType* GetBSplineInterpolator(unsigned int pos) const;
 
+
+  /** ******************** Fixed image limiters ******************** */
+
+  /** Set the fixed image limiters. */
+  virtual void SetFixedImageLimiter( FixedImageLimiterType* _arg, unsigned int pos );
+
+  /** Set the first fixed image. */
+  void SetFixedImageLimiter( FixedImageLimiterType* _arg )
+  {
+    this->SetFixedImageLimiter(_arg, 0);
+  }
+
+
+  /** Get the fixed image limiters. */
+  virtual const FixedImageLimiterType* GetFixedImageLimiter(unsigned int pos) const;
+
+  /** Get the first fixed image limiter. */
+  const FixedImageLimiterType* GetFixedImageLimiter(void) const
+  {
+    return this->GetFixedImageLimiter(0);
+  }
+
+  /** Set the number of moving image limiters. */
+  itkSetNumberOfMacro( FixedImageLimiter );
+
+  /** Get the number of moving image limiters. */
+  itkGetConstMacro( NumberOfFixedImageLimiters, unsigned int );
+
+  /** ******************** Moving image limiters ******************** */
+
+  /** Set the moving image limiters. */
+  virtual void SetMovingImageLimiter(MovingImageLimiterType* _arg, unsigned int pos);
+
+  /** Set the first moving image. */
+  void SetMovingImageLimiter(MovingImageLimiterType* _arg)
+  {
+    this->SetMovingImageLimiter(_arg, 0);
+  }
+
+
+  /** Get the moving image limiters. */
+  virtual const MovingImageLimiterType* GetMovingImageLimiter(unsigned int pos) const;
+
+  /** Get the first moving image limiter. */
+  const MovingImageLimiterType* GetMovingImageLimiter(void) const
+  {
+    return this->GetMovingImageLimiter(0);
+  }
+
+  /** Set the number of moving image limiters. */
+  itkSetNumberOfMacro( MovingImageLimiter );
+
+  /** Get the number of moving image limiters. */
+  itkGetConstMacro( NumberOfMovingImageLimiters, unsigned int );
 
 
   /** ******************** Other public functions ******************** */
@@ -344,6 +399,9 @@ protected:
   typedef typename Superclass::MovingImageDerivativeType      MovingImageDerivativeType;
   typedef typename Superclass::MovingImageContinuousIndexType MovingImageContinuousIndexType;
 
+  /** Initialize the {Fixed,Moving}[True]{Max,Min}[Limit] and the {Fixed,Moving}ImageLimiter
+   * Only does something when Use{Fixed,Moving}Limiter is set to true; */
+  void InitializeLimiters( void ) override;
 
   /** Initialize variables related to the image sampler; called by Initialize. */
   void InitializeImageSampler( void ) override;
@@ -380,6 +438,8 @@ protected:
   MovingImageMaskVectorType        m_MovingImageMaskVector;
   InterpolatorVectorType           m_InterpolatorVector;
   FixedImageInterpolatorVectorType m_FixedImageInterpolatorVector;
+  FixedImageLimiterVectorType      m_FixedImageLimiterVector;
+  MovingImageLimiterVectorType     m_MovingImageLimiterVector;
 
   bool                          m_InterpolatorsAreBSpline;
   BSplineInterpolatorVectorType m_BSplineInterpolatorVector;
@@ -399,6 +459,8 @@ private:
   unsigned int m_NumberOfMovingImageMasks;
   unsigned int m_NumberOfInterpolators;
   unsigned int m_NumberOfFixedImageInterpolators;
+  unsigned int m_NumberOfFixedImageLimiters;
+  unsigned int m_NumberOfMovingImageLimiters;
 
 };
 

@@ -1089,8 +1089,8 @@ MultiPWHistogramImageToImageMetric< TFixedImage, TMovingImage >
         RealType fixedImageValue = static_cast<RealType>((*fiter).Value().m_ImageValue);
 
         /** Make sure the values fall within the histogram range. */
-        fixedImageValue = this->GetFixedImageLimiter()->Evaluate(fixedImageValue);
-        movingImageValue = this->GetMovingImageLimiter()->Evaluate(movingImageValue);
+        fixedImageValue = this->GetFixedImageLimiter(pos)->Evaluate(fixedImageValue);
+        movingImageValue = this->GetMovingImageLimiter(pos)->Evaluate(movingImageValue);
 
         /** Compute this sample's contribution to the joint distributions. */
         this->UpdateJointPDFAndDerivatives(
@@ -1221,8 +1221,8 @@ MultiPWHistogramImageToImageMetric< TFixedImage, TMovingImage >
         RealType fixedImageValue = static_cast<RealType>((*fiter).Value().m_ImageValue);
 
         /** Make sure the values fall within the histogram range. */
-        fixedImageValue = this->GetFixedImageLimiter()->Evaluate(fixedImageValue);
-        movingImageValue = this->GetMovingImageLimiter()->Evaluate(movingImageValue);
+        fixedImageValue = this->GetFixedImageLimiter(pos)->Evaluate(fixedImageValue);
+        movingImageValue = this->GetMovingImageLimiter(pos)->Evaluate(movingImageValue);
 
         /** Compute this sample's contribution to the joint distributions. */
         this->UpdateJointPDFAndDerivatives(
@@ -1426,8 +1426,8 @@ MultiPWHistogramImageToImageMetric< TFixedImage, TMovingImage >
         RealType fixedImageValue = static_cast<RealType>((*fiter).Value().m_ImageValue);
 
         /** Make sure the values fall within the histogram range. */
-        fixedImageValue = this->GetFixedImageLimiter()->Evaluate(fixedImageValue);
-        movingImageValue = this->GetMovingImageLimiter()->Evaluate(
+        fixedImageValue = this->GetFixedImageLimiter(pos)->Evaluate(fixedImageValue);
+        movingImageValue = this->GetMovingImageLimiter(pos)->Evaluate(
           movingImageValue, movingImageDerivative);
 
         /** Get the TransformJacobian dT/dmu. */
@@ -1527,7 +1527,7 @@ MultiPWHistogramImageToImageMetric< TFixedImage, TMovingImage >
     {
       /** Get the fixed image value and make sure the value falls within the histogram range. */
       RealType fixedImageValue = static_cast< RealType >( ( *fiter ).Value().m_ImageValue );
-      fixedImageValue = this->GetFixedImageLimiter()->Evaluate( fixedImageValue );
+      fixedImageValue = this->GetFixedImageLimiter(pos)->Evaluate( fixedImageValue );
 
       /** Check if point is inside mask. */
       sampleOk = this->IsInsideMovingMask( mappedPoint );
@@ -1544,7 +1544,7 @@ MultiPWHistogramImageToImageMetric< TFixedImage, TMovingImage >
           mappedPoint, movingImageValue, 0, pos );
         if( sampleOk )
         {
-          movingImageValue = this->GetMovingImageLimiter()->Evaluate( movingImageValue );
+          movingImageValue = this->GetMovingImageLimiter(pos)->Evaluate( movingImageValue );
         }
         else
         {
@@ -1599,7 +1599,7 @@ MultiPWHistogramImageToImageMetric< TFixedImage, TMovingImage >
           if( sampleOk )
           {
             movingImageValueRight
-                                        = this->GetMovingImageLimiter()->Evaluate( movingImageValueRight );
+                                        = this->GetMovingImageLimiter(pos)->Evaluate( movingImageValueRight );
             movingImageValuesRight[ i ] = movingImageValueRight;
           }
           else
@@ -1622,7 +1622,7 @@ MultiPWHistogramImageToImageMetric< TFixedImage, TMovingImage >
           if( sampleOk )
           {
             movingImageValueLeft
-                                       = this->GetMovingImageLimiter()->Evaluate( movingImageValueLeft );
+                                       = this->GetMovingImageLimiter(pos)->Evaluate( movingImageValueLeft );
             movingImageValuesLeft[ i ] = movingImageValueLeft;
           }
           else

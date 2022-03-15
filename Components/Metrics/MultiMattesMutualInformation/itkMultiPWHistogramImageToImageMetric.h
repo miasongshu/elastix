@@ -88,7 +88,7 @@ public:
   typedef SmartPointer< const Self >                              ConstPointer;
 
   /** Run-time type information (and related methods). */
-  itkTypeMacro( MultiPWHistogramImageToImageMetric, AdvancedImageToImageMetric );
+  itkTypeMacro( MultiPWHistogramImageToImageMetric, MultiInputImageToImageMetricBase);
 
   /** Typedefs from the superclass. */
   typedef typename Superclass::CoordinateRepresentationType    CoordinateRepresentationType;

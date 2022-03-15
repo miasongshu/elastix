@@ -93,6 +93,8 @@ MultiMattesMutualInformationMetric< TElastix >
   this->SetNumberOfFixedHistogramBins( numberOfFixedHistogramBins );
   this->SetNumberOfMovingHistogramBins( numberOfMovingHistogramBins );
 
+  // There is only one set here - the rest happens in InitializeLimiter
+
   /** Set limiters. */
   typedef itk::HardLimiterFunction< RealType, FixedImageDimension >         FixedLimiterType;
   typedef itk::ExponentialLimiterFunction< RealType, MovingImageDimension > MovingLimiterType;
