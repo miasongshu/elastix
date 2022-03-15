@@ -82,57 +82,65 @@ typename MultiPWMutualInformationImageToImageMetric< TFixedImage, TMovingImage >
 MultiPWMutualInformationImageToImageMetric< TFixedImage, TMovingImage >
 ::GetValue( const ParametersType & parameters ) const
 {
-  /** Construct the JointPDF and Alpha. */
-  this->ComputePDFs( parameters );
+  /** Get the number of multiple images in the cluster */
+  if (this->GetNumberOfFixedImages() != this->GetNumberOfMovingImages())
+    itkExceptionMacro(<< "MultiNormalizedCorrelationImageToImageMetric requires the same number of fixed and moving images");
 
-  /** Normalize the pdfs: p = alpha h. */
-  this->NormalizeJointPDF( this->m_JointPDF, this->m_Alpha );
-
-  /** Compute the fixed and moving marginal pdfs, by summing over the joint pdf. */
-  this->ComputeMarginalPDF( this->m_JointPDF, this->m_FixedImageMarginalPDF, 0 );
-  this->ComputeMarginalPDF( this->m_JointPDF, this->m_MovingImageMarginalPDF, 1 );
-
-  /** Compute the metric by double summation over histogram. */
-
-  /** Setup iterators */
-  typedef ImageLinearConstIteratorWithIndex< JointPDFType > JointPDFIteratorType;
-  typedef typename MarginalPDFType::const_iterator          MarginalPDFIteratorType;
-
-  JointPDFIteratorType jointPDFit(
-    this->m_JointPDF, this->m_JointPDF->GetLargestPossibleRegion() );
-  jointPDFit.SetDirection( 0 );
-  jointPDFit.GoToBegin();
-  MarginalPDFIteratorType       fixedPDFit   = this->m_FixedImageMarginalPDF.begin();
-  const MarginalPDFIteratorType fixedPDFend  = this->m_FixedImageMarginalPDF.end();
-  MarginalPDFIteratorType       movingPDFit  = this->m_MovingImageMarginalPDF.begin();
-  const MarginalPDFIteratorType movingPDFend = this->m_MovingImageMarginalPDF.end();
-
-  /** Loop over histogram. */
+  const unsigned int clusterSize = this->GetNumberOfFixedImages();
+  /** Loop over all the multiple images in the cluster */
   double MI = 0.0;
-  while( fixedPDFit != fixedPDFend )
+  for (unsigned int pos = 0; pos < clusterSize; ++pos)
   {
-    const double fixedImagePDFValue = *fixedPDFit;
-    movingPDFit = this->m_MovingImageMarginalPDF.begin();
-    while( movingPDFit != movingPDFend )
+    /** Construct the JointPDF and Alpha. */
+    this->ComputePDFs(parameters, pos);
+
+    /** Normalize the pdfs: p = alpha h. */
+    this->NormalizeJointPDF(this->m_JointPDF, this->m_Alpha);
+
+    /** Compute the fixed and moving marginal pdfs, by summing over the joint pdf. */
+    this->ComputeMarginalPDF(this->m_JointPDF, this->m_FixedImageMarginalPDF, 0);
+    this->ComputeMarginalPDF(this->m_JointPDF, this->m_MovingImageMarginalPDF, 1);
+
+    /** Compute the metric by double summation over histogram. */
+
+    /** Setup iterators */
+    typedef ImageLinearConstIteratorWithIndex< JointPDFType > JointPDFIteratorType;
+    typedef typename MarginalPDFType::const_iterator          MarginalPDFIteratorType;
+
+    JointPDFIteratorType jointPDFit(
+      this->m_JointPDF, this->m_JointPDF->GetLargestPossibleRegion());
+    jointPDFit.SetDirection(0);
+    jointPDFit.GoToBegin();
+    MarginalPDFIteratorType       fixedPDFit = this->m_FixedImageMarginalPDF.begin();
+    const MarginalPDFIteratorType fixedPDFend = this->m_FixedImageMarginalPDF.end();
+    MarginalPDFIteratorType       movingPDFit = this->m_MovingImageMarginalPDF.begin();
+    const MarginalPDFIteratorType movingPDFend = this->m_MovingImageMarginalPDF.end();
+
+    /** Loop over histogram. */
+    while (fixedPDFit != fixedPDFend)
     {
-      const double movingImagePDFValue = *movingPDFit;
-      const double fixPDFmovPDF        = fixedImagePDFValue * movingImagePDFValue;
-      const double jointPDFValue       = jointPDFit.Get();
-
-      /** Check for non-zero bin contribution. */
-      if( jointPDFValue > 1e-16 && fixPDFmovPDF > 1e-16 )
+      const double fixedImagePDFValue = *fixedPDFit;
+      movingPDFit = this->m_MovingImageMarginalPDF.begin();
+      while (movingPDFit != movingPDFend)
       {
-        MI += jointPDFValue * std::log( jointPDFValue / fixPDFmovPDF );
-      }
-      ++movingPDFit;
-      ++jointPDFit;
-    }  // end while-loop over moving index
+        const double movingImagePDFValue = *movingPDFit;
+        const double fixPDFmovPDF = fixedImagePDFValue * movingImagePDFValue;
+        const double jointPDFValue = jointPDFit.Get();
 
-    ++fixedPDFit;
-    jointPDFit.NextLine();
+        /** Check for non-zero bin contribution. */
+        if (jointPDFValue > 1e-16 && fixPDFmovPDF > 1e-16)
+        {
+          MI += jointPDFValue * std::log(jointPDFValue / fixPDFmovPDF);
+        }
+        ++movingPDFit;
+        ++jointPDFit;
+      }  // end while-loop over moving index
 
-  } // end while-loop over fixed index
+      ++fixedPDFit;
+      jointPDFit.NextLine();
 
+    } // end while-loop over fixed index
+  }
   return static_cast< MeasureType >( -1.0 * MI );
 
 } // end GetValue()
@@ -158,86 +166,97 @@ MultiPWMutualInformationImageToImageMetric< TFixedImage, TMovingImage >
     return;
   }
 
-  /** Initialize some variables. */
-  value      = NumericTraits< MeasureType >::Zero;
-  derivative = DerivativeType( this->GetNumberOfParameters() );
-  derivative.Fill( NumericTraits< double >::ZeroValue() );
+  /** Get the number of multiple images in the cluster */
+  if (this->GetNumberOfFixedImages() != this->GetNumberOfMovingImages())
+    itkExceptionMacro(<< "MultiNormalizedCorrelationImageToImageMetric requires the same number of fixed and moving images");
 
-  /** Construct the JointPDF, JointPDFDerivatives, Alpha and its derivatives. */
-  this->ComputePDFsAndPDFDerivatives( parameters );
-
-  /** Normalize the pdfs: p = alpha h. */
-  this->NormalizeJointPDF( this->m_JointPDF, this->m_Alpha );
-
-  /** Compute the fixed and moving marginal pdf by summing over the histogram. */
-  this->ComputeMarginalPDF( this->m_JointPDF, this->m_FixedImageMarginalPDF, 0 );
-  this->ComputeMarginalPDF( this->m_JointPDF, this->m_MovingImageMarginalPDF, 1 );
-
-  /** Compute the metric and derivatives by double summation over histogram. */
-
-  /** Setup iterators .*/
-  typedef ImageLinearConstIteratorWithIndex<
-    JointPDFType >                                 JointPDFIteratorType;
-  typedef ImageLinearConstIteratorWithIndex<
-    JointPDFDerivativesType >                       JointPDFDerivativesIteratorType;
-  typedef typename MarginalPDFType::const_iterator MarginalPDFIteratorType;
-  typedef typename DerivativeType::iterator        DerivativeIteratorType;
-
-  JointPDFIteratorType jointPDFit(
-  this->m_JointPDF, this->m_JointPDF->GetLargestPossibleRegion() );
-  jointPDFit.SetDirection( 0 );
-  jointPDFit.GoToBegin();
-  JointPDFDerivativesIteratorType jointPDFDerivativesit(
-  this->m_JointPDFDerivatives, this->m_JointPDFDerivatives->GetLargestPossibleRegion() );
-  jointPDFDerivativesit.SetDirection( 0 );
-  jointPDFDerivativesit.GoToBegin();
-  MarginalPDFIteratorType       fixedPDFit   = this->m_FixedImageMarginalPDF.begin();
-  const MarginalPDFIteratorType fixedPDFend  = this->m_FixedImageMarginalPDF.end();
-  MarginalPDFIteratorType       movingPDFit  = this->m_MovingImageMarginalPDF.begin();
-  const MarginalPDFIteratorType movingPDFend = this->m_MovingImageMarginalPDF.end();
-  DerivativeIteratorType        derivit      = derivative.begin();
-  const DerivativeIteratorType  derivbegin   = derivative.begin();
-  const DerivativeIteratorType  derivend     = derivative.end();
-
-  /** Loop over the joint histogram. */
+  const unsigned int clusterSize = this->GetNumberOfFixedImages();
+  /** Loop over all the multiple images in the cluster */
   double MI = 0.0;
-  while( fixedPDFit != fixedPDFend )
+  for (unsigned int pos = 0; pos < clusterSize; ++pos)
   {
-    const double fixedImagePDFValue = *fixedPDFit;
-    movingPDFit = this->m_MovingImageMarginalPDF.begin();
-    while( movingPDFit != movingPDFend )
+    /** Initialize some variables. */
+    value = NumericTraits< MeasureType >::Zero;
+    derivative = DerivativeType(this->GetNumberOfParameters());
+    derivative.Fill(NumericTraits< double >::ZeroValue());
+
     {
-      const double movingImagePDFValue = *movingPDFit;
-      const double fixPDFmovPDF        = fixedImagePDFValue * movingImagePDFValue;
-      const double jointPDFValue       = jointPDFit.Get();
 
-      /** Check for non-zero bin contribution. */
-      if( jointPDFValue > 1e-16 && fixPDFmovPDF > 1e-16 )
+      /** Construct the JointPDF, JointPDFDerivatives, Alpha and its derivatives. */
+      this->ComputePDFsAndPDFDerivatives(parameters, pos);
+
+      /** Normalize the pdfs: p = alpha h. */
+      this->NormalizeJointPDF(this->m_JointPDF, this->m_Alpha);
+
+      /** Compute the fixed and moving marginal pdf by summing over the histogram. */
+      this->ComputeMarginalPDF(this->m_JointPDF, this->m_FixedImageMarginalPDF, 0);
+      this->ComputeMarginalPDF(this->m_JointPDF, this->m_MovingImageMarginalPDF, 1);
+
+      /** Compute the metric and derivatives by double summation over histogram. */
+
+      /** Setup iterators .*/
+      typedef ImageLinearConstIteratorWithIndex<
+        JointPDFType >                                 JointPDFIteratorType;
+      typedef ImageLinearConstIteratorWithIndex<
+        JointPDFDerivativesType >                       JointPDFDerivativesIteratorType;
+      typedef typename MarginalPDFType::const_iterator MarginalPDFIteratorType;
+      typedef typename DerivativeType::iterator        DerivativeIteratorType;
+
+      JointPDFIteratorType jointPDFit(
+        this->m_JointPDF, this->m_JointPDF->GetLargestPossibleRegion());
+      jointPDFit.SetDirection(0);
+      jointPDFit.GoToBegin();
+      JointPDFDerivativesIteratorType jointPDFDerivativesit(
+        this->m_JointPDFDerivatives, this->m_JointPDFDerivatives->GetLargestPossibleRegion());
+      jointPDFDerivativesit.SetDirection(0);
+      jointPDFDerivativesit.GoToBegin();
+      MarginalPDFIteratorType       fixedPDFit = this->m_FixedImageMarginalPDF.begin();
+      const MarginalPDFIteratorType fixedPDFend = this->m_FixedImageMarginalPDF.end();
+      MarginalPDFIteratorType       movingPDFit = this->m_MovingImageMarginalPDF.begin();
+      const MarginalPDFIteratorType movingPDFend = this->m_MovingImageMarginalPDF.end();
+      DerivativeIteratorType        derivit = derivative.begin();
+      const DerivativeIteratorType  derivbegin = derivative.begin();
+      const DerivativeIteratorType  derivend = derivative.end();
+
+      /** Loop over the joint histogram. */
+      while (fixedPDFit != fixedPDFend)
       {
-        derivit = derivbegin;
-        const double pRatio      = std::log( jointPDFValue / fixPDFmovPDF );
-        const double pRatioAlpha = this->m_Alpha * pRatio;
-        MI += jointPDFValue * pRatio;
-        while( derivit != derivend )
+        const double fixedImagePDFValue = *fixedPDFit;
+        movingPDFit = this->m_MovingImageMarginalPDF.begin();
+        while (movingPDFit != movingPDFend)
         {
-          /**  Ref: eq 23 of Thevenaz & Unser paper [3]. */
-          ( *derivit ) -= jointPDFDerivativesit.Get() * pRatioAlpha;
-          ++derivit;
-          ++jointPDFDerivativesit;
-        } // end while-loop over parameters
-      } // end if-block to check non-zero bin contribution
+          const double movingImagePDFValue = *movingPDFit;
+          const double fixPDFmovPDF = fixedImagePDFValue * movingImagePDFValue;
+          const double jointPDFValue = jointPDFit.Get();
 
-      ++movingPDFit;
-      ++jointPDFit;
-      jointPDFDerivativesit.NextLine();
+          /** Check for non-zero bin contribution. */
+          if (jointPDFValue > 1e-16 && fixPDFmovPDF > 1e-16)
+          {
+            derivit = derivbegin;
+            const double pRatio = std::log(jointPDFValue / fixPDFmovPDF);
+            const double pRatioAlpha = this->m_Alpha * pRatio;
+            MI += jointPDFValue * pRatio;
+            while (derivit != derivend)
+            {
+              /**  Ref: eq 23 of Thevenaz & Unser paper [3]. */
+              (*derivit) -= jointPDFDerivativesit.Get() * pRatioAlpha;
+              ++derivit;
+              ++jointPDFDerivativesit;
+            } // end while-loop over parameters
+          } // end if-block to check non-zero bin contribution
 
-    }  // end while-loop over moving index
-    ++fixedPDFit;
-    jointPDFit.NextLine();
-  }  // end while-loop over fixed index
+          ++movingPDFit;
+          ++jointPDFit;
+          jointPDFDerivativesit.NextLine();
 
-  value = static_cast< MeasureType >( -1.0 * MI );
+        }  // end while-loop over moving index
+        ++fixedPDFit;
+        jointPDFit.NextLine();
+      }  // end while-loop over fixed index
 
+    }
+    value += static_cast<MeasureType>(-1.0 * MI);
+  }
 } // end GetValueAndAnalyticDerivative()
 
 
@@ -257,32 +276,41 @@ MultiPWMutualInformationImageToImageMetric< TFixedImage, TMovingImage >
    * This function contains a loop over the samples.
    * It executes multi-threadedly when m_UseMultiThread == true.
    */
-  this->ComputePDFs( parameters );
 
-  /** Normalize the joint histogram by alpha. */
-  this->NormalizeJointPDF( this->m_JointPDF, this->m_Alpha );
+   /** Get the number of multiple images in the cluster */
+  if (this->GetNumberOfFixedImages() != this->GetNumberOfMovingImages())
+    itkExceptionMacro(<< "MultiNormalizedCorrelationImageToImageMetric requires the same number of fixed and moving images");
 
-  /** Compute the fixed and moving marginal pdf by summing over the histogram. */
-  this->ComputeMarginalPDF( this->m_JointPDF, this->m_FixedImageMarginalPDF, 0 );
-  this->ComputeMarginalPDF( this->m_JointPDF, this->m_MovingImageMarginalPDF, 1 );
+  const unsigned int clusterSize = this->GetNumberOfFixedImages();
+  /** Loop over all the multiple images in the cluster */
+  for (unsigned int pos = 0; pos < clusterSize; ++pos)
+  {
+    this->ComputePDFs(parameters, pos);
 
-  // \todo: the last three loops over the joint histogram can be done in
-  // one loop, maybe also include the next loop to generate m_PRatioArray.
-  // The effort is probably not worth the gain in performance.
+    /** Normalize the joint histogram by alpha. */
+    this->NormalizeJointPDF(this->m_JointPDF, this->m_Alpha);
 
-  /** Compute the metric value and the intermediate m_PRatioArray
-   * by summation over the joint histogram.
-   */
-  double MI = 0.0;
-  this->ComputeValueAndPRatioArray( MI );
-  value = static_cast< MeasureType >( -1.0 * MI );
+    /** Compute the fixed and moving marginal pdf by summing over the histogram. */
+    this->ComputeMarginalPDF(this->m_JointPDF, this->m_FixedImageMarginalPDF, 0);
+    this->ComputeMarginalPDF(this->m_JointPDF, this->m_MovingImageMarginalPDF, 1);
 
-  /* Compute the derivative.
-   * This function contains a second loop over the samples.
-   * It executes multi-threadedly when m_UseMultiThread == true.
-   */
-  this->ComputeDerivativeLowMemory( derivative );
+    // \todo: the last three loops over the joint histogram can be done in
+    // one loop, maybe also include the next loop to generate m_PRatioArray.
+    // The effort is probably not worth the gain in performance.
 
+    /** Compute the metric value and the intermediate m_PRatioArray
+     * by summation over the joint histogram.
+     */
+    double MI = 0.0;
+    this->ComputeValueAndPRatioArray(MI);
+    value += static_cast<MeasureType>(-1.0 * MI);
+
+    /* Compute the derivative.
+     * This function contains a second loop over the samples.
+     * It executes multi-threadedly when m_UseMultiThread == true.
+     */
+    this->ComputeDerivativeLowMemory(derivative);
+  }
 } // end GetValueAndAnalyticDerivativeLowMemory()
 
 
@@ -311,99 +339,109 @@ MultiPWMutualInformationImageToImageMetric< TFixedImage, TMovingImage >
     preconditioningDivisor.Fill( 0.0 );
   }
 
-  /** Get a handle to the sample container. */
-  ImageSampleContainerPointer sampleContainer = this->GetImageSampler()->GetOutput();
 
-  /** Create iterator over the sample container. */
-  typename ImageSampleContainerType::ConstIterator fiter;
-  typename ImageSampleContainerType::ConstIterator fbegin = sampleContainer->Begin();
-  typename ImageSampleContainerType::ConstIterator fend   = sampleContainer->End();
+  /** Get the number of multiple images in the cluster */
+  if (this->GetNumberOfFixedImages() != this->GetNumberOfMovingImages())
+    itkExceptionMacro(<< "MultiNormalizedCorrelationImageToImageMetric requires the same number of fixed and moving images");
 
-  /** Loop over sample container and compute contribution of each sample to pdfs. */
-  for( fiter = fbegin; fiter != fend; ++fiter )
+  const unsigned int clusterSize = this->GetNumberOfFixedImages();
+  /** Loop over all the multiple images in the cluster */
+  for (unsigned int pos = 0; pos < clusterSize; ++pos)
   {
-    /** Read fixed coordinates and create some variables. */
-    const FixedImagePointType & fixedPoint = ( *fiter ).Value().m_ImageCoordinates;
-    RealType                    movingImageValue;
-    MovingImageDerivativeType   movingImageDerivative;
-    MovingImagePointType        mappedPoint;
+    /** Get a handle to the sample container. */
+    ImageSampleContainerPointer sampleContainer = this->GetImageSampler()->GetOutput();
 
-    /** Transform point and check if it is inside the B-spline support region. */
-    bool sampleOk = this->TransformPoint( fixedPoint, mappedPoint );
+    /** Create iterator over the sample container. */
+    typename ImageSampleContainerType::ConstIterator fiter;
+    typename ImageSampleContainerType::ConstIterator fbegin = sampleContainer->Begin();
+    typename ImageSampleContainerType::ConstIterator fend = sampleContainer->End();
 
-    /** Check if the point is inside the moving mask. */
-    if( sampleOk )
+    /** Loop over sample container and compute contribution of each sample to pdfs. */
+    for (fiter = fbegin; fiter != fend; ++fiter)
     {
-      sampleOk = this->IsInsideMovingMask( mappedPoint );
-    }
+      /** Read fixed coordinates and create some variables. */
+      const FixedImagePointType& fixedPoint = (*fiter).Value().m_ImageCoordinates;
+      RealType                    movingImageValue;
+      MovingImageDerivativeType   movingImageDerivative;
+      MovingImagePointType        mappedPoint;
 
-    /** Compute the moving image value, its derivative, and check
-     * if the point is inside the moving image buffer.
-     */
-    if( sampleOk )
-    {
-      sampleOk = this->EvaluateMovingImageValueAndDerivative(
-        mappedPoint, movingImageValue, &movingImageDerivative );
-    }
+      /** Transform point and check if it is inside the B-spline support region. */
+      bool sampleOk = this->TransformPoint(fixedPoint, mappedPoint);
 
-    if( sampleOk )
-    {
-      /** Get the fixed image value. */
-      RealType fixedImageValue = static_cast< RealType >( ( *fiter ).Value().m_ImageValue );
-
-      /** Make sure the values fall within the histogram range. */
-      fixedImageValue = this->GetFixedImageLimiter()
-        ->Evaluate( fixedImageValue );
-      movingImageValue = this->GetMovingImageLimiter()
-        ->Evaluate( movingImageValue, movingImageDerivative );
-
-      /** Get the transform Jacobian dT/dmu. */
-      this->EvaluateTransformJacobian( fixedPoint, jacobian, nzji );
-
-      /** Compute the inner product (dM/dx)^T (dT/dmu). */
-      this->EvaluateTransformJacobianInnerProduct(
-        jacobian, movingImageDerivative, imageJacobian );
-
-      /** If desired, apply the technique introduced by Tustison. */
-      if( this->GetUseJacobianPreconditioning() )
+      /** Check if the point is inside the moving mask. */
+      if (sampleOk)
       {
-        this->ComputeJacobianPreconditioner( jacobian, nzji,
-          jacobianPreconditioner, preconditioningDivisor );
-        DerivativeValueType * imjacit   = imageJacobian.begin();
-        DerivativeValueType * jacprecit = jacobianPreconditioner.begin();
-        for( unsigned int i = 0; i < nzji.size(); ++i )
-        {
-          while( imjacit != imageJacobian.end() )
-          {
-            ( *imjacit ) *= ( *jacprecit );
-            ++imjacit;
-            ++jacprecit;
-          }
-        }
+        sampleOk = this->IsInsideMovingMask(mappedPoint);
       }
 
-      /** Compute this sample's contribution to the joint distributions. */
-      this->UpdateDerivativeLowMemory(
-        fixedImageValue, movingImageValue, imageJacobian, nzji, derivative );
+      /** Compute the moving image value, its derivative, and check
+       * if the point is inside the moving image buffer.
+       */
+      if (sampleOk)
+      {
+        sampleOk = this->EvaluateMovingImageValueAndDerivative(
+          mappedPoint, movingImageValue, &movingImageDerivative, pos);
+      }
 
-    } // end sampleOk
-  } // end loop over sample container
+      if (sampleOk)
+      {
+        /** Get the fixed image value. */
+        RealType fixedImageValue = static_cast<RealType>((*fiter).Value().m_ImageValue);
 
-  /** If desired, apply the technique introduced by Tustison */
-  if( this->GetUseJacobianPreconditioning() )
-  {
-    DerivativeValueType * derivit = derivative.begin();
-    DerivativeValueType * divisit = preconditioningDivisor.begin();
+        /** Make sure the values fall within the histogram range. */
+        fixedImageValue = this->GetFixedImageLimiter()
+          ->Evaluate(fixedImageValue);
+        movingImageValue = this->GetMovingImageLimiter()
+          ->Evaluate(movingImageValue, movingImageDerivative);
 
-    /** This normalization was not in the Tustison paper, but it helps,
-     * especially for localized mutual information.
-     */
-    const double normalizationFactor = preconditioningDivisor.mean();
-    while( derivit != derivative.end() )
+        /** Get the transform Jacobian dT/dmu. */
+        this->EvaluateTransformJacobian(fixedPoint, jacobian, nzji);
+
+        /** Compute the inner product (dM/dx)^T (dT/dmu). */
+        this->EvaluateTransformJacobianInnerProduct(
+          jacobian, movingImageDerivative, imageJacobian);
+
+        /** If desired, apply the technique introduced by Tustison. */
+        if (this->GetUseJacobianPreconditioning())
+        {
+          this->ComputeJacobianPreconditioner(jacobian, nzji,
+            jacobianPreconditioner, preconditioningDivisor);
+          DerivativeValueType* imjacit = imageJacobian.begin();
+          DerivativeValueType* jacprecit = jacobianPreconditioner.begin();
+          for (unsigned int i = 0; i < nzji.size(); ++i)
+          {
+            while (imjacit != imageJacobian.end())
+            {
+              (*imjacit) *= (*jacprecit);
+              ++imjacit;
+              ++jacprecit;
+            }
+          }
+        }
+
+        /** Compute this sample's contribution to the joint distributions. */
+        this->UpdateDerivativeLowMemory(
+          fixedImageValue, movingImageValue, imageJacobian, nzji, derivative);
+
+      } // end sampleOk
+    } // end loop over sample container
+
+    /** If desired, apply the technique introduced by Tustison */
+    if (this->GetUseJacobianPreconditioning())
     {
-      ( *derivit ) *= normalizationFactor / ( ( *divisit ) + 1e-14 );
-      ++derivit;
-      ++divisit;
+      DerivativeValueType* derivit = derivative.begin();
+      DerivativeValueType* divisit = preconditioningDivisor.begin();
+
+      /** This normalization was not in the Tustison paper, but it helps,
+       * especially for localized mutual information.
+       */
+      const double normalizationFactor = preconditioningDivisor.mean();
+      while (derivit != derivative.end())
+      {
+        (*derivit) *= normalizationFactor / ((*divisit) + 1e-14);
+        ++derivit;
+        ++divisit;
+      }
     }
   }
 
@@ -464,124 +502,133 @@ MultiPWMutualInformationImageToImageMetric< TFixedImage, TMovingImage >
     preconditioningDivisor.Fill( 0.0 );
   }
 
-  /** Get a handle to the sample container. */
-  ImageSampleContainerPointer sampleContainer     = this->GetImageSampler()->GetOutput();
-  const unsigned long         sampleContainerSize = sampleContainer->Size();
+  /** Get the number of multiple images in the cluster */
+  if (this->GetNumberOfFixedImages() != this->GetNumberOfMovingImages())
+    itkExceptionMacro(<< "MultiNormalizedCorrelationImageToImageMetric requires the same number of fixed and moving images");
 
-  /** Get the samples for this thread. */
-  const unsigned long nrOfSamplesPerThreads
-    = static_cast< unsigned long >( std::ceil( static_cast< double >( sampleContainerSize )
-    / static_cast< double >( Self::GetNumberOfWorkUnits() ) ) );
+  const unsigned int clusterSize = this->GetNumberOfFixedImages();
+  /** Loop over all the multiple images in the cluster */
 
-  unsigned long pos_begin = nrOfSamplesPerThreads * threadId;
-  unsigned long pos_end   = nrOfSamplesPerThreads * ( threadId + 1 );
-  pos_begin = ( pos_begin > sampleContainerSize ) ? sampleContainerSize : pos_begin;
-  pos_end   = ( pos_end > sampleContainerSize ) ? sampleContainerSize : pos_end;
-
-  /** Create iterator over the sample container. */
-  typename ImageSampleContainerType::ConstIterator fiter;
-  typename ImageSampleContainerType::ConstIterator fbegin = sampleContainer->Begin();
-  typename ImageSampleContainerType::ConstIterator fend   = sampleContainer->Begin();
-  fbegin                                                 += (int)pos_begin;
-  fend                                                   += (int)pos_end;
-
-  /** Loop over sample container and compute contribution of each sample to pdfs. */
-  for( fiter = fbegin; fiter != fend; ++fiter )
+  for (unsigned int pos = 0; pos < clusterSize; ++pos)
   {
-    /** Read fixed coordinates and create some variables. */
-    const FixedImagePointType & fixedPoint = ( *fiter ).Value().m_ImageCoordinates;
-    RealType                    movingImageValue;
-    MovingImageDerivativeType   movingImageDerivative;
-    MovingImagePointType        mappedPoint;
+    /** Get a handle to the sample container. */
+    ImageSampleContainerPointer sampleContainer = this->GetImageSampler()->GetOutput();
+    const unsigned long         sampleContainerSize = sampleContainer->Size();
 
-    /** Transform point and check if it is inside the B-spline support region. */
-    bool sampleOk = this->TransformPoint( fixedPoint, mappedPoint );
+    /** Get the samples for this thread. */
+    const unsigned long nrOfSamplesPerThreads
+      = static_cast<unsigned long>(std::ceil(static_cast<double>(sampleContainerSize)
+        / static_cast<double>(Self::GetNumberOfWorkUnits())));
 
-    /** Check if the point is inside the moving mask. */
-    if( sampleOk )
+    unsigned long pos_begin = nrOfSamplesPerThreads * threadId;
+    unsigned long pos_end = nrOfSamplesPerThreads * (threadId + 1);
+    pos_begin = (pos_begin > sampleContainerSize) ? sampleContainerSize : pos_begin;
+    pos_end = (pos_end > sampleContainerSize) ? sampleContainerSize : pos_end;
+
+    /** Create iterator over the sample container. */
+    typename ImageSampleContainerType::ConstIterator fiter;
+    typename ImageSampleContainerType::ConstIterator fbegin = sampleContainer->Begin();
+    typename ImageSampleContainerType::ConstIterator fend = sampleContainer->Begin();
+    fbegin += (int)pos_begin;
+    fend += (int)pos_end;
+
+    /** Loop over sample container and compute contribution of each sample to pdfs. */
+    for (fiter = fbegin; fiter != fend; ++fiter)
     {
-      sampleOk = this->IsInsideMovingMask( mappedPoint );
-    }
+      /** Read fixed coordinates and create some variables. */
+      const FixedImagePointType& fixedPoint = (*fiter).Value().m_ImageCoordinates;
+      RealType                    movingImageValue;
+      MovingImageDerivativeType   movingImageDerivative;
+      MovingImagePointType        mappedPoint;
 
-    /** Compute the moving image value, its derivative, and check
-     * if the point is inside the moving image buffer.
-     */
-    if( sampleOk )
-    {
-      sampleOk = this->EvaluateMovingImageValueAndDerivative(
-        mappedPoint, movingImageValue, &movingImageDerivative );
-    }
+      /** Transform point and check if it is inside the B-spline support region. */
+      bool sampleOk = this->TransformPoint(fixedPoint, mappedPoint);
 
-    if( sampleOk )
-    {
-      /** Get the fixed image value. */
-      RealType fixedImageValue = static_cast< RealType >( ( *fiter ).Value().m_ImageValue );
-
-      /** Make sure the values fall within the histogram range. */
-      fixedImageValue  = this->GetFixedImageLimiter()->Evaluate( fixedImageValue );
-      movingImageValue = this->GetMovingImageLimiter()
-        ->Evaluate( movingImageValue, movingImageDerivative );
-
-#if 0
-      /** Get the TransformJacobian dT/dmu. */
-      this->EvaluateTransformJacobian( fixedPoint, jacobian, nzji );
-
-      /** Compute the inner products (dM/dx)^T (dT/dmu). */
-      this->EvaluateTransformJacobianInnerProduct(
-        jacobian, movingImageDerivative, imageJacobian );
-#else
-      /** Compute the inner product of the transform Jacobian dT/dmu and the moving image gradient dM/dx. */
-      this->m_AdvancedTransform->EvaluateJacobianWithImageGradientProduct(
-        fixedPoint, movingImageDerivative, imageJacobian, nzji );
-#endif
-
-      /** If desired, apply the technique introduced by Tustison. */
-      TransformJacobianType jacobian;
-      if( this->GetUseJacobianPreconditioning() )
+      /** Check if the point is inside the moving mask. */
+      if (sampleOk)
       {
-        this->EvaluateTransformJacobian( fixedPoint, jacobian, nzji );
-
-        this->ComputeJacobianPreconditioner( jacobian, nzji,
-          jacobianPreconditioner, preconditioningDivisor );
-        DerivativeValueType * imjacit   = imageJacobian.begin();
-        DerivativeValueType * jacprecit = jacobianPreconditioner.begin();
-        for( unsigned int i = 0; i < nzji.size(); ++i )
-        {
-          while( imjacit != imageJacobian.end() )
-          {
-            ( *imjacit ) *= ( *jacprecit );
-            ++imjacit;
-            ++jacprecit;
-          }
-        }
+        sampleOk = this->IsInsideMovingMask(mappedPoint);
       }
 
-      /** Compute this sample's contribution to the joint distributions. */
-      this->UpdateDerivativeLowMemory(
-        fixedImageValue, movingImageValue, imageJacobian, nzji,
-        derivative );
+      /** Compute the moving image value, its derivative, and check
+       * if the point is inside the moving image buffer.
+       */
+      if (sampleOk)
+      {
+        sampleOk = this->EvaluateMovingImageValueAndDerivative(
+          mappedPoint, movingImageValue, &movingImageDerivative, pos);
+      }
 
-    } // end sampleOk
-  } // end loop over sample container
+      if (sampleOk)
+      {
+        /** Get the fixed image value. */
+        RealType fixedImageValue = static_cast<RealType>((*fiter).Value().m_ImageValue);
 
-  /** If desired, apply the technique introduced by Tustison. */
-  if( this->GetUseJacobianPreconditioning() )
-  {
-    DerivativeValueType * derivit = derivative.begin();
-    DerivativeValueType * divisit = preconditioningDivisor.begin();
+        /** Make sure the values fall within the histogram range. */
+        fixedImageValue = this->GetFixedImageLimiter()->Evaluate(fixedImageValue);
+        movingImageValue = this->GetMovingImageLimiter()
+          ->Evaluate(movingImageValue, movingImageDerivative);
 
-    /** This normalization was not in the Tustison paper, but it helps,
-     * especially for localized mutual information.
-     */
-    const double normalizationFactor = preconditioningDivisor.mean();
-    while( derivit != derivative.end() )
+#if 0
+        /** Get the TransformJacobian dT/dmu. */
+        this->EvaluateTransformJacobian(fixedPoint, jacobian, nzji);
+
+        /** Compute the inner products (dM/dx)^T (dT/dmu). */
+        this->EvaluateTransformJacobianInnerProduct(
+          jacobian, movingImageDerivative, imageJacobian);
+#else
+        /** Compute the inner product of the transform Jacobian dT/dmu and the moving image gradient dM/dx. */
+        this->m_AdvancedTransform->EvaluateJacobianWithImageGradientProduct(
+          fixedPoint, movingImageDerivative, imageJacobian, nzji);
+#endif
+
+        /** If desired, apply the technique introduced by Tustison. */
+        TransformJacobianType jacobian;
+        if (this->GetUseJacobianPreconditioning())
+        {
+          this->EvaluateTransformJacobian(fixedPoint, jacobian, nzji);
+
+          this->ComputeJacobianPreconditioner(jacobian, nzji,
+            jacobianPreconditioner, preconditioningDivisor);
+          DerivativeValueType* imjacit = imageJacobian.begin();
+          DerivativeValueType* jacprecit = jacobianPreconditioner.begin();
+          for (unsigned int i = 0; i < nzji.size(); ++i)
+          {
+            while (imjacit != imageJacobian.end())
+            {
+              (*imjacit) *= (*jacprecit);
+              ++imjacit;
+              ++jacprecit;
+            }
+          }
+        }
+
+        /** Compute this sample's contribution to the joint distributions. */
+        this->UpdateDerivativeLowMemory(
+          fixedImageValue, movingImageValue, imageJacobian, nzji,
+          derivative);
+
+      } // end sampleOk
+    } // end loop over sample container
+
+    /** If desired, apply the technique introduced by Tustison. */
+    if (this->GetUseJacobianPreconditioning())
     {
-      ( *derivit ) *= normalizationFactor / ( ( *divisit ) + 1e-14 );
-      ++derivit;
-      ++divisit;
+      DerivativeValueType* derivit = derivative.begin();
+      DerivativeValueType* divisit = preconditioningDivisor.begin();
+
+      /** This normalization was not in the Tustison paper, but it helps,
+       * especially for localized mutual information.
+       */
+      const double normalizationFactor = preconditioningDivisor.mean();
+      while (derivit != derivative.end())
+      {
+        (*derivit) *= normalizationFactor / ((*divisit) + 1e-14);
+        ++derivit;
+        ++divisit;
+      }
     }
   }
-
 } // end ThreadedComputeDerivativeLowMemory()
 
 
@@ -867,190 +914,198 @@ MultiPWMutualInformationImageToImageMetric< TFixedImage, TMovingImage >
   derivative = DerivativeType( this->GetNumberOfParameters() );
   derivative.Fill( NumericTraits< double >::ZeroValue() );
 
-  /** Construct the JointPDF, JointPDFDerivatives, Alpha and its derivatives. */
-  this->ComputePDFsAndIncrementalPDFs( parameters );
+  /** Get the number of multiple images in the cluster */
+  if (this->GetNumberOfFixedImages() != this->GetNumberOfMovingImages())
+    itkExceptionMacro(<< "MultiNormalizedCorrelationImageToImageMetric requires the same number of fixed and moving images");
 
-  /** Compute the fixed and moving marginal pdf by summing over the histogram. */
-  this->ComputeMarginalPDF( this->m_JointPDF, this->m_FixedImageMarginalPDF, 0 );
-  this->ComputeMarginalPDF( this->m_JointPDF, this->m_MovingImageMarginalPDF, 1 );
-
-  /** Compute the fixed and moving incremental marginal pdfs by summing over the
-   * incremental histogram. Do it for Right and Left.
-   */
-  this->ComputeIncrementalMarginalPDFs( this->m_IncrementalJointPDFRight,
-    this->m_FixedIncrementalMarginalPDFRight, this->m_MovingIncrementalMarginalPDFRight );
-  this->ComputeIncrementalMarginalPDFs( this->m_IncrementalJointPDFLeft,
-    this->m_FixedIncrementalMarginalPDFLeft, this->m_MovingIncrementalMarginalPDFLeft );
-
-  /** Compute the metric and derivatives by double summation over histogram. */
-
-  /** Setup iterators */
-  typedef ImageLinearConstIteratorWithIndex<
-    JointPDFType >                                 JointPDFIteratorType;
-  typedef ImageLinearConstIteratorWithIndex<
-    JointPDFDerivativesType >                       IncrementalJointPDFIteratorType;
-  typedef typename MarginalPDFType::const_iterator MarginalPDFIteratorType;
-  typedef ImageLinearConstIteratorWithIndex<
-    IncrementalMarginalPDFType >                   IncrementalMarginalPDFIteratorType;
-  typedef typename DerivativeType::iterator       DerivativeIteratorType;
-  typedef typename DerivativeType::const_iterator DerivativeConstIteratorType;
-
-  JointPDFIteratorType jointPDFit(
-  this->m_JointPDF, this->m_JointPDF->GetLargestPossibleRegion() );
-  jointPDFit.GoToBegin();
-
-  IncrementalJointPDFIteratorType jointIncPDFRightit( this->m_IncrementalJointPDFRight,
-  this->m_IncrementalJointPDFRight->GetLargestPossibleRegion() );
-  IncrementalJointPDFIteratorType jointIncPDFLeftit( this->m_IncrementalJointPDFLeft,
-  this->m_IncrementalJointPDFLeft->GetLargestPossibleRegion() );
-  jointIncPDFRightit.GoToBegin();
-  jointIncPDFLeftit.GoToBegin();
-
-  MarginalPDFIteratorType       fixedPDFit   = this->m_FixedImageMarginalPDF.begin();
-  const MarginalPDFIteratorType fixedPDFend  = this->m_FixedImageMarginalPDF.end();
-  MarginalPDFIteratorType       movingPDFit  = this->m_MovingImageMarginalPDF.begin();
-  const MarginalPDFIteratorType movingPDFend = this->m_MovingImageMarginalPDF.end();
-
-  IncrementalMarginalPDFIteratorType fixedIncPDFRightit(
-  this->m_FixedIncrementalMarginalPDFRight,
-  this->m_FixedIncrementalMarginalPDFRight->GetLargestPossibleRegion() );
-  IncrementalMarginalPDFIteratorType movingIncPDFRightit(
-  this->m_MovingIncrementalMarginalPDFRight,
-  this->m_MovingIncrementalMarginalPDFRight->GetLargestPossibleRegion() );
-  IncrementalMarginalPDFIteratorType fixedIncPDFLeftit(
-  this->m_FixedIncrementalMarginalPDFLeft,
-  this->m_FixedIncrementalMarginalPDFLeft->GetLargestPossibleRegion() );
-  IncrementalMarginalPDFIteratorType movingIncPDFLeftit(
-  this->m_MovingIncrementalMarginalPDFLeft,
-  this->m_MovingIncrementalMarginalPDFLeft->GetLargestPossibleRegion() );
-  fixedIncPDFRightit.GoToBegin();
-  movingIncPDFRightit.GoToBegin();
-  fixedIncPDFLeftit.GoToBegin();
-  movingIncPDFLeftit.GoToBegin();
-
-  DerivativeIteratorType       derivit    = derivative.begin();
-  const DerivativeIteratorType derivbegin = derivative.begin();
-  const DerivativeIteratorType derivend   = derivative.end();
-
-  DerivativeConstIteratorType       perturbedAlphaRightit    = this->m_PerturbedAlphaRight.begin();
-  const DerivativeConstIteratorType perturbedAlphaRightbegin = this->m_PerturbedAlphaRight.begin();
-  DerivativeConstIteratorType       perturbedAlphaLeftit     = this->m_PerturbedAlphaLeft.begin();
-  const DerivativeConstIteratorType perturbedAlphaLeftbegin  = this->m_PerturbedAlphaLeft.begin();
-
-  double MI = 0.0;
-  while( fixedPDFit != fixedPDFend )
+  const unsigned int clusterSize = this->GetNumberOfFixedImages();
+  /** Loop over all the multiple images in the cluster */
+  for (unsigned int pos = 0; pos < clusterSize; ++pos)
   {
-    const double fixedPDFValue = *fixedPDFit;
+    /** Construct the JointPDF, JointPDFDerivatives, Alpha and its derivatives. */
+    this->ComputePDFsAndIncrementalPDFs(parameters, pos);
 
-    while( movingPDFit != movingPDFend )
+    /** Compute the fixed and moving marginal pdf by summing over the histogram. */
+    this->ComputeMarginalPDF(this->m_JointPDF, this->m_FixedImageMarginalPDF, 0);
+    this->ComputeMarginalPDF(this->m_JointPDF, this->m_MovingImageMarginalPDF, 1);
+
+    /** Compute the fixed and moving incremental marginal pdfs by summing over the
+     * incremental histogram. Do it for Right and Left.
+     */
+    this->ComputeIncrementalMarginalPDFs(this->m_IncrementalJointPDFRight,
+      this->m_FixedIncrementalMarginalPDFRight, this->m_MovingIncrementalMarginalPDFRight);
+    this->ComputeIncrementalMarginalPDFs(this->m_IncrementalJointPDFLeft,
+      this->m_FixedIncrementalMarginalPDFLeft, this->m_MovingIncrementalMarginalPDFLeft);
+
+    /** Compute the metric and derivatives by double summation over histogram. */
+
+    /** Setup iterators */
+    typedef ImageLinearConstIteratorWithIndex<
+      JointPDFType >                                 JointPDFIteratorType;
+    typedef ImageLinearConstIteratorWithIndex<
+      JointPDFDerivativesType >                       IncrementalJointPDFIteratorType;
+    typedef typename MarginalPDFType::const_iterator MarginalPDFIteratorType;
+    typedef ImageLinearConstIteratorWithIndex<
+      IncrementalMarginalPDFType >                   IncrementalMarginalPDFIteratorType;
+    typedef typename DerivativeType::iterator       DerivativeIteratorType;
+    typedef typename DerivativeType::const_iterator DerivativeConstIteratorType;
+
+    JointPDFIteratorType jointPDFit(
+      this->m_JointPDF, this->m_JointPDF->GetLargestPossibleRegion());
+    jointPDFit.GoToBegin();
+
+    IncrementalJointPDFIteratorType jointIncPDFRightit(this->m_IncrementalJointPDFRight,
+      this->m_IncrementalJointPDFRight->GetLargestPossibleRegion());
+    IncrementalJointPDFIteratorType jointIncPDFLeftit(this->m_IncrementalJointPDFLeft,
+      this->m_IncrementalJointPDFLeft->GetLargestPossibleRegion());
+    jointIncPDFRightit.GoToBegin();
+    jointIncPDFLeftit.GoToBegin();
+
+    MarginalPDFIteratorType       fixedPDFit = this->m_FixedImageMarginalPDF.begin();
+    const MarginalPDFIteratorType fixedPDFend = this->m_FixedImageMarginalPDF.end();
+    MarginalPDFIteratorType       movingPDFit = this->m_MovingImageMarginalPDF.begin();
+    const MarginalPDFIteratorType movingPDFend = this->m_MovingImageMarginalPDF.end();
+
+    IncrementalMarginalPDFIteratorType fixedIncPDFRightit(
+      this->m_FixedIncrementalMarginalPDFRight,
+      this->m_FixedIncrementalMarginalPDFRight->GetLargestPossibleRegion());
+    IncrementalMarginalPDFIteratorType movingIncPDFRightit(
+      this->m_MovingIncrementalMarginalPDFRight,
+      this->m_MovingIncrementalMarginalPDFRight->GetLargestPossibleRegion());
+    IncrementalMarginalPDFIteratorType fixedIncPDFLeftit(
+      this->m_FixedIncrementalMarginalPDFLeft,
+      this->m_FixedIncrementalMarginalPDFLeft->GetLargestPossibleRegion());
+    IncrementalMarginalPDFIteratorType movingIncPDFLeftit(
+      this->m_MovingIncrementalMarginalPDFLeft,
+      this->m_MovingIncrementalMarginalPDFLeft->GetLargestPossibleRegion());
+    fixedIncPDFRightit.GoToBegin();
+    movingIncPDFRightit.GoToBegin();
+    fixedIncPDFLeftit.GoToBegin();
+    movingIncPDFLeftit.GoToBegin();
+
+    DerivativeIteratorType       derivit = derivative.begin();
+    const DerivativeIteratorType derivbegin = derivative.begin();
+    const DerivativeIteratorType derivend = derivative.end();
+
+    DerivativeConstIteratorType       perturbedAlphaRightit = this->m_PerturbedAlphaRight.begin();
+    const DerivativeConstIteratorType perturbedAlphaRightbegin = this->m_PerturbedAlphaRight.begin();
+    DerivativeConstIteratorType       perturbedAlphaLeftit = this->m_PerturbedAlphaLeft.begin();
+    const DerivativeConstIteratorType perturbedAlphaLeftbegin = this->m_PerturbedAlphaLeft.begin();
+
+    double MI = 0.0;
+    while (fixedPDFit != fixedPDFend)
     {
-      const double movingPDFValue = *movingPDFit;
-      const double jointPDFValue  = jointPDFit.Get();
-      const double fixPDFmovPDFAlpha
-        = fixedPDFValue * movingPDFValue * this->m_Alpha;
+      const double fixedPDFValue = *fixedPDFit;
 
-      /** Check for non-zero bin contribution and update the mutual information value. */
-      if( jointPDFValue > 1e-16 && fixPDFmovPDFAlpha > 1e-16 )
+      while (movingPDFit != movingPDFend)
       {
-        MI += this->m_Alpha * jointPDFValue * std::log( jointPDFValue / fixPDFmovPDFAlpha );
-      }
+        const double movingPDFValue = *movingPDFit;
+        const double jointPDFValue = jointPDFit.Get();
+        const double fixPDFmovPDFAlpha
+          = fixedPDFValue * movingPDFValue * this->m_Alpha;
 
-      /** Update the derivative. */
-      derivit               = derivbegin;
-      perturbedAlphaRightit = perturbedAlphaRightbegin;
-      perturbedAlphaLeftit  = perturbedAlphaLeftbegin;
-      while( derivit != derivend )
-      {
-        /** Initialize. */
-        double contrib = 0.0;
-
-        /** For clarity, get some values and give them a name.
-         * \todo Does this cost a lot of computation time?
-         */
-        const double jointIncPDFRightValue    = jointIncPDFRightit.Get();
-        const double fixedIncPDFRightValue    = fixedIncPDFRightit.Get();
-        const double movingIncPDFRightValue   = movingIncPDFRightit.Get();
-        const double perturbedAlphaRightValue = *perturbedAlphaRightit;
-
-        /** Compute the contribution of the Right-perturbation to the derivative. */
-        const double perturbedJointPDFRightValue  = jointIncPDFRightValue + jointPDFValue;
-        const double perturbedFixedPDFRightValue  = fixedPDFValue + fixedIncPDFRightValue;
-        const double perturbedMovingPDFRightValue = movingPDFValue + movingIncPDFRightValue;
-        const double perturbedfixPDFmovPDFAlphaRight
-          = perturbedFixedPDFRightValue * perturbedMovingPDFRightValue * perturbedAlphaRightValue;
-
-        if( perturbedJointPDFRightValue > 1e-16 && perturbedfixPDFmovPDFAlphaRight > 1e-16 )
+        /** Check for non-zero bin contribution and update the mutual information value. */
+        if (jointPDFValue > 1e-16 && fixPDFmovPDFAlpha > 1e-16)
         {
-          contrib += perturbedAlphaRightValue * perturbedJointPDFRightValue
-            * std::log( perturbedJointPDFRightValue / perturbedfixPDFmovPDFAlphaRight );
+          MI += this->m_Alpha * jointPDFValue * std::log(jointPDFValue / fixPDFmovPDFAlpha);
         }
 
-        /** For clarity, get some values and give them a name. */
-        const double jointIncPDFLeftValue    = jointIncPDFLeftit.Get();
-        const double fixedIncPDFLeftValue    = fixedIncPDFLeftit.Get();
-        const double movingIncPDFLeftValue   = movingIncPDFLeftit.Get();
-        const double perturbedAlphaLeftValue = *perturbedAlphaLeftit;
-
-        /** Compute the contribution of the Left-perturbation to the derivative. */
-        const double perturbedJointPDFLeftValue  = jointIncPDFLeftValue + jointPDFValue;
-        const double perturbedFixedPDFLeftValue  = fixedPDFValue + fixedIncPDFLeftValue;
-        const double perturbedMovingPDFLeftValue = movingPDFValue + movingIncPDFLeftValue;
-        const double perturbedfixPDFmovPDFAlphaLeft
-          = perturbedFixedPDFLeftValue * perturbedMovingPDFLeftValue * perturbedAlphaLeftValue;
-
-        if( perturbedJointPDFLeftValue > 1e-16 && perturbedfixPDFmovPDFAlphaLeft > 1e-16 )
+        /** Update the derivative. */
+        derivit = derivbegin;
+        perturbedAlphaRightit = perturbedAlphaRightbegin;
+        perturbedAlphaLeftit = perturbedAlphaLeftbegin;
+        while (derivit != derivend)
         {
-          contrib -= perturbedAlphaLeftValue * perturbedJointPDFLeftValue
-            * std::log( perturbedJointPDFLeftValue / perturbedfixPDFmovPDFAlphaLeft );
-        }
+          /** Initialize. */
+          double contrib = 0.0;
 
-        /** Update the derivative component. */
-        ( *derivit ) += contrib;
+          /** For clarity, get some values and give them a name.
+           * \todo Does this cost a lot of computation time?
+           */
+          const double jointIncPDFRightValue = jointIncPDFRightit.Get();
+          const double fixedIncPDFRightValue = fixedIncPDFRightit.Get();
+          const double movingIncPDFRightValue = movingIncPDFRightit.Get();
+          const double perturbedAlphaRightValue = *perturbedAlphaRightit;
 
-        /** Move the iterators to the next parameter. */
-        ++derivit;
-        ++perturbedAlphaRightit;
-        ++perturbedAlphaLeftit;
-        ++jointIncPDFRightit;
-        ++jointIncPDFLeftit;
-        ++fixedIncPDFRightit;
-        ++movingIncPDFRightit;
-        ++fixedIncPDFLeftit;
-        ++movingIncPDFLeftit;
-      }  // end while-loop over parameters
+          /** Compute the contribution of the Right-perturbation to the derivative. */
+          const double perturbedJointPDFRightValue = jointIncPDFRightValue + jointPDFValue;
+          const double perturbedFixedPDFRightValue = fixedPDFValue + fixedIncPDFRightValue;
+          const double perturbedMovingPDFRightValue = movingPDFValue + movingIncPDFRightValue;
+          const double perturbedfixPDFmovPDFAlphaRight
+            = perturbedFixedPDFRightValue * perturbedMovingPDFRightValue * perturbedAlphaRightValue;
 
-      ++jointPDFit;                         // next moving bin
-      ++movingPDFit;                        // next moving bin
-      jointIncPDFRightit.NextLine();        // next moving bin
-      jointIncPDFLeftit.NextLine();         // next moving bin
-      fixedIncPDFRightit.GoToBeginOfLine(); // same fixed bin
-      fixedIncPDFLeftit.GoToBeginOfLine();  // same fixed bin
-      movingIncPDFRightit.NextLine();       // next moving bin
-      movingIncPDFLeftit.NextLine();        // next moving bin
+          if (perturbedJointPDFRightValue > 1e-16 && perturbedfixPDFmovPDFAlphaRight > 1e-16)
+          {
+            contrib += perturbedAlphaRightValue * perturbedJointPDFRightValue
+              * std::log(perturbedJointPDFRightValue / perturbedfixPDFmovPDFAlphaRight);
+          }
 
-    }  // end while-loop over moving index
+          /** For clarity, get some values and give them a name. */
+          const double jointIncPDFLeftValue = jointIncPDFLeftit.Get();
+          const double fixedIncPDFLeftValue = fixedIncPDFLeftit.Get();
+          const double movingIncPDFLeftValue = movingIncPDFLeftit.Get();
+          const double perturbedAlphaLeftValue = *perturbedAlphaLeftit;
 
-    jointPDFit.NextLine();                                // next fixed bin
-    ++fixedPDFit;                                         // next fixed bin
-    movingPDFit = this->m_MovingImageMarginalPDF.begin(); // first moving bin
-    fixedIncPDFRightit.NextLine();                        // next fixed bin
-    fixedIncPDFLeftit.NextLine();                         // next fixed bin
-    movingIncPDFRightit.GoToBegin();                      // first moving bin
-    movingIncPDFLeftit.GoToBegin();                       // first moving bin
+          /** Compute the contribution of the Left-perturbation to the derivative. */
+          const double perturbedJointPDFLeftValue = jointIncPDFLeftValue + jointPDFValue;
+          const double perturbedFixedPDFLeftValue = fixedPDFValue + fixedIncPDFLeftValue;
+          const double perturbedMovingPDFLeftValue = movingPDFValue + movingIncPDFLeftValue;
+          const double perturbedfixPDFmovPDFAlphaLeft
+            = perturbedFixedPDFLeftValue * perturbedMovingPDFLeftValue * perturbedAlphaLeftValue;
 
-  }  // end while-loop over fixed index
+          if (perturbedJointPDFLeftValue > 1e-16 && perturbedfixPDFmovPDFAlphaLeft > 1e-16)
+          {
+            contrib -= perturbedAlphaLeftValue * perturbedJointPDFLeftValue
+              * std::log(perturbedJointPDFLeftValue / perturbedfixPDFmovPDFAlphaLeft);
+          }
 
-  value = static_cast< MeasureType >( -1.0 * MI );
+          /** Update the derivative component. */
+          (*derivit) += contrib;
 
-  /** Divide the derivative by -delta*2. */
-  const double delta2 = -1.0 / ( this->GetFiniteDifferencePerturbation() * 2.0 );
-  derivit = derivative.begin();
-  while( derivit != derivend )
-  {
-    ( *derivit ) *= delta2;
-    ++derivit;
+          /** Move the iterators to the next parameter. */
+          ++derivit;
+          ++perturbedAlphaRightit;
+          ++perturbedAlphaLeftit;
+          ++jointIncPDFRightit;
+          ++jointIncPDFLeftit;
+          ++fixedIncPDFRightit;
+          ++movingIncPDFRightit;
+          ++fixedIncPDFLeftit;
+          ++movingIncPDFLeftit;
+        }  // end while-loop over parameters
+
+        ++jointPDFit;                         // next moving bin
+        ++movingPDFit;                        // next moving bin
+        jointIncPDFRightit.NextLine();        // next moving bin
+        jointIncPDFLeftit.NextLine();         // next moving bin
+        fixedIncPDFRightit.GoToBeginOfLine(); // same fixed bin
+        fixedIncPDFLeftit.GoToBeginOfLine();  // same fixed bin
+        movingIncPDFRightit.NextLine();       // next moving bin
+        movingIncPDFLeftit.NextLine();        // next moving bin
+
+      }  // end while-loop over moving index
+
+      jointPDFit.NextLine();                                // next fixed bin
+      ++fixedPDFit;                                         // next fixed bin
+      movingPDFit = this->m_MovingImageMarginalPDF.begin(); // first moving bin
+      fixedIncPDFRightit.NextLine();                        // next fixed bin
+      fixedIncPDFLeftit.NextLine();                         // next fixed bin
+      movingIncPDFRightit.GoToBegin();                      // first moving bin
+      movingIncPDFLeftit.GoToBegin();                       // first moving bin
+
+    }  // end while-loop over fixed index
+
+    value += static_cast<MeasureType>(-1.0 * MI);
+
+    /** Divide the derivative by -delta*2. */
+    const double delta2 = -1.0 / (this->GetFiniteDifferencePerturbation() * 2.0);
+    derivit = derivative.begin();
+    while (derivit != derivend)
+    {
+      (*derivit) *= delta2;
+      ++derivit;
+    }
   }
-
 } // end GetValueAndFiniteDifferenceDerivative
 
 

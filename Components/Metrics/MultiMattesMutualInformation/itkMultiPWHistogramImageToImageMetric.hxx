@@ -69,9 +69,6 @@ MultiPWHistogramImageToImageMetric< TFixedImage, TMovingImage >
 
   this->m_UseExplicitPDFDerivatives = true;
 
-  /** Initialize the m_ParzenWindowHistogramThreaderParameters */
-  this->m_ParzenWindowHistogramThreaderParameters.m_Metric = this;
-
   // Multi-threading structs
   this->m_ParzenWindowHistogramGetValueAndDerivativePerThreadVariables     = nullptr;
   this->m_ParzenWindowHistogramGetValueAndDerivativePerThreadVariablesSize = 0;
@@ -127,6 +124,8 @@ MultiPWHistogramImageToImageMetric< TFixedImage, TMovingImage >
   /** This function is not complete, but we don't use it anyway. */
 
 } // end PrintSelf()
+
+
 
 
 /**
@@ -1025,7 +1024,7 @@ MultiPWHistogramImageToImageMetric< TFixedImage, TMovingImage >
 template< class TFixedImage, class TMovingImage >
 void
 MultiPWHistogramImageToImageMetric< TFixedImage, TMovingImage >
-::ComputePDFsSingleThreaded( const ParametersType & parameters ) const
+::ComputePDFsSingleThreaded( const ParametersType & parameters, unsigned int pos) const
 {
   /** Initialize some variables. */
   this->m_JointPDF->FillBuffer( 0.0 );
@@ -1047,64 +1046,64 @@ MultiPWHistogramImageToImageMetric< TFixedImage, TMovingImage >
    */
   this->BeforeThreadedGetValueAndDerivative( parameters );
 
-  /** Get a handle to the sample container. */
-  ImageSampleContainerPointer sampleContainer = this->GetImageSampler()->GetOutput();
 
-  /** Create iterator over the sample container. */
-  typename ImageSampleContainerType::ConstIterator fiter;
-  typename ImageSampleContainerType::ConstIterator fbegin = sampleContainer->Begin();
-  typename ImageSampleContainerType::ConstIterator fend   = sampleContainer->End();
+    /** Get a handle to the sample container. */
+    ImageSampleContainerPointer sampleContainer = this->GetImageSampler()->GetOutput();
 
-  /** Loop over sample container and compute contribution of each sample to pdfs. */
-  for( fiter = fbegin; fiter != fend; ++fiter )
-  {
-    /** Read fixed coordinates and initialize some variables. */
-    const FixedImagePointType & fixedPoint = ( *fiter ).Value().m_ImageCoordinates;
-    RealType                    movingImageValue;
-    MovingImagePointType        mappedPoint;
+    /** Create iterator over the sample container. */
+    typename ImageSampleContainerType::ConstIterator fiter;
+    typename ImageSampleContainerType::ConstIterator fbegin = sampleContainer->Begin();
+    typename ImageSampleContainerType::ConstIterator fend = sampleContainer->End();
 
-    /** Transform point and check if it is inside the B-spline support region. */
-    bool sampleOk = this->TransformPoint( fixedPoint, mappedPoint );
-
-    /** Check if point is inside mask. */
-    if( sampleOk )
+    /** Loop over sample container and compute contribution of each sample to pdfs. */
+    for (fiter = fbegin; fiter != fend; ++fiter)
     {
-      sampleOk = this->IsInsideMovingMask( mappedPoint );
-    }
+      /** Read fixed coordinates and initialize some variables. */
+      const FixedImagePointType& fixedPoint = (*fiter).Value().m_ImageCoordinates;
+      RealType                    movingImageValue;
+      MovingImagePointType        mappedPoint;
 
-    /** Compute the moving image value and check if the point is
-     * inside the moving image buffer.
-     */
-    if( sampleOk )
-    {
-      sampleOk = this->EvaluateMovingImageValueAndDerivative(
-        mappedPoint, movingImageValue, 0 );
-    }
+      /** Transform point and check if it is inside the B-spline support region. */
+      bool sampleOk = this->TransformPoint(fixedPoint, mappedPoint);
 
-    if( sampleOk )
-    {
-      this->m_NumberOfPixelsCounted++;
+      /** Check if point is inside mask. */
+      if (sampleOk)
+      {
+        sampleOk = this->IsInsideMovingMask(mappedPoint);
+      }
 
-      /** Get the fixed image value. */
-      RealType fixedImageValue = static_cast< RealType >( ( *fiter ).Value().m_ImageValue );
+      /** Compute the moving image value and check if the point is
+       * inside the moving image buffer.
+       */
+      if (sampleOk)
+      {
+        sampleOk = this->EvaluateMovingImageValueAndDerivative(
+          mappedPoint, movingImageValue, 0, pos);
+      }
 
-      /** Make sure the values fall within the histogram range. */
-      fixedImageValue  = this->GetFixedImageLimiter()->Evaluate( fixedImageValue );
-      movingImageValue = this->GetMovingImageLimiter()->Evaluate( movingImageValue );
+      if (sampleOk)
+      {
+        this->m_NumberOfPixelsCounted++;
 
-      /** Compute this sample's contribution to the joint distributions. */
-      this->UpdateJointPDFAndDerivatives(
-        fixedImageValue, movingImageValue, 0, 0, this->m_JointPDF.GetPointer() );
-    }
+        /** Get the fixed image value. */
+        RealType fixedImageValue = static_cast<RealType>((*fiter).Value().m_ImageValue);
 
-  } // end iterating over fixed image spatial sample container for loop
+        /** Make sure the values fall within the histogram range. */
+        fixedImageValue = this->GetFixedImageLimiter()->Evaluate(fixedImageValue);
+        movingImageValue = this->GetMovingImageLimiter()->Evaluate(movingImageValue);
 
-  /** Check if enough samples were valid. */
-  this->CheckNumberOfSamples( sampleContainer->Size(), this->m_NumberOfPixelsCounted );
+        /** Compute this sample's contribution to the joint distributions. */
+        this->UpdateJointPDFAndDerivatives(
+          fixedImageValue, movingImageValue, 0, 0, this->m_JointPDF.GetPointer());  // works automatically (?)
+      }
 
-  /** Compute alpha. */
+    } // end iterating over fixed image spatial sample container for loop
+
+    /** Check if enough samples were valid. */
+    this->CheckNumberOfSamples(sampleContainer->Size(), this->m_NumberOfPixelsCounted);
+
+    /** Compute alpha. */
   this->m_Alpha = 1.0 / static_cast< double >( this->m_NumberOfPixelsCounted );
-
 } // end ComputePDFsSingleThreaded()
 
 
@@ -1115,12 +1114,12 @@ MultiPWHistogramImageToImageMetric< TFixedImage, TMovingImage >
 template< class TFixedImage, class TMovingImage >
 void
 MultiPWHistogramImageToImageMetric< TFixedImage, TMovingImage >
-::ComputePDFs( const ParametersType & parameters ) const
+::ComputePDFs( const ParametersType & parameters, const unsigned int pos ) const
 {
   /** Option for now to still use the single threaded code. */
   if( !this->m_UseMultiThread )
   {
-    return this->ComputePDFsSingleThreaded( parameters );
+    return this->ComputePDFsSingleThreaded( parameters, pos );
   }
 
   /** Call non-thread-safe stuff, such as:
@@ -1139,7 +1138,7 @@ MultiPWHistogramImageToImageMetric< TFixedImage, TMovingImage >
   this->BeforeThreadedGetValueAndDerivative( parameters );
 
   /** Launch multi-threading JointPDF computation. */
-  this->LaunchComputePDFsThreaderCallback();
+  this->LaunchComputePDFsThreaderCallback(pos);
 
   /** Gather the results from all threads. */
   this->AfterThreadedComputePDFs();
@@ -1154,7 +1153,7 @@ MultiPWHistogramImageToImageMetric< TFixedImage, TMovingImage >
 template< class TFixedImage, class TMovingImage >
 void
 MultiPWHistogramImageToImageMetric< TFixedImage, TMovingImage >
-::ThreadedComputePDFs( ThreadIdType threadId )
+::ThreadedComputePDFs( ThreadIdType threadId, const unsigned int pos)
 {
   /** Get a handle to the pre-allocated joint PDF for the current thread.
    * The initialization is performed here, so that it is done multi-threadedly
@@ -1163,77 +1162,77 @@ MultiPWHistogramImageToImageMetric< TFixedImage, TMovingImage >
   JointPDFPointer & jointPDF = this->m_ParzenWindowHistogramGetValueAndDerivativePerThreadVariables[ threadId ].st_JointPDF;
   jointPDF->FillBuffer( NumericTraits< PDFValueType >::ZeroValue() );
 
-  /** Get a handle to the sample container. */
-  ImageSampleContainerPointer sampleContainer     = this->GetImageSampler()->GetOutput();
-  const unsigned long         sampleContainerSize = sampleContainer->Size();
 
-  /** Get the samples for this thread. */
-  const unsigned long nrOfSamplesPerThreads
-    = static_cast< unsigned long >( std::ceil( static_cast< double >( sampleContainerSize )
-    / static_cast< double >( Self::GetNumberOfWorkUnits() ) ) );
+    /** Get a handle to the sample container. */
+    ImageSampleContainerPointer sampleContainer = this->GetImageSampler()->GetOutput();
+    const unsigned long         sampleContainerSize = sampleContainer->Size();
 
-  unsigned long pos_begin = nrOfSamplesPerThreads * threadId;
-  unsigned long pos_end   = nrOfSamplesPerThreads * ( threadId + 1 );
-  pos_begin = ( pos_begin > sampleContainerSize ) ? sampleContainerSize : pos_begin;
-  pos_end   = ( pos_end > sampleContainerSize ) ? sampleContainerSize : pos_end;
+    /** Get the samples for this thread. */
+    const unsigned long nrOfSamplesPerThreads
+      = static_cast<unsigned long>(std::ceil(static_cast<double>(sampleContainerSize)
+        / static_cast<double>(Self::GetNumberOfWorkUnits())));
 
-  /** Create iterator over the sample container. */
-  typename ImageSampleContainerType::ConstIterator fiter;
-  typename ImageSampleContainerType::ConstIterator fbegin = sampleContainer->Begin();
-  typename ImageSampleContainerType::ConstIterator fend   = sampleContainer->Begin();
-  fbegin                                                 += (int)pos_begin;
-  fend                                                   += (int)pos_end;
+    unsigned long pos_begin = nrOfSamplesPerThreads * threadId;
+    unsigned long pos_end = nrOfSamplesPerThreads * (threadId + 1);
+    pos_begin = (pos_begin > sampleContainerSize) ? sampleContainerSize : pos_begin;
+    pos_end = (pos_end > sampleContainerSize) ? sampleContainerSize : pos_end;
 
-  /** Create variables to store intermediate results. circumvent false sharing */
-  unsigned long numberOfPixelsCounted = 0;
+    /** Create iterator over the sample container. */
+    typename ImageSampleContainerType::ConstIterator fiter;
+    typename ImageSampleContainerType::ConstIterator fbegin = sampleContainer->Begin();
+    typename ImageSampleContainerType::ConstIterator fend = sampleContainer->Begin();
+    fbegin += (int)pos_begin;
+    fend += (int)pos_end;
 
-  /** Loop over sample container and compute contribution of each sample to pdfs. */
-  for( fiter = fbegin; fiter != fend; ++fiter )
-  {
-    /** Read fixed coordinates and initialize some variables. */
-    const FixedImagePointType & fixedPoint = ( *fiter ).Value().m_ImageCoordinates;
-    RealType                    movingImageValue;
-    MovingImagePointType        mappedPoint;
+    /** Create variables to store intermediate results. circumvent false sharing */
+    unsigned long numberOfPixelsCounted = 0;
 
-    /** Transform point and check if it is inside the B-spline support region. */
-    bool sampleOk = this->TransformPoint( fixedPoint, mappedPoint );
-
-    /** Check if point is inside mask. */
-    if( sampleOk )
+    /** Loop over sample container and compute contribution of each sample to pdfs. */
+    for (fiter = fbegin; fiter != fend; ++fiter)
     {
-      sampleOk = this->IsInsideMovingMask( mappedPoint );
-    }
+      /** Read fixed coordinates and initialize some variables. */
+      const FixedImagePointType& fixedPoint = (*fiter).Value().m_ImageCoordinates;
+      RealType                    movingImageValue;
+      MovingImagePointType        mappedPoint;
 
-    /** Compute the moving image value and check if the point is
-     * inside the moving image buffer.
-     */
-    if( sampleOk )
-    {
-      sampleOk = this->EvaluateMovingImageValueAndDerivative(
-        mappedPoint, movingImageValue, 0 );
-    }
+      /** Transform point and check if it is inside the B-spline support region. */
+      bool sampleOk = this->TransformPoint(fixedPoint, mappedPoint);
 
-    if( sampleOk )
-    {
-      numberOfPixelsCounted++;
+      /** Check if point is inside mask. */
+      if (sampleOk)
+      {
+        sampleOk = this->IsInsideMovingMask(mappedPoint);
+      }
 
-      /** Get the fixed image value. */
-      RealType fixedImageValue = static_cast< RealType >( ( *fiter ).Value().m_ImageValue );
+      /** Compute the moving image value and check if the point is
+       * inside the moving image buffer.
+       */
+      if (sampleOk)
+      {
+        sampleOk = this->EvaluateMovingImageValueAndDerivative(
+        mappedPoint, movingImageValue, 0, pos );
+      }
 
-      /** Make sure the values fall within the histogram range. */
-      fixedImageValue  = this->GetFixedImageLimiter()->Evaluate( fixedImageValue );
-      movingImageValue = this->GetMovingImageLimiter()->Evaluate( movingImageValue );
+      if (sampleOk)
+      {
+        numberOfPixelsCounted++;
 
-      /** Compute this sample's contribution to the joint distributions. */
-      this->UpdateJointPDFAndDerivatives(
-        fixedImageValue, movingImageValue, 0, 0,
-        jointPDF.GetPointer() );
-    }
-  } // end iterating over fixed image spatial sample container for loop
+        /** Get the fixed image value. */
+        RealType fixedImageValue = static_cast<RealType>((*fiter).Value().m_ImageValue);
 
-  /** Only update these variables at the end to prevent unnecessary "false sharing". */
+        /** Make sure the values fall within the histogram range. */
+        fixedImageValue = this->GetFixedImageLimiter()->Evaluate(fixedImageValue);
+        movingImageValue = this->GetMovingImageLimiter()->Evaluate(movingImageValue);
+
+        /** Compute this sample's contribution to the joint distributions. */
+        this->UpdateJointPDFAndDerivatives(
+          fixedImageValue, movingImageValue, 0, 0,
+          jointPDF.GetPointer());
+      }
+    } // end iterating over fixed image spatial sample container for loop
+
+    /** Only update these variables at the end to prevent unnecessary "false sharing". */
   this->m_ParzenWindowHistogramGetValueAndDerivativePerThreadVariables[ threadId ].st_NumberOfPixelsCounted = numberOfPixelsCounted;
-
 } // end ThreadedComputePDFs()
 
 
@@ -1311,7 +1310,7 @@ MultiPWHistogramImageToImageMetric< TFixedImage, TMovingImage >
 template< class TFixedImage, class TMovingImage >
 ITK_THREAD_RETURN_TYPE
 MultiPWHistogramImageToImageMetric< TFixedImage, TMovingImage >
-::ComputePDFsThreaderCallback( void * arg )
+::ComputePDFsThreaderCallback( void * arg)
 {
   ThreadInfoType * infoStruct = static_cast< ThreadInfoType * >( arg );
   ThreadIdType     threadId   = infoStruct->WorkUnitID;
@@ -1319,7 +1318,8 @@ MultiPWHistogramImageToImageMetric< TFixedImage, TMovingImage >
   ParzenWindowHistogramMultiThreaderParameterType * temp
     = static_cast< ParzenWindowHistogramMultiThreaderParameterType * >( infoStruct->UserData );
 
-  temp->m_Metric->ThreadedComputePDFs( threadId );
+  //unsigned int pos = 0; // TODO: solve this problem to get the actual image number "pos" here!!!
+  temp->m_Metric->ThreadedComputePDFs( threadId, temp->pos);
 
   return itk::ITK_THREAD_RETURN_DEFAULT_VALUE;
 
@@ -1333,12 +1333,14 @@ MultiPWHistogramImageToImageMetric< TFixedImage, TMovingImage >
 template< class TFixedImage, class TMovingImage >
 void
 MultiPWHistogramImageToImageMetric< TFixedImage, TMovingImage >
-::LaunchComputePDFsThreaderCallback( void ) const
+::LaunchComputePDFsThreaderCallback(const unsigned int pos) const
 {
   /** Setup threader. */
-  this->m_Threader->SetSingleMethod( this->ComputePDFsThreaderCallback,
-    const_cast< void * >( static_cast< const void * >(
-      &this->m_ParzenWindowHistogramThreaderParameters ) ) );
+  ParzenWindowHistogramMultiThreaderParameterType* temp = new ParzenWindowHistogramMultiThreaderParameterType;
+  temp->m_Metric = const_cast<Self*>(this);
+  temp->pos = pos;
+
+  this->m_Threader->SetSingleMethod( this->ComputePDFsThreaderCallback, temp);
 
   /** Launch. */
   this->m_Threader->SingleMethodExecute();
@@ -1353,7 +1355,7 @@ MultiPWHistogramImageToImageMetric< TFixedImage, TMovingImage >
 template< class TFixedImage, class TMovingImage >
 void
 MultiPWHistogramImageToImageMetric< TFixedImage, TMovingImage >
-::ComputePDFsAndPDFDerivatives( const ParametersType & parameters ) const
+::ComputePDFsAndPDFDerivatives( const ParametersType & parameters, unsigned int pos) const
 {
   /** Initialize some variables. */
   this->m_JointPDF->FillBuffer( 0.0 );
@@ -1381,78 +1383,77 @@ MultiPWHistogramImageToImageMetric< TFixedImage, TMovingImage >
    */
   this->BeforeThreadedGetValueAndDerivative( parameters );
 
-  /** Get a handle to the sample container. */
-  ImageSampleContainerPointer sampleContainer = this->GetImageSampler()->GetOutput();
+    /** Get a handle to the sample container. */
+    ImageSampleContainerPointer sampleContainer = this->GetImageSampler()->GetOutput();
 
-  /** Create iterator over the sample container. */
-  typename ImageSampleContainerType::ConstIterator fiter;
-  typename ImageSampleContainerType::ConstIterator fbegin = sampleContainer->Begin();
-  typename ImageSampleContainerType::ConstIterator fend   = sampleContainer->End();
+    /** Create iterator over the sample container. */
+    typename ImageSampleContainerType::ConstIterator fiter;
+    typename ImageSampleContainerType::ConstIterator fbegin = sampleContainer->Begin();
+    typename ImageSampleContainerType::ConstIterator fend = sampleContainer->End();
 
-  /** Loop over sample container and compute contribution of each sample to pdfs. */
-  for( fiter = fbegin; fiter != fend; ++fiter )
-  {
-    /** Read fixed coordinates and initialize some variables. */
-    const FixedImagePointType & fixedPoint = ( *fiter ).Value().m_ImageCoordinates;
-    RealType                    movingImageValue;
-    MovingImagePointType        mappedPoint;
-    MovingImageDerivativeType   movingImageDerivative;
-
-    /** Transform point and check if it is inside the B-spline support region. */
-    bool sampleOk = this->TransformPoint( fixedPoint, mappedPoint );
-
-    /** Check if point is inside mask. */
-    if( sampleOk )
+    /** Loop over sample container and compute contribution of each sample to pdfs. */
+    for (fiter = fbegin; fiter != fend; ++fiter)
     {
-      sampleOk = this->IsInsideMovingMask( mappedPoint );
-    }
+      /** Read fixed coordinates and initialize some variables. */
+      const FixedImagePointType& fixedPoint = (*fiter).Value().m_ImageCoordinates;
+      RealType                    movingImageValue;
+      MovingImagePointType        mappedPoint;
+      MovingImageDerivativeType   movingImageDerivative;
 
-    /** Compute the moving image value M(T(x)) and derivative dM/dx and check if
-     * the point is inside the moving image buffer.
-     */
-    if( sampleOk )
-    {
-      sampleOk = this->EvaluateMovingImageValueAndDerivative(
-        mappedPoint, movingImageValue, &movingImageDerivative );
-    }
+      /** Transform point and check if it is inside the B-spline support region. */
+      bool sampleOk = this->TransformPoint(fixedPoint, mappedPoint);
 
-    if( sampleOk )
-    {
-      this->m_NumberOfPixelsCounted++;
+      /** Check if point is inside mask. */
+      if (sampleOk)
+      {
+        sampleOk = this->IsInsideMovingMask(mappedPoint);
+      }
 
-      /** Get the fixed image value. */
-      RealType fixedImageValue = static_cast< RealType >( ( *fiter ).Value().m_ImageValue );
+      /** Compute the moving image value M(T(x)) and derivative dM/dx and check if
+       * the point is inside the moving image buffer.
+       */
+      if (sampleOk)
+      {
+        sampleOk = this->EvaluateMovingImageValueAndDerivative(
+        mappedPoint, movingImageValue, &movingImageDerivative, pos );
+      }
 
-      /** Make sure the values fall within the histogram range. */
-      fixedImageValue  = this->GetFixedImageLimiter()->Evaluate( fixedImageValue );
-      movingImageValue = this->GetMovingImageLimiter()->Evaluate(
-        movingImageValue, movingImageDerivative );
+      if (sampleOk)
+      {
+        this->m_NumberOfPixelsCounted++;
 
-      /** Get the TransformJacobian dT/dmu. */
-      this->EvaluateTransformJacobian( fixedPoint, jacobian, nzji );
+        /** Get the fixed image value. */
+        RealType fixedImageValue = static_cast<RealType>((*fiter).Value().m_ImageValue);
 
-      /** Compute the inner product (dM/dx)^T (dT/dmu). */
-      this->EvaluateTransformJacobianInnerProduct(
-        jacobian, movingImageDerivative, imageJacobian );
+        /** Make sure the values fall within the histogram range. */
+        fixedImageValue = this->GetFixedImageLimiter()->Evaluate(fixedImageValue);
+        movingImageValue = this->GetMovingImageLimiter()->Evaluate(
+          movingImageValue, movingImageDerivative);
 
-      /** Update the joint pdf and the joint pdf derivatives. */
-      this->UpdateJointPDFAndDerivatives(
-        fixedImageValue, movingImageValue, &imageJacobian, &nzji, this->m_JointPDF.GetPointer() );
+        /** Get the TransformJacobian dT/dmu. */
+        this->EvaluateTransformJacobian(fixedPoint, jacobian, nzji);
 
-    } //end if-block check sampleOk
-  } // end iterating over fixed image spatial sample container for loop
+        /** Compute the inner product (dM/dx)^T (dT/dmu). */
+        this->EvaluateTransformJacobianInnerProduct(
+          jacobian, movingImageDerivative, imageJacobian);
 
-  /** Check if enough samples were valid. */
-  this->CheckNumberOfSamples(
-    sampleContainer->Size(), this->m_NumberOfPixelsCounted );
+        /** Update the joint pdf and the joint pdf derivatives. */
+        this->UpdateJointPDFAndDerivatives(
+          fixedImageValue, movingImageValue, &imageJacobian, &nzji, this->m_JointPDF.GetPointer());
 
-  /** Compute alpha. */
+      } //end if-block check sampleOk
+    } // end iterating over fixed image spatial sample container for loop
+
+    /** Check if enough samples were valid. */
+    this->CheckNumberOfSamples(
+      sampleContainer->Size(), this->m_NumberOfPixelsCounted);
+
+    /** Compute alpha. */
   this->m_Alpha = 0.0;
-  if( this->m_NumberOfPixelsCounted > 0 )
-  {
+    if (this->m_NumberOfPixelsCounted > 0)
+    {
     this->m_Alpha = 1.0 / static_cast< double >( this->m_NumberOfPixelsCounted );
-  }
-
+    }
 } // end ComputePDFsAndPDFDerivatives()
 
 
@@ -1463,7 +1464,7 @@ MultiPWHistogramImageToImageMetric< TFixedImage, TMovingImage >
 template< class TFixedImage, class TMovingImage >
 void
 MultiPWHistogramImageToImageMetric< TFixedImage, TMovingImage >
-::ComputePDFsAndIncrementalPDFs( const ParametersType & parameters ) const
+::ComputePDFsAndIncrementalPDFs( const ParametersType & parameters, unsigned int pos) const
 {
   /** Initialize some variables. */
   this->m_JointPDF->FillBuffer( 0.0 );
@@ -1540,7 +1541,7 @@ MultiPWHistogramImageToImageMetric< TFixedImage, TMovingImage >
       if( sampleOk )
       {
         sampleOk = this->EvaluateMovingImageValueAndDerivative(
-          mappedPoint, movingImageValue, 0 );
+          mappedPoint, movingImageValue, 0, pos );
         if( sampleOk )
         {
           movingImageValue = this->GetMovingImageLimiter()->Evaluate( movingImageValue );
@@ -1594,7 +1595,7 @@ MultiPWHistogramImageToImageMetric< TFixedImage, TMovingImage >
         {
           RealType movingImageValueRight = 0.0;
           sampleOk = this->EvaluateMovingImageValueAndDerivative(
-            mappedPointRight, movingImageValueRight, 0 );
+            mappedPointRight, movingImageValueRight, 0, pos );
           if( sampleOk )
           {
             movingImageValueRight
@@ -1617,7 +1618,7 @@ MultiPWHistogramImageToImageMetric< TFixedImage, TMovingImage >
         {
           RealType movingImageValueLeft = 0.0;
           sampleOk = this->EvaluateMovingImageValueAndDerivative(
-            mappedPointLeft, movingImageValueLeft, 0 );
+            mappedPointLeft, movingImageValueLeft, 0, pos );
           if( sampleOk )
           {
             movingImageValueLeft
@@ -1676,7 +1677,6 @@ MultiPWHistogramImageToImageMetric< TFixedImage, TMovingImage >
       this->m_PerturbedAlphaLeft[ i ] = 0.0;
     }
   }
-
 } // end ComputePDFsAndIncrementalPDFs()
 
 

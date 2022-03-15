@@ -20,7 +20,12 @@
 
 #include "itkAdvancedImageToImageMetric.h"
 #include "itkKernelFunctionBase2.h"
+#include "itkMultiInputImageToImageMetricBase.h"
+#include "itkArray.h"
+#include "../KNNGraphAlphaMutualInformation/KNN/itkListSampleCArray.h"
 
+ /** Include for the spatial derivatives. */
+#include "itkArray2D.h"
 
 namespace itk
 {
@@ -72,13 +77,13 @@ namespace itk
 
 template< class TFixedImage, class TMovingImage >
 class MultiPWHistogramImageToImageMetric :
-  public AdvancedImageToImageMetric< TFixedImage, TMovingImage >
+  public MultiInputImageToImageMetricBase< TFixedImage, TMovingImage >
 {
 public:
 
   /** Standard class typedefs. */
   typedef MultiPWHistogramImageToImageMetric                 Self;
-  typedef AdvancedImageToImageMetric< TFixedImage, TMovingImage > Superclass;
+  typedef MultiInputImageToImageMetricBase< TFixedImage, TMovingImage > Superclass;
   typedef SmartPointer< Self >                                    Pointer;
   typedef SmartPointer< const Self >                              ConstPointer;
 
@@ -128,6 +133,24 @@ public:
   typedef typename Superclass::MovingImageDerivativeScalesType MovingImageDerivativeScalesType;
   typedef typename Superclass::ThreaderType                    ThreaderType;
   typedef typename Superclass::ThreadInfoType                  ThreadInfoType;
+
+  typedef typename Superclass::NonZeroJacobianIndicesType NonZeroJacobianIndicesType;
+
+  /** Typedef's for storing multiple inputs. */
+  typedef typename Superclass::FixedImageVectorType             FixedImageVectorType;
+  typedef typename Superclass::FixedImageMaskVectorType         FixedImageMaskVectorType;
+  typedef typename Superclass::FixedImageRegionVectorType       FixedImageRegionVectorType;
+  typedef typename Superclass::MovingImageVectorType            MovingImageVectorType;
+  typedef typename Superclass::MovingImageMaskVectorType        MovingImageMaskVectorType;
+  typedef typename Superclass::InterpolatorVectorType           InterpolatorVectorType;
+  typedef typename Superclass::FixedImageInterpolatorVectorType FixedImageInterpolatorVectorType;
+
+  /** Typedefs for the samples. */
+  typedef Array< double >                           MeasurementVectorType;
+  typedef typename MeasurementVectorType::ValueType MeasurementVectorValueType;
+  typedef typename Statistics::ListSampleCArray<
+    MeasurementVectorType, double >                   ListSampleType;
+  typedef typename ListSampleType::Pointer ListSamplePointer;
 
   /** The fixed image dimension. */
   itkStaticConstMacro( FixedImageDimension, unsigned int,
@@ -221,7 +244,7 @@ protected:
   MultiPWHistogramImageToImageMetric();
 
   /** The destructor. */
-  ~MultiPWHistogramImageToImageMetric() override;
+  ~MultiPWHistogramImageToImageMetric();
 
   /** Print Self. */
   void PrintSelf( std::ostream & os, Indent indent ) const override;
@@ -240,6 +263,10 @@ protected:
   typedef typename Superclass::MovingImageDerivativeType           MovingImageDerivativeType;
   typedef typename Superclass::CentralDifferenceGradientFilterType CentralDifferenceGradientFilterType;
   typedef typename Superclass::NonZeroJacobianIndicesType          NonZeroJacobianIndicesType;
+
+  typedef std::vector< TransformJacobianType >                     TransformJacobianContainerType;
+  typedef Array2D< double >                                        SpatialDerivativeType;
+  typedef std::vector< SpatialDerivativeType >                     SpatialDerivativeContainerType;
 
   /** Typedefs for the PDFs and PDF derivatives. */
   typedef double                                       PDFValueType;
@@ -305,9 +332,17 @@ protected:
    */
   struct ParzenWindowHistogramMultiThreaderParameterType // can't we use the one from AdvancedImageToImageMetric ?
   {
-    Self * m_Metric;
+  Self * m_Metric;
+  unsigned int pos; // number of image in multi image processing cluster
+
+  // constructor:
+  ParzenWindowHistogramMultiThreaderParameterType() : 
+    m_Metric(nullptr),
+    pos(0)
+    {
+    }
   };
-  ParzenWindowHistogramMultiThreaderParameterType m_ParzenWindowHistogramThreaderParameters;
+
 
   struct ParzenWindowHistogramGetValueAndDerivativePerThreadStruct
   {
@@ -325,16 +360,16 @@ protected:
   void InitializeThreadingParameters( void ) const override;
 
   /** Multi-threaded versions of the ComputePDF function. */
-  inline void ThreadedComputePDFs( ThreadIdType threadId );
+  inline void ThreadedComputePDFs( ThreadIdType threadId, const unsigned int pos );
 
   /** Single-threadedly accumulate results. */
   inline void AfterThreadedComputePDFs( void ) const;
 
   /** Helper function to launch the threads. */
-  static ITK_THREAD_RETURN_TYPE ComputePDFsThreaderCallback( void * arg );
+  static ITK_THREAD_RETURN_TYPE ComputePDFsThreaderCallback( void * arg);
 
   /** Helper function to launch the threads. */
-  void LaunchComputePDFsThreaderCallback( void ) const;
+  void LaunchComputePDFsThreaderCallback( const unsigned int pos) const;
 
   /** Compute the Parzen values given an image value and a starting histogram index
    * Compute the values at (parzenWindowIndex - parzenWindowTerm + k) for
@@ -419,7 +454,7 @@ protected:
    * The histograms are left unnormalized since it may be faster to
    * not do this explicitly.
    */
-  virtual void ComputePDFsAndPDFDerivatives( const ParametersType & parameters ) const;
+  virtual void ComputePDFsAndPDFDerivatives( const ParametersType & parameters, const unsigned int pos) const;
 
   /** Compute PDFs and incremental pdfs (which you can use to compute finite
    * difference estimate of the derivative).
@@ -444,7 +479,7 @@ protected:
    * p(mu+delta*e_k) = ( par(k) ) * jh(mu+delta*e_k)
    * p(mu-delta*e_k) = ( pal(k) ) * jh(mu-delta*e_k)
    */
-  virtual void ComputePDFsAndIncrementalPDFs( const ParametersType & parameters ) const;
+  virtual void ComputePDFsAndIncrementalPDFs( const ParametersType & parameters, const unsigned int pos) const;
 
   /** Compute PDFs; Loops over the fixed image samples and constructs
    * the m_JointPDF and m_Alpha
@@ -454,9 +489,9 @@ protected:
    * The histogram is left unnormalised since it may be faster to
    * not do this explicitly.
    */
-  virtual void ComputePDFsSingleThreaded( const ParametersType & parameters ) const;
+  virtual void ComputePDFsSingleThreaded( const ParametersType & parameters, const unsigned int pos) const;
 
-  virtual void ComputePDFs( const ParametersType & parameters ) const;
+  virtual void ComputePDFs( const ParametersType & parameters, const unsigned int pos ) const;
 
   /** Some initialization functions, called by Initialize. */
   virtual void InitializeHistograms( void );
@@ -497,6 +532,7 @@ private:
   bool          m_UseExplicitPDFDerivatives;
   bool          m_UseFiniteDifferenceDerivative;
   double        m_FiniteDifferencePerturbation;
+  unsigned int  m_posAsGlobalVar;
 
 };
 
