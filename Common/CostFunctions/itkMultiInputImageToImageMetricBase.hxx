@@ -288,9 +288,11 @@ MultiInputImageToImageMetricBase< TFixedImage, TMovingImage >
       typedef typename itk::ComputeImageExtremaFilter<FixedImageType> ComputeFixedImageExtremaFilterType;
       typename ComputeFixedImageExtremaFilterType::Pointer computeFixedImageExtrema
         = ComputeFixedImageExtremaFilterType::New();
-      computeFixedImageExtrema->SetInput(this->GetFixedImage(i));
+      computeFixedImageExtrema->SetInput(this->GetFixedImage(i));  
       computeFixedImageExtrema->SetImageRegion(this->GetFixedImageRegion(i));
-      if (this->m_FixedImageMaskVector[i].IsNotNull())
+
+      if (this->GetNumberOfFixedImageMasks() > i
+        && this->m_FixedImageMaskVector[i].IsNotNull())
       {
         computeFixedImageExtrema->SetUseMask(true);
 
@@ -311,7 +313,6 @@ MultiInputImageToImageMetricBase< TFixedImage, TMovingImage >
       elxout << "  Computing the fixed image #" << i << "  extrema took "
         << static_cast<long>(timer.GetMean() * 1000) << " ms." << std::endl;
 
-      // TODO Those are temp? only used to initialize limiter. If not, need to extend MultiInput...
       this->m_FixedImageTrueMax = computeFixedImageExtrema->GetMaximum();
       this->m_FixedImageTrueMin = computeFixedImageExtrema->GetMinimum();
 
@@ -320,21 +321,17 @@ MultiInputImageToImageMetricBase< TFixedImage, TMovingImage >
       this->m_FixedImageMaxLimit = static_cast<FixedImageLimiterOutputType>(
         this->m_FixedImageTrueMax + this->m_FixedLimitRangeRatio * (this->m_FixedImageTrueMax - this->m_FixedImageTrueMin));
 
-      if (i > 0)
-      {
-        /** Initialize limiter. */
-        typedef itk::HardLimiterFunction< RealType, FixedImageDimension >         FixedLimiterType;
-        this->SetFixedImageLimiter(FixedLimiterType::New(), i);
-      }
+      typedef itk::HardLimiterFunction< RealType, FixedImageDimension >         FixedLimiterType;
+      auto fixedLimiter = FixedLimiterType::New();
 
-      this->m_FixedImageLimiterVector[i]->SetLowerThreshold(
-        static_cast<RealType>(this->m_FixedImageTrueMin));
-      this->m_FixedImageLimiterVector[i]->SetUpperThreshold(
-        static_cast<RealType>(this->m_FixedImageTrueMax));
-      this->m_FixedImageLimiterVector[i]->SetLowerBound(this->m_FixedImageMinLimit);
-      this->m_FixedImageLimiterVector[i]->SetUpperBound(this->m_FixedImageMaxLimit);
+      fixedLimiter->SetLowerThreshold(static_cast<RealType>(this->m_FixedImageTrueMin));
+      fixedLimiter->SetUpperThreshold(static_cast<RealType>(this->m_FixedImageTrueMax));
+      fixedLimiter->SetLowerBound(this->m_FixedImageMinLimit);
+      fixedLimiter->SetUpperBound(this->m_FixedImageMaxLimit);
 
-      this->m_FixedImageLimiterVector[i]->Initialize();
+      fixedLimiter->Initialize();
+
+      this->SetFixedImageLimiter(fixedLimiter, i);
     }
   }
 
@@ -356,7 +353,8 @@ MultiInputImageToImageMetricBase< TFixedImage, TMovingImage >
         = ComputeMovingImageExtremaFilterType::New();
       computeMovingImageExtrema->SetInput(this->GetMovingImage(i));
       computeMovingImageExtrema->SetImageRegion(this->GetMovingImage(i)->GetBufferedRegion());
-      if (this->m_MovingImageMaskVector[i].IsNotNull())
+      if (this->GetNumberOfMovingImageMasks() > i
+        && this->m_MovingImageMaskVector[i].IsNotNull())
       {
         computeMovingImageExtrema->SetUseMask(true);
         const MovingImageMaskSpatialObject2Type* mMask
@@ -385,21 +383,17 @@ MultiInputImageToImageMetricBase< TFixedImage, TMovingImage >
       this->m_MovingImageMaxLimit = static_cast<MovingImageLimiterOutputType>(
         this->m_MovingImageTrueMax + this->m_MovingLimitRangeRatio * (this->m_MovingImageTrueMax - this->m_MovingImageTrueMin));
 
-      if (i > 0)
-      {
-        /** Initialize limiter. */
-        typedef itk::ExponentialLimiterFunction< RealType, MovingImageDimension > MovingLimiterType;
-        this->SetMovingImageLimiter(MovingLimiterType::New(), i);
-      }
+      typedef itk::ExponentialLimiterFunction< RealType, MovingImageDimension > MovingLimiterType;
+      auto movingLimiter = MovingLimiterType::New();
 
-      this->m_MovingImageLimiterVector[i]->SetLowerThreshold(
-        static_cast<RealType>(this->m_MovingImageTrueMin));
-      this->m_MovingImageLimiterVector[i]->SetUpperThreshold(
-        static_cast<RealType>(this->m_MovingImageTrueMax));
-      this->m_MovingImageLimiterVector[i]->SetLowerBound(this->m_MovingImageMinLimit);
-      this->m_MovingImageLimiterVector[i]->SetUpperBound(this->m_MovingImageMaxLimit);
+      movingLimiter->SetLowerThreshold(static_cast<RealType>(this->m_MovingImageTrueMin));
+      movingLimiter->SetUpperThreshold(static_cast<RealType>(this->m_MovingImageTrueMax));
+      movingLimiter->SetLowerBound(this->m_MovingImageMinLimit);
+      movingLimiter->SetUpperBound(this->m_MovingImageMaxLimit);
 
-      this->m_MovingImageLimiterVector[i]->Initialize();
+      movingLimiter->Initialize();
+
+      this->SetMovingImageLimiter(movingLimiter, i);
     }
   }
 
