@@ -131,8 +131,6 @@ public:
   typedef typename Superclass::FixedImageLimiterOutputType     FixedImageLimiterOutputType;
   typedef typename Superclass::MovingImageLimiterOutputType    MovingImageLimiterOutputType;
   typedef typename Superclass::MovingImageDerivativeScalesType MovingImageDerivativeScalesType;
-  typedef typename Superclass::ThreaderType                    ThreaderType;
-  typedef typename Superclass::ThreadInfoType                  ThreadInfoType;
 
   typedef typename Superclass::NonZeroJacobianIndicesType NonZeroJacobianIndicesType;
 
@@ -212,42 +210,17 @@ public:
   itkSetClampMacro( MovingKernelBSplineOrder, unsigned int, 0, 3 );
   itkGetConstMacro( MovingKernelBSplineOrder, unsigned int );
 
-  /** Option to use explicit PDF derivatives, which requires a lot
-   * of memory in case of many parameters.
-   */
-  itkSetMacro( UseExplicitPDFDerivatives, bool );
-  itkGetConstReferenceMacro( UseExplicitPDFDerivatives, bool );
-  itkBooleanMacro( UseExplicitPDFDerivatives );
-
   /** Whether you plan to call the GetDerivative/GetValueAndDerivative method or not.
-   * This option should be set before calling Initialize(); Default: false.
-   */
-  itkSetMacro( UseDerivative, bool );
-  itkGetConstMacro( UseDerivative, bool );
-
-  /** Whether you want to use a finite difference implementation of the metric's derivative.
-   * This option should be set before calling Initialize(); Default: false.
-   */
-  itkSetMacro( UseFiniteDifferenceDerivative, bool );
-  itkGetConstMacro( UseFiniteDifferenceDerivative, bool );
-
-  /** For computing the finite difference derivative, the perturbation (delta) of the
-   * transform parameters; default: 1.0.
-   * mu_right= mu + delta*e_k
-   */
-  itkSetMacro( FiniteDifferencePerturbation, double );
-  itkGetConstMacro( FiniteDifferencePerturbation, double );
+ * This option should be set before calling Initialize(); Default: false.
+ */
+  itkSetMacro(UseDerivative, bool);
+  itkGetConstMacro(UseDerivative, bool);
 
 protected:
 
   /** The constructor. */
   MultiPWHistogramImageToImageMetric();
 
-  /** The destructor. */
-  ~MultiPWHistogramImageToImageMetric();
-
-  /** Print Self. */
-  void PrintSelf( std::ostream & os, Indent indent ) const override;
 
   /** Protected Typedefs ******************/
 
@@ -276,17 +249,12 @@ protected:
   typedef typename JointPDFType::Pointer               JointPDFPointer;
   typedef Image< PDFDerivativeValueType, 3 >           JointPDFDerivativesType;
   typedef typename JointPDFDerivativesType::Pointer    JointPDFDerivativesPointer;
-  typedef Image< PDFValueType, 2 >                     IncrementalMarginalPDFType;
-  typedef typename IncrementalMarginalPDFType::Pointer IncrementalMarginalPDFPointer;
   typedef JointPDFType::IndexType                      JointPDFIndexType;
   typedef JointPDFType::RegionType                     JointPDFRegionType;
   typedef JointPDFType::SizeType                       JointPDFSizeType;
   typedef JointPDFDerivativesType::IndexType           JointPDFDerivativesIndexType;
   typedef JointPDFDerivativesType::RegionType          JointPDFDerivativesRegionType;
   typedef JointPDFDerivativesType::SizeType            JointPDFDerivativesSizeType;
-  typedef IncrementalMarginalPDFType::IndexType        IncrementalMarginalPDFIndexType;
-  typedef IncrementalMarginalPDFType::RegionType       IncrementalMarginalPDFRegionType;
-  typedef IncrementalMarginalPDFType::SizeType         IncrementalMarginalPDFSizeType;
   typedef Array< PDFValueType >                        ParzenValueContainerType;
 
   /** Typedefs for Parzen kernel. */
@@ -305,12 +273,6 @@ protected:
   mutable MarginalPDFType       m_MovingImageMarginalPDF;
   JointPDFPointer               m_JointPDF;
   JointPDFDerivativesPointer    m_JointPDFDerivatives;
-  JointPDFDerivativesPointer    m_IncrementalJointPDFRight;
-  JointPDFDerivativesPointer    m_IncrementalJointPDFLeft;
-  IncrementalMarginalPDFPointer m_FixedIncrementalMarginalPDFRight;
-  IncrementalMarginalPDFPointer m_MovingIncrementalMarginalPDFRight;
-  IncrementalMarginalPDFPointer m_FixedIncrementalMarginalPDFLeft;
-  IncrementalMarginalPDFPointer m_MovingIncrementalMarginalPDFLeft;
   mutable JointPDFRegionType    m_JointPDFWindow;                // no need for mutable anymore?
   double                        m_MovingImageNormalizedMin;
   double                        m_FixedImageNormalizedMin;
@@ -324,52 +286,6 @@ protected:
   KernelFunctionPointer m_MovingKernel;
   KernelFunctionPointer m_DerivativeMovingKernel;
 
-  /** Threading related parameters. */
-  mutable std::vector< JointPDFPointer > m_ThreaderJointPDFs;
-
-  /** Helper structs that multi-threads the computation of
-   * the metric derivative using ITK threads.
-   */
-  struct ParzenWindowHistogramMultiThreaderParameterType // can't we use the one from AdvancedImageToImageMetric ?
-  {
-  Self * m_Metric;
-  unsigned int pos; // number of image in multi image processing cluster
-
-  // constructor:
-  ParzenWindowHistogramMultiThreaderParameterType() : 
-    m_Metric(nullptr),
-    pos(0)
-    {
-    }
-  };
-
-
-  struct ParzenWindowHistogramGetValueAndDerivativePerThreadStruct
-  {
-    SizeValueType   st_NumberOfPixelsCounted;
-    JointPDFPointer st_JointPDF;
-  };
-  itkPadStruct( ITK_CACHE_LINE_ALIGNMENT, ParzenWindowHistogramGetValueAndDerivativePerThreadStruct,
-    PaddedParzenWindowHistogramGetValueAndDerivativePerThreadStruct );
-  itkAlignedTypedef( ITK_CACHE_LINE_ALIGNMENT, PaddedParzenWindowHistogramGetValueAndDerivativePerThreadStruct,
-    AlignedParzenWindowHistogramGetValueAndDerivativePerThreadStruct );
-  mutable AlignedParzenWindowHistogramGetValueAndDerivativePerThreadStruct * m_ParzenWindowHistogramGetValueAndDerivativePerThreadVariables;
-  mutable ThreadIdType                                                       m_ParzenWindowHistogramGetValueAndDerivativePerThreadVariablesSize;
-
-  /** Initialize threading related parameters. */
-  void InitializeThreadingParameters( void ) const override;
-
-  /** Multi-threaded versions of the ComputePDF function. */
-  inline void ThreadedComputePDFs( ThreadIdType threadId, const unsigned int pos );
-
-  /** Single-threadedly accumulate results. */
-  inline void AfterThreadedComputePDFs( void ) const;
-
-  /** Helper function to launch the threads. */
-  static ITK_THREAD_RETURN_TYPE ComputePDFsThreaderCallback( void * arg);
-
-  /** Helper function to launch the threads. */
-  void LaunchComputePDFsThreaderCallback( const unsigned int pos) const;
 
   /** Compute the Parzen values given an image value and a starting histogram index
    * Compute the values at (parzenWindowIndex - parzenWindowTerm + k) for
@@ -392,23 +308,6 @@ protected:
     const NonZeroJacobianIndicesType * nzji,
     JointPDFType * jointPDF ) const;
 
-  /** Update the joint PDF and the incremental pdfs.
-   * The input is a pixel pair (fixed, moving, moving mask) and
-   * a set of moving image/mask values when using mu+delta*e_k, for
-   * each k that has a nonzero Jacobian. And for mu-delta*e_k of course.
-   * Also updates the PerturbedAlpha's
-   * This function is used when UseFiniteDifferenceDerivative is true.
-   *
-   * \todo The IsInsideMovingMask return bools are converted to doubles (1 or 0) to
-   * simplify the computation. But this may not be necessary.
-   */
-  virtual void UpdateJointPDFAndIncrementalPDFs(
-    RealType fixedImageValue, RealType movingImageValue, RealType movingMaskValue,
-    const DerivativeType & movingImageValuesRight,
-    const DerivativeType & movingImageValuesLeft,
-    const DerivativeType & movingMaskValuesRight,
-    const DerivativeType & movingMaskValuesLeft,
-    const NonZeroJacobianIndicesType & nzji ) const;
 
   /** Update the pdf derivatives
    * adds -image_jac[mu]*factor to the bin
@@ -437,14 +336,6 @@ protected:
     MarginalPDFType & marginalPDF,
     const unsigned int & direction ) const;
 
-  /** Compute incremental marginal pdfs. Integrates the incremental PDF
-   * to obtain the fixed and moving marginal pdfs at once.
-   */
-  virtual void ComputeIncrementalMarginalPDFs(
-    const JointPDFDerivativesType * incrementalPDF,
-    IncrementalMarginalPDFType * fixedIncrementalMarginalPDF,
-    IncrementalMarginalPDFType * movingIncrementalMarginalPDF ) const;
-
   /** Compute PDFs and pdf derivatives; Loops over the fixed image samples and constructs
    * the m_JointPDF, m_JointPDFDerivatives, and m_Alpha.
    * The JointPDF and Alpha and its derivatives are related as follows:
@@ -456,30 +347,6 @@ protected:
    */
   virtual void ComputePDFsAndPDFDerivatives( const ParametersType & parameters, const unsigned int pos) const;
 
-  /** Compute PDFs and incremental pdfs (which you can use to compute finite
-   * difference estimate of the derivative).
-   * Loops over the fixed image samples and constructs the m_JointPDF,
-   * m_IncrementalJointPDF<Right/Left>, m_Alpha, and m_PerturbedAlpha<Right/Left>.
-   *
-   * mu = input parameters vector
-   * jh(mu) = m_JointPDF(:,:) = joint histogram
-   * ihr(k) = m_IncrementalJointPDFRight(k,:,:)
-   * ihl(k) = m_IncrementalJointPDFLeft(k,:,:)
-   * a(mu) = m_Alpha
-   * par(k) = m_PerturbedAlphaRight(k)
-   * pal(k) = m_PerturbedAlphaLeft(k)
-   * size(ihr) = = size(ihl) = nrofparams * nrofmovingbins * nroffixedbins
-   *
-   * ihr and ihl are determined such that:
-   * jh(mu+delta*e_k) = jh(mu) + ihr(k)
-   * jh(mu-delta*e_k) = jh(mu) + ihl(k)
-   * where e_k is the unit vector.
-   *
-   * the pdf can be derived with:
-   * p(mu+delta*e_k) = ( par(k) ) * jh(mu+delta*e_k)
-   * p(mu-delta*e_k) = ( pal(k) ) * jh(mu-delta*e_k)
-   */
-  virtual void ComputePDFsAndIncrementalPDFs( const ParametersType & parameters, const unsigned int pos) const;
 
   /** Compute PDFs; Loops over the fixed image samples and constructs
    * the m_JointPDF and m_Alpha
@@ -489,7 +356,6 @@ protected:
    * The histogram is left unnormalised since it may be faster to
    * not do this explicitly.
    */
-  virtual void ComputePDFsSingleThreaded( const ParametersType & parameters, const unsigned int pos) const;
 
   virtual void ComputePDFs( const ParametersType & parameters, const unsigned int pos ) const;
 
@@ -529,10 +395,6 @@ private:
   unsigned int  m_FixedKernelBSplineOrder;
   unsigned int  m_MovingKernelBSplineOrder;
   bool          m_UseDerivative;
-  bool          m_UseExplicitPDFDerivatives;
-  bool          m_UseFiniteDifferenceDerivative;
-  double        m_FiniteDifferencePerturbation;
-  unsigned int  m_posAsGlobalVar;
 
 };
 

@@ -139,8 +139,7 @@ public:
     Superclass::MovingImageLimiterOutputType MovingImageLimiterOutputType;
   typedef typename
     Superclass::MovingImageDerivativeScalesType MovingImageDerivativeScalesType;
-  typedef typename Superclass::ThreaderType   ThreaderType;
-  typedef typename Superclass::ThreadInfoType ThreadInfoType;
+
 
   /** The fixed image dimension. */
   itkStaticConstMacro( FixedImageDimension, unsigned int,
@@ -153,9 +152,6 @@ public:
   /**  Get the value. */
   MeasureType GetValue( const ParametersType & parameters ) const override;
 
-  /** Set/get whether to apply the technique introduced by Nicholas Tustison; default: false */
-  itkGetConstMacro( UseJacobianPreconditioning, bool );
-  itkSetMacro( UseJacobianPreconditioning, bool );
 
 protected:
 
@@ -182,7 +178,6 @@ protected:
   typedef typename Superclass::MarginalPDFType                     MarginalPDFType;
   typedef typename Superclass::JointPDFType                        JointPDFType;
   typedef typename Superclass::JointPDFDerivativesType             JointPDFDerivativesType;
-  typedef typename Superclass::IncrementalMarginalPDFType          IncrementalMarginalPDFType;
   typedef typename Superclass::JointPDFIndexType                   JointPDFIndexType;
   typedef typename Superclass::JointPDFRegionType                  JointPDFRegionType;
   typedef typename Superclass::JointPDFSizeType                    JointPDFSizeType;
@@ -204,57 +199,10 @@ protected:
     const ParametersType & parameters,
     MeasureType & value, DerivativeType & derivative ) const override;
 
-  /** Get the value and analytic derivative.
-   * Called by GetValueAndDerivative if UseFiniteDifferenceDerivative == false
-   * and UseExplicitPDFDerivatives == false.
-   *
-   * Implements a version that avoids the large memory allocation of the
-   * explicit joint histogram derivative. This comes at the cost of looping
-   * over the samples twice, instead of once. The first time does not require
-   * GetJacobian() and moving image derivatives, however.
-   */
-  virtual void GetValueAndAnalyticDerivativeLowMemory(
-    const ParametersType & parameters,
-    MeasureType & value, DerivativeType & derivative ) const;
-
-  /**  Get the value and finite difference derivative.
-   * Called by GetValueAndDerivative if UseFiniteDifferenceDerivative == true.
-   *
-   * This is really only here for experimental purposes.
-   */
-  void GetValueAndFiniteDifferenceDerivative(
-    const ParametersType & parameters,
-    MeasureType & value, DerivativeType & derivative ) const override;
-
-  /** Compute terms to implement preconditioning as proposed by Tustison et al. */
-  virtual void ComputeJacobianPreconditioner(
-    const TransformJacobianType & jac,
-    const NonZeroJacobianIndicesType & nzji,
-    DerivativeType & preconditioner,
-    DerivativeType & divisor ) const;
-
   /** Some initialization functions, called by Initialize. */
   void InitializeHistograms( void ) override;
 
-  /** Threading related parameters. */
-  struct ParzenWindowMutualInformationMultiThreaderParameterType
-  {
-    Self * m_Metric;
-  };
-  ParzenWindowMutualInformationMultiThreaderParameterType m_ParzenWindowMutualInformationThreaderParameters;
 
-  /** Multi-threaded versions of the ComputePDF function. */
-  inline void ThreadedComputeDerivativeLowMemory( ThreadIdType threadId );
-
-  /** Single-threadedly accumulate results. */
-  inline void AfterThreadedComputeDerivativeLowMemory(
-    DerivativeType & derivative ) const;
-
-  /** Helper function to launch the threads. */
-  static ITK_THREAD_RETURN_TYPE ComputeDerivativeLowMemoryThreaderCallback( void * arg );
-
-  /** Helper function to launch the threads. */
-  void LaunchComputeDerivativeLowMemoryThreaderCallback( void ) const;
 
 private:
 
@@ -263,29 +211,6 @@ private:
   /** The private copy constructor. */
   void operator=( const Self & );                                  // purposely not implemented
 
-  /** Helper array for storing the values of the JointPDF ratios. */
-  typedef double                PRatioType;
-  typedef Array2D< PRatioType > PRatioArrayType;
-  mutable PRatioArrayType m_PRatioArray;
-
-  /** Setting */
-  bool m_UseJacobianPreconditioning;
-
-  /** Helper function to compute the derivative for the low memory variant. */
-  void ComputeDerivativeLowMemorySingleThreaded( DerivativeType & derivative ) const;
-
-  void ComputeDerivativeLowMemory( DerivativeType & derivative ) const;
-
-  /** Helper function to update the derivative for the low memory variant. */
-  void UpdateDerivativeLowMemory(
-    const RealType & fixedImageValue,
-    const RealType & movingImageValue,
-    const DerivativeType & imageJacobian,
-    const NonZeroJacobianIndicesType & nzji,
-    DerivativeType & derivative ) const;
-
-  /** Helper function to compute m_PRatioArray in case of low memory consumption. */
-  void ComputeValueAndPRatioArray( double & MI ) const;
 
 };
 
