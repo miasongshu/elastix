@@ -123,6 +123,7 @@ MultiInputImageToImageMetricBase< TFixedImage, TMovingImage >
 
   this->m_InterpolatorsAreBSpline = false;
 
+
 } // end Constructor()
 
 
@@ -313,21 +314,21 @@ MultiInputImageToImageMetricBase< TFixedImage, TMovingImage >
       elxout << "  Computing the fixed image #" << i << "  extrema took "
         << static_cast<long>(timer.GetMean() * 1000) << " ms." << std::endl;
 
-      this->m_FixedImageTrueMax = computeFixedImageExtrema->GetMaximum();
-      this->m_FixedImageTrueMin = computeFixedImageExtrema->GetMinimum();
+      this->m_FixedImageTrueMaxVector.push_back(computeFixedImageExtrema->GetMaximum());
+      this->m_FixedImageTrueMinVector.push_back(computeFixedImageExtrema->GetMinimum());
 
-      this->m_FixedImageMinLimit = static_cast<FixedImageLimiterOutputType>(
-        this->m_FixedImageTrueMin - this->m_FixedLimitRangeRatio * (this->m_FixedImageTrueMax - this->m_FixedImageTrueMin));
-      this->m_FixedImageMaxLimit = static_cast<FixedImageLimiterOutputType>(
-        this->m_FixedImageTrueMax + this->m_FixedLimitRangeRatio * (this->m_FixedImageTrueMax - this->m_FixedImageTrueMin));
+      this->m_FixedImageMinLimitVector.push_back(static_cast<FixedImageLimiterOutputType>(
+        this->m_FixedImageTrueMinVector[i] - this->m_FixedLimitRangeRatio * (this->m_FixedImageTrueMaxVector[i] - this->m_FixedImageTrueMinVector[i])));
+      this->m_FixedImageMaxLimitVector.push_back(static_cast<FixedImageLimiterOutputType>(
+        this->m_FixedImageTrueMaxVector[i] + this->m_FixedLimitRangeRatio * (this->m_FixedImageTrueMaxVector[i] - this->m_FixedImageTrueMinVector[i])));
 
       typedef itk::HardLimiterFunction< RealType, FixedImageDimension >         FixedLimiterType;
       auto fixedLimiter = FixedLimiterType::New();
 
-      fixedLimiter->SetLowerThreshold(static_cast<RealType>(this->m_FixedImageTrueMin));
-      fixedLimiter->SetUpperThreshold(static_cast<RealType>(this->m_FixedImageTrueMax));
-      fixedLimiter->SetLowerBound(this->m_FixedImageMinLimit);
-      fixedLimiter->SetUpperBound(this->m_FixedImageMaxLimit);
+      fixedLimiter->SetLowerThreshold(static_cast<RealType>(this->m_FixedImageTrueMinVector[i]));
+      fixedLimiter->SetUpperThreshold(static_cast<RealType>(this->m_FixedImageTrueMaxVector[i]));
+      fixedLimiter->SetLowerBound(this->m_FixedImageMinLimitVector[i]);
+      fixedLimiter->SetUpperBound(this->m_FixedImageMaxLimitVector[i]);
 
       fixedLimiter->Initialize();
 
@@ -374,22 +375,22 @@ MultiInputImageToImageMetricBase< TFixedImage, TMovingImage >
       elxout << "  Computing the moving image #" << i << " extrema took "
         << static_cast<long>(timer.GetMean() * 1000) << " ms." << std::endl;
 
-      // TODO see comment above
-      this->m_MovingImageTrueMax = computeMovingImageExtrema->GetMaximum();
-      this->m_MovingImageTrueMin = computeMovingImageExtrema->GetMinimum();
 
-      this->m_MovingImageMinLimit = static_cast<MovingImageLimiterOutputType>(
-        this->m_MovingImageTrueMin - this->m_MovingLimitRangeRatio * (this->m_MovingImageTrueMax - this->m_MovingImageTrueMin));
-      this->m_MovingImageMaxLimit = static_cast<MovingImageLimiterOutputType>(
-        this->m_MovingImageTrueMax + this->m_MovingLimitRangeRatio * (this->m_MovingImageTrueMax - this->m_MovingImageTrueMin));
+      this->m_MovingImageTrueMaxVector.push_back(computeMovingImageExtrema->GetMaximum());
+      this->m_MovingImageTrueMinVector.push_back(computeMovingImageExtrema->GetMinimum());
+
+      this->m_MovingImageMinLimitVector.push_back(static_cast<MovingImageLimiterOutputType>(
+        this->m_MovingImageTrueMinVector[i] - this->m_MovingLimitRangeRatio * (this->m_MovingImageTrueMaxVector[i] - this->m_MovingImageTrueMinVector[i])));
+      this->m_MovingImageMaxLimitVector.push_back(static_cast<MovingImageLimiterOutputType>(
+        this->m_MovingImageTrueMaxVector[i] + this->m_MovingLimitRangeRatio * (this->m_MovingImageTrueMaxVector[i] - this->m_MovingImageTrueMinVector[i])));
 
       typedef itk::ExponentialLimiterFunction< RealType, MovingImageDimension > MovingLimiterType;
       auto movingLimiter = MovingLimiterType::New();
 
-      movingLimiter->SetLowerThreshold(static_cast<RealType>(this->m_MovingImageTrueMin));
-      movingLimiter->SetUpperThreshold(static_cast<RealType>(this->m_MovingImageTrueMax));
-      movingLimiter->SetLowerBound(this->m_MovingImageMinLimit);
-      movingLimiter->SetUpperBound(this->m_MovingImageMaxLimit);
+      movingLimiter->SetLowerThreshold(static_cast<RealType>(this->m_MovingImageTrueMinVector[i]));
+      movingLimiter->SetUpperThreshold(static_cast<RealType>(this->m_MovingImageTrueMaxVector[i]));
+      movingLimiter->SetLowerBound(this->m_MovingImageMinLimitVector[i]);
+      movingLimiter->SetUpperBound(this->m_MovingImageMaxLimitVector[i]);
 
       movingLimiter->Initialize();
 

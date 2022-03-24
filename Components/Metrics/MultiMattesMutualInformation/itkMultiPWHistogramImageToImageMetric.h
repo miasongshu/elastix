@@ -30,6 +30,9 @@
 namespace itk
 {
 /**
+* * copied and adapted from Elastix\Common\CostFunctions\itkParzenWindowHistogramImageToImageMetric.h
+* *
+* *
  * \class MultiPWHistogramImageToImageMetric
  * \brief A base class for image metrics based on a joint histogram
  * computed using Parzen Windowing
@@ -54,7 +57,6 @@ namespace itk
  *  - The Parzen window order can be chosen.
  *  - A fixed and moving number of histogram bins can be chosen.
  *  - More use of iterators instead of raw buffer pointers.
- *  - An optional FiniteDifference derivative estimation.
  *
  * \warning This class is not thread safe due the member data structures
  *  used to the store the sampled points and the marginal and joint pdfs.
@@ -264,22 +266,20 @@ protected:
   /** Protected variables **************************** */
 
   /** Variables for Alpha (the normalization factor of the histogram). */
-  mutable double         m_Alpha;
-  mutable DerivativeType m_PerturbedAlphaRight;
-  mutable DerivativeType m_PerturbedAlphaLeft;
+  mutable std::vector< double >        m_AlphaVector;
 
   /** Variables for the pdfs (actually: histograms). */
-  mutable MarginalPDFType       m_FixedImageMarginalPDF;
-  mutable MarginalPDFType       m_MovingImageMarginalPDF;
-  JointPDFPointer               m_JointPDF;
-  JointPDFDerivativesPointer    m_JointPDFDerivatives;
-  mutable JointPDFRegionType    m_JointPDFWindow;                // no need for mutable anymore?
-  double                        m_MovingImageNormalizedMin;
-  double                        m_FixedImageNormalizedMin;
-  double                        m_FixedImageBinSize;
-  double                        m_MovingImageBinSize;
-  double                        m_FixedParzenTermToIndexOffset;
-  double                        m_MovingParzenTermToIndexOffset;
+  mutable std::vector< MarginalPDFType>    m_FixedImageMarginalPDFVector;
+  mutable std::vector< MarginalPDFType>    m_MovingImageMarginalPDFVector;
+  std::vector< JointPDFPointer>            m_JointPDFVector;
+  std::vector< JointPDFDerivativesPointer> m_JointPDFDerivativesVector;
+  std::vector < double >                   m_MovingImageNormalizedMinVector;
+  std::vector < double >                   m_FixedImageNormalizedMinVector;
+  std::vector < double >                   m_FixedImageBinSizeVector;
+  std::vector < double >                   m_MovingImageBinSizeVector;
+  mutable JointPDFRegionType               m_JointPDFWindow;
+  double                                   m_FixedParzenTermToIndexOffset;
+  double                                   m_MovingParzenTermToIndexOffset;
 
   /** Kernels for computing Parzen histograms and derivatives. */
   KernelFunctionPointer m_FixedKernel;
@@ -306,7 +306,8 @@ protected:
     const RealType & movingImageValue,
     const DerivativeType * imageJacobian,
     const NonZeroJacobianIndicesType * nzji,
-    JointPDFType * jointPDF ) const;
+    JointPDFType * jointPDF,
+    const unsigned int pos) const;
 
 
   /** Update the pdf derivatives
@@ -317,7 +318,8 @@ protected:
   void UpdateJointPDFDerivatives(
     const JointPDFIndexType & pdfIndex, double factor,
     const DerivativeType & imageJacobian,
-    const NonZeroJacobianIndicesType & nzji ) const;
+    const NonZeroJacobianIndicesType& nzji,
+    const unsigned int pos) const;
 
   /** Multiply the pdf entries by the given normalization factor. */
   virtual void NormalizeJointPDF(
@@ -334,7 +336,8 @@ protected:
   virtual void ComputeMarginalPDF(
     const JointPDFType * jointPDF,
     MarginalPDFType & marginalPDF,
-    const unsigned int & direction ) const;
+    const unsigned int& direction,
+    const unsigned int pos) const;
 
   /** Compute PDFs and pdf derivatives; Loops over the fixed image samples and constructs
    * the m_JointPDF, m_JointPDFDerivatives, and m_Alpha.
@@ -373,14 +376,6 @@ protected:
     MeasureType & itkNotUsed( value ),
     DerivativeType & itkNotUsed( derivative ) ) const {}
 
-  /** Get the value and finite difference derivatives for single valued optimizers.
-   * Called by GetValueAndDerivative if UseFiniteDifferenceDerivative == true
-   * Implement this method in subclasses.
-   */
-  virtual void GetValueAndFiniteDifferenceDerivative(
-    const ParametersType & itkNotUsed( parameters ),
-    MeasureType & itkNotUsed( value ),
-    DerivativeType & itkNotUsed( derivative ) ) const {}
 
 private:
 

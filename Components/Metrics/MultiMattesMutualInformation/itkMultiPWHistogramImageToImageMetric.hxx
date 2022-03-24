@@ -39,13 +39,15 @@ MultiPWHistogramImageToImageMetric< TFixedImage, TMovingImage >
 {
   this->m_NumberOfFixedHistogramBins        = 32;
   this->m_NumberOfMovingHistogramBins       = 32;
-  this->m_JointPDF                          = 0;
-  this->m_JointPDFDerivatives               = 0;
-  this->m_FixedImageNormalizedMin           = 0.0;
-  this->m_MovingImageNormalizedMin          = 0.0;
-  this->m_FixedImageBinSize                 = 0.0;
-  this->m_MovingImageBinSize                = 0.0;
-  this->m_Alpha                             = 0.0;
+  this->m_JointPDFVector                    = {};
+  this->m_JointPDFDerivativesVector         = {};
+  this->m_FixedImageNormalizedMinVector     = {};
+  this->m_MovingImageNormalizedMinVector    = {};
+  this->m_FixedImageBinSizeVector           = {};
+  this->m_MovingImageBinSizeVector          = {};
+  this->m_AlphaVector                       = {};
+  this->m_FixedImageMarginalPDFVector       = {};
+  this->m_MovingImageMarginalPDFVector      = {};
 
   this->m_FixedKernel                   = 0;
   this->m_MovingKernel                  = 0;
@@ -83,8 +85,6 @@ MultiPWHistogramImageToImageMetric< TFixedImage, TMovingImage >
   /** Set up the Parzen windows. */
   this->InitializeKernels();
 
-  this->m_PerturbedAlphaRight.SetSize( 0 );
-  this->m_PerturbedAlphaLeft.SetSize( 0 );
 
 } // end Initialize()
 
@@ -96,7 +96,7 @@ MultiPWHistogramImageToImageMetric< TFixedImage, TMovingImage >
 template< class TFixedImage, class TMovingImage >
 void
 MultiPWHistogramImageToImageMetric< TFixedImage, TMovingImage >
-::InitializeHistograms( void )
+::InitializeHistograms(void)
 {
   /* Compute binsize for the histogram.
    *
@@ -112,48 +112,60 @@ MultiPWHistogramImageToImageMetric< TFixedImage, TMovingImage >
    * it's just that these bins will never be a central bin for the Parzen
    * window.
    */
-  //int fixedPadding = 2;  // this will pad by 2 bins
-  //int movingPadding = 2;  // this will pad by 2 bins
-  int fixedPadding  = this->m_FixedKernelBSplineOrder / 2; // should be enough
+   //int fixedPadding = 2;  // this will pad by 2 bins
+   //int movingPadding = 2;  // this will pad by 2 bins
+  int fixedPadding = this->m_FixedKernelBSplineOrder / 2; // should be enough
   int movingPadding = this->m_MovingKernelBSplineOrder / 2;
 
-  /** The ratio times the expected bin size will be added twice to the image range. */
-  const double smallNumberRatio = 0.001;
-  const double smallNumberFixed = smallNumberRatio
-    * ( this->m_FixedImageMaxLimit - this->m_FixedImageMinLimit )
-    / static_cast< double >( this->m_NumberOfFixedHistogramBins - 2 * fixedPadding - 1 );
+
+  const unsigned int clusterSize = this->GetNumberOfFixedImages();
+  /** Loop over all the multiple images in the cluster */
+  for (unsigned int pos = 0; pos < clusterSize; ++pos)
+  {
+    /** The ratio times the expected bin size will be added twice to the image range. */
+    const double smallNumberRatio = 0.001;
+    const double smallNumberFixed = smallNumberRatio
+    * (this->m_FixedImageMaxLimitVector[pos] - this->m_FixedImageMinLimitVector[pos])
+    / static_cast<double>(this->m_NumberOfFixedHistogramBins - 2 * fixedPadding - 1);
   const double smallNumberMoving = smallNumberRatio
-    * ( this->m_MovingImageMaxLimit - this->m_MovingImageMinLimit )
-    / static_cast< double >( this->m_NumberOfFixedHistogramBins - 2 * movingPadding - 1 );
+    * (this->m_MovingImageMaxLimitVector[pos] - this->m_MovingImageMinLimitVector[pos])
+    / static_cast<double>(this->m_NumberOfFixedHistogramBins - 2 * movingPadding - 1);
 
   /** Compute binsizes. */
-  const double fixedHistogramWidth = static_cast< double >(
-    static_cast< OffsetValueType >( this->m_NumberOfFixedHistogramBins ) // requires cast to signed type!
-    - 2.0 * fixedPadding - 1.0 );
-  this->m_FixedImageBinSize
-    = ( this->m_FixedImageMaxLimit - this->m_FixedImageMinLimit
-    + 2.0 * smallNumberFixed ) / fixedHistogramWidth;
-  this->m_FixedImageBinSize = std::max( this->m_FixedImageBinSize, 1e-10 );
-  this->m_FixedImageBinSize = std::min( this->m_FixedImageBinSize, 1e+10 );
-  this->m_FixedImageNormalizedMin
-    = ( this->m_FixedImageMinLimit - smallNumberFixed )
-    / this->m_FixedImageBinSize - static_cast< double >( fixedPadding );
+  const double fixedHistogramWidth = static_cast<double>(
+    static_cast<OffsetValueType>(this->m_NumberOfFixedHistogramBins) // requires cast to signed type!
+    - 2.0 * fixedPadding - 1.0);
+  this->m_FixedImageBinSizeVector.push_back(
+    (this->m_FixedImageMaxLimitVector[pos] - this->m_FixedImageMinLimitVector[pos]
+      + 2.0 * smallNumberFixed) / fixedHistogramWidth);
+  this->m_FixedImageBinSizeVector[pos] = std::max(this->m_FixedImageBinSizeVector[pos], 1e-10);
+  this->m_FixedImageBinSizeVector[pos] = std::min(this->m_FixedImageBinSizeVector[pos], 1e+10);
+  this->m_FixedImageNormalizedMinVector.push_back(
+    (this->m_FixedImageMinLimitVector[pos] - smallNumberFixed)
+    / this->m_FixedImageBinSizeVector[pos] - static_cast<double>(fixedPadding));
 
-  const double movingHistogramWidth = static_cast< double >(
-    static_cast< OffsetValueType >( this->m_NumberOfMovingHistogramBins ) // requires cast to signed type!
-    - 2.0 * movingPadding - 1.0 );
-  this->m_MovingImageBinSize
-    = ( this->m_MovingImageMaxLimit - this->m_MovingImageMinLimit
-    + 2.0 * smallNumberMoving ) / movingHistogramWidth;
-  this->m_MovingImageBinSize = std::max( this->m_MovingImageBinSize, 1e-10 );
-  this->m_MovingImageBinSize = std::min( this->m_MovingImageBinSize, 1e+10 );
-  this->m_MovingImageNormalizedMin
-    = ( this->m_MovingImageMinLimit - smallNumberMoving )
-    / this->m_MovingImageBinSize - static_cast< double >( movingPadding );
+  const double movingHistogramWidth = static_cast<double>(
+    static_cast<OffsetValueType>(this->m_NumberOfMovingHistogramBins) // requires cast to signed type!
+    - 2.0 * movingPadding - 1.0);
+  this->m_MovingImageBinSizeVector.push_back(
+    (this->m_MovingImageMaxLimitVector[pos] - this->m_MovingImageMinLimitVector[pos]
+      + 2.0 * smallNumberMoving) / movingHistogramWidth);
+  this->m_MovingImageBinSizeVector[pos] = std::max(this->m_MovingImageBinSizeVector[pos], 1e-10);
+  this->m_MovingImageBinSizeVector[pos] = std::min(this->m_MovingImageBinSizeVector[pos], 1e+10);
+  this->m_MovingImageNormalizedMinVector.push_back(
+    (this->m_MovingImageMinLimitVector[pos] - smallNumberMoving)
+    / this->m_MovingImageBinSizeVector[pos] - static_cast<double>(movingPadding));
 
   /** Allocate memory for the marginal PDF. */
-  this->m_FixedImageMarginalPDF.SetSize( this->m_NumberOfFixedHistogramBins );
-  this->m_MovingImageMarginalPDF.SetSize( this->m_NumberOfMovingHistogramBins );
+  MarginalPDFType FixedImageMarginalPDFDummy = {};
+  FixedImageMarginalPDFDummy.SetSize(this->m_NumberOfFixedHistogramBins);
+  this->m_FixedImageMarginalPDFVector.push_back(FixedImageMarginalPDFDummy);
+  MarginalPDFType MovingImageMarginalPDFDummy = {};
+  MovingImageMarginalPDFDummy.SetSize(this->m_NumberOfMovingHistogramBins);
+  this->m_MovingImageMarginalPDFVector.push_back(MovingImageMarginalPDFDummy);
+
+  //this->m_FixedImageMarginalPDFVector.SetSize(this->m_NumberOfFixedHistogramBins);
+  //this->m_MovingImageMarginalPDFVector.SetSize(this->m_NumberOfMovingHistogramBins);
 
   /** Allocate memory for the joint PDF and joint PDF derivatives. */
 
@@ -166,19 +178,21 @@ MultiPWHistogramImageToImageMetric< TFixedImage, TMovingImage >
    * than the fixed B-spline kernel order and it is faster to iterate along
    * the first dimension.
    */
-  this->m_JointPDF = JointPDFType::New();
+  this->m_JointPDFVector.push_back(JointPDFType::New());
   JointPDFRegionType jointPDFRegion;
   JointPDFIndexType  jointPDFIndex;
   JointPDFSizeType   jointPDFSize;
-  jointPDFIndex.Fill( 0 );
-  jointPDFSize[ 0 ] = this->m_NumberOfMovingHistogramBins;
-  jointPDFSize[ 1 ] = this->m_NumberOfFixedHistogramBins;
-  jointPDFRegion.SetIndex( jointPDFIndex );
-  jointPDFRegion.SetSize( jointPDFSize );
-  this->m_JointPDF->SetRegions( jointPDFRegion );
-  this->m_JointPDF->Allocate();
+  jointPDFIndex.Fill(0);
+  jointPDFSize[0] = this->m_NumberOfMovingHistogramBins;
+  jointPDFSize[1] = this->m_NumberOfFixedHistogramBins;
+  jointPDFRegion.SetIndex(jointPDFIndex);
+  jointPDFRegion.SetSize(jointPDFSize);
+  this->m_JointPDFVector[pos]->SetRegions(jointPDFRegion);
+  this->m_JointPDFVector[pos]->Allocate();
 
-  if( this->GetUseDerivative() )
+  this->m_AlphaVector.push_back(0);
+
+  if (this->GetUseDerivative())
   {
     /** For the derivatives of the joint PDF define a region starting from {0,0,0}
      * with size {GetNumberOfParameters(),m_NumberOfMovingHistogramBins,
@@ -190,23 +204,23 @@ MultiPWHistogramImageToImageMetric< TFixedImage, TMovingImage >
     JointPDFDerivativesRegionType jointPDFDerivativesRegion;
     JointPDFDerivativesIndexType  jointPDFDerivativesIndex;
     JointPDFDerivativesSizeType   jointPDFDerivativesSize;
-    jointPDFDerivativesIndex.Fill( 0 );
-    jointPDFDerivativesSize[ 0 ] = this->GetNumberOfParameters();
-    jointPDFDerivativesSize[ 1 ] = this->m_NumberOfMovingHistogramBins;
-    jointPDFDerivativesSize[ 2 ] = this->m_NumberOfFixedHistogramBins;
-    jointPDFDerivativesRegion.SetIndex( jointPDFDerivativesIndex );
-    jointPDFDerivativesRegion.SetSize( jointPDFDerivativesSize );
+    jointPDFDerivativesIndex.Fill(0);
+    jointPDFDerivativesSize[0] = this->GetNumberOfParameters();
+    jointPDFDerivativesSize[1] = this->m_NumberOfMovingHistogramBins;
+    jointPDFDerivativesSize[2] = this->m_NumberOfFixedHistogramBins;
+    jointPDFDerivativesRegion.SetIndex(jointPDFDerivativesIndex);
+    jointPDFDerivativesRegion.SetSize(jointPDFDerivativesSize);
 
 
-        this->m_JointPDFDerivatives = JointPDFDerivativesType::New();
-        this->m_JointPDFDerivatives->SetRegions( jointPDFDerivativesRegion );
-        this->m_JointPDFDerivatives->Allocate();
+    this->m_JointPDFDerivativesVector.push_back(JointPDFDerivativesType::New());
+    this->m_JointPDFDerivativesVector[pos]->SetRegions(jointPDFDerivativesRegion);
+    this->m_JointPDFDerivativesVector[pos]->Allocate();
   }
   else
   {
-    this->m_JointPDFDerivatives      = 0;
+    this->m_JointPDFDerivativesVector.push_back(nullptr);
   }
-
+}// end loop over pos
 } // end InitializeHistograms()
 
 
@@ -273,6 +287,7 @@ MultiPWHistogramImageToImageMetric< TFixedImage, TMovingImage >
   JointPDFSizeType parzenWindowSize;
   parzenWindowSize[ 0 ] = this->m_MovingKernelBSplineOrder + 1;
   parzenWindowSize[ 1 ] = this->m_FixedKernelBSplineOrder + 1;
+
   this->m_JointPDFWindow.SetSize( parzenWindowSize );
 
   /** The ParzenIndex is the lowest bin number that is affected by a
@@ -348,15 +363,16 @@ MultiPWHistogramImageToImageMetric< TFixedImage, TMovingImage >
   const RealType & movingImageValue,
   const DerivativeType * imageJacobian,
   const NonZeroJacobianIndicesType * nzji,
-  JointPDFType * jointPDF ) const
+  JointPDFType * jointPDF,
+  const unsigned int pos) const
 {
   typedef ImageScanlineIterator< JointPDFType > PDFIteratorType;
 
   /** Determine Parzen window arguments (see eq. 6 of Mattes paper [2]). */
   const double fixedImageParzenWindowTerm
-    = fixedImageValue / this->m_FixedImageBinSize - this->m_FixedImageNormalizedMin;
+    = fixedImageValue / this->m_FixedImageBinSizeVector[pos] - this->m_FixedImageNormalizedMinVector[pos];
   const double movingImageParzenWindowTerm
-    = movingImageValue / this->m_MovingImageBinSize - this->m_MovingImageNormalizedMin;
+    = movingImageValue / this->m_MovingImageBinSizeVector[pos] - this->m_MovingImageNormalizedMinVector[pos] ;
 
   /** The lowest bin numbers affected by this pixel: */
   const OffsetValueType fixedImageParzenWindowIndex
@@ -411,7 +427,7 @@ MultiPWHistogramImageToImageMetric< TFixedImage, TMovingImage >
       movingImageParzenWindowTerm, movingImageParzenWindowIndex,
       this->m_DerivativeMovingKernel, derivativeMovingParzenValues );
 
-    const double et = static_cast< double >( this->m_MovingImageBinSize );
+    const double et = static_cast< double >( this->m_MovingImageBinSizeVector[pos]);
 
     /** Loop over the Parzen window region and increment the values
      * Also update the pdf derivatives.
@@ -425,7 +441,7 @@ MultiPWHistogramImageToImageMetric< TFixedImage, TMovingImage >
         it.Value() += static_cast< PDFValueType >( fv * movingParzenValues[ m ] );
         this->UpdateJointPDFDerivatives(
           it.GetIndex(), fv_et * derivativeMovingParzenValues[ m ],
-          *imageJacobian, *nzji );
+          *imageJacobian, *nzji, pos );
         ++it;
       }
       it.NextLine();
@@ -445,12 +461,13 @@ MultiPWHistogramImageToImageMetric< TFixedImage, TMovingImage >
 ::UpdateJointPDFDerivatives(
   const JointPDFIndexType & pdfIndex, double factor,
   const DerivativeType & imageJacobian,
-  const NonZeroJacobianIndicesType & nzji ) const
+  const NonZeroJacobianIndicesType & nzji,
+  const unsigned int pos) const
 {
   /** Get the pointer to the element with index [0, pdfIndex[0], pdfIndex[1]]. */
-  PDFDerivativeValueType * derivPtr = this->m_JointPDFDerivatives->GetBufferPointer()
-    + ( pdfIndex[ 0 ] * this->m_JointPDFDerivatives->GetOffsetTable()[ 1 ] )
-    + ( pdfIndex[ 1 ] * this->m_JointPDFDerivatives->GetOffsetTable()[ 2 ] );
+  PDFDerivativeValueType * derivPtr = this->m_JointPDFDerivativesVector[pos]->GetBufferPointer()
+    + ( pdfIndex[ 0 ] * this->m_JointPDFDerivativesVector[pos]->GetOffsetTable()[ 1 ] )
+    + ( pdfIndex[ 1 ] * this->m_JointPDFDerivativesVector[pos]->GetOffsetTable()[ 2 ] );
 
   if( nzji.size() == this->GetNumberOfParameters() )
   {
@@ -534,12 +551,13 @@ template< class TFixedImage, class TMovingImage >
 void
 MultiPWHistogramImageToImageMetric< TFixedImage, TMovingImage >
 ::ComputeMarginalPDF(
-  const JointPDFType * itkNotUsed( jointPDF ),
-  MarginalPDFType & marginalPDF, const unsigned int & direction ) const
+  const JointPDFType * jointPDF,
+  MarginalPDFType & marginalPDF, const unsigned int & direction, const unsigned int pos ) const
 {
   typedef ImageLinearIteratorWithIndex< JointPDFType > JointPDFLinearIterator;
   // \todo: bug? shouldn't this be over the function argument jointPDF ?
-  JointPDFLinearIterator linearIter( this->m_JointPDF, this->m_JointPDF->GetBufferedRegion() );
+  JointPDFLinearIterator linearIter(this->m_JointPDFVector[pos], this->m_JointPDFVector[pos]->GetBufferedRegion());
+  //JointPDFLinearIterator linearIter( jointPDF, jointPDF->GetBufferedRegion() ); // not possible??? Songshu
   linearIter.SetDirection( direction );
   linearIter.GoToBegin();
   unsigned int marginalIndex = 0;
@@ -572,9 +590,9 @@ MultiPWHistogramImageToImageMetric< TFixedImage, TMovingImage >
 ::ComputePDFs( const ParametersType & parameters, const unsigned int pos ) const
 {
   /** Initialize some variables. */
-  this->m_JointPDF->FillBuffer(0.0);
+  this->m_JointPDFVector[pos]->FillBuffer(0.0);
   this->m_NumberOfPixelsCounted = 0;
-  this->m_Alpha = 0.0;
+  this->m_AlphaVector[pos] = 0.0;  // not possible??? Songshu
 
 
   /** Get a handle to the sample container. */
@@ -624,7 +642,7 @@ MultiPWHistogramImageToImageMetric< TFixedImage, TMovingImage >
 
       /** Compute this sample's contribution to the joint distributions. */
       this->UpdateJointPDFAndDerivatives(
-        fixedImageValue, movingImageValue, 0, 0, this->m_JointPDF.GetPointer());  // works automatically (?)
+        fixedImageValue, movingImageValue, 0, 0, this->m_JointPDFVector[pos].GetPointer(), pos);  // works automatically (?)
     }
 
   } // end iterating over fixed image spatial sample container for loop
@@ -633,7 +651,7 @@ MultiPWHistogramImageToImageMetric< TFixedImage, TMovingImage >
   this->CheckNumberOfSamples(sampleContainer->Size(), this->m_NumberOfPixelsCounted);
 
   /** Compute alpha. */
-  this->m_Alpha = 1.0 / static_cast<double>(this->m_NumberOfPixelsCounted);
+  this->m_AlphaVector[pos] = 1.0 / static_cast<double>(this->m_NumberOfPixelsCounted);
 
 } // end ComputePDFs()
 
@@ -650,9 +668,9 @@ MultiPWHistogramImageToImageMetric< TFixedImage, TMovingImage >
 ::ComputePDFsAndPDFDerivatives( const ParametersType & parameters, unsigned int pos) const
 {
   /** Initialize some variables. */
-  this->m_JointPDF->FillBuffer( 0.0 );
-  this->m_JointPDFDerivatives->FillBuffer( 0.0 );
-  this->m_Alpha                 = 0.0;
+  this->m_JointPDFVector[pos]->FillBuffer( 0.0 );
+  this->m_JointPDFDerivativesVector[pos]->FillBuffer( 0.0 );
+  this->m_AlphaVector[pos] = 0.0;  // not possible??? Songshu
   this->m_NumberOfPixelsCounted = 0;
   /** Array that stores dM(x)/dmu, and the sparse jacobian+indices. */
   NonZeroJacobianIndicesType nzji( this->m_AdvancedTransform->GetNumberOfNonZeroJacobianIndices() );
@@ -709,20 +727,20 @@ MultiPWHistogramImageToImageMetric< TFixedImage, TMovingImage >
           jacobian, movingImageDerivative, imageJacobian);
         /** Update the joint pdf and the joint pdf derivatives. */
         this->UpdateJointPDFAndDerivatives(
-          fixedImageValue, movingImageValue, &imageJacobian, &nzji, this->m_JointPDF.GetPointer());
+          fixedImageValue, movingImageValue, &imageJacobian, &nzji, this->m_JointPDFVector[pos].GetPointer(), pos);
 
       } //end if-block check sampleOk
     } // end iterating over fixed image spatial sample container for loop
-    itkWarningMacro(<< "SONGSHU in ComputePDFsAndPDFDerivatives 9");
+   
     /** Check if enough samples were valid. */
     this->CheckNumberOfSamples(
       sampleContainer->Size(), this->m_NumberOfPixelsCounted);
 
     /** Compute alpha. */
-  this->m_Alpha = 0.0;
+  this->m_AlphaVector[pos] = 0.0;
     if (this->m_NumberOfPixelsCounted > 0)
     {
-    this->m_Alpha = 1.0 / static_cast< double >( this->m_NumberOfPixelsCounted );
+    this->m_AlphaVector[pos] = 1.0 / static_cast< double >( this->m_NumberOfPixelsCounted );
     }
 } // end ComputePDFsAndPDFDerivatives()
 

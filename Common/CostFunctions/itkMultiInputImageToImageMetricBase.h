@@ -110,6 +110,10 @@ public:
   typedef std::vector< FixedImageInterpolatorPointer > FixedImageInterpolatorVectorType;
   typedef std::vector< FixedImageLimiterPointer >      FixedImageLimiterVectorType;
   typedef std::vector< MovingImageLimiterPointer >     MovingImageLimiterVectorType;
+  typedef std::vector< FixedImagePixelType>            FixedImagePixelVectorType;
+  typedef std::vector< MovingImagePixelType>           MovingImagePixelVectorType;
+  typedef std::vector< FixedImageLimiterOutputType>    FixedImageLimiterOutputVectorType;
+  typedef std::vector< MovingImageLimiterOutputType>   MovingImageLimiterOutputVectorType;
 
   /** Typedef's for the moving image interpolators. */
   typedef typename Superclass::BSplineInterpolatorType BSplineInterpolatorType;
@@ -444,6 +448,17 @@ protected:
   bool                          m_InterpolatorsAreBSpline;
   BSplineInterpolatorVectorType m_BSplineInterpolatorVector;
 
+  /** Variables for the Limiters. */
+  FixedImagePixelVectorType          m_FixedImageTrueMinVector;
+  FixedImagePixelVectorType          m_FixedImageTrueMaxVector;
+  MovingImagePixelVectorType         m_MovingImageTrueMinVector;
+  MovingImagePixelVectorType         m_MovingImageTrueMaxVector;
+  FixedImageLimiterOutputVectorType  m_FixedImageMinLimitVector;
+  FixedImageLimiterOutputVectorType  m_FixedImageMaxLimitVector;
+  MovingImageLimiterOutputVectorType m_MovingImageMinLimitVector;
+  MovingImageLimiterOutputVectorType m_MovingImageMaxLimitVector;
+
+
 private:
 
   MultiInputImageToImageMetricBase( const Self & ); // purposely not implemented
@@ -461,6 +476,7 @@ private:
   unsigned int m_NumberOfFixedImageInterpolators;
   unsigned int m_NumberOfFixedImageLimiters;
   unsigned int m_NumberOfMovingImageLimiters;
+
 
 };
 

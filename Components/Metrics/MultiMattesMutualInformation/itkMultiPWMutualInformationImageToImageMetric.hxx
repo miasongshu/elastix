@@ -81,11 +81,11 @@ MultiPWMutualInformationImageToImageMetric< TFixedImage, TMovingImage >
     this->ComputePDFs(parameters, pos);
 
     /** Normalize the pdfs: p = alpha h. */
-    this->NormalizeJointPDF(this->m_JointPDF, this->m_Alpha);
+    this->NormalizeJointPDF(this->m_JointPDFVector[pos], this->m_AlphaVector[pos]);
 
     /** Compute the fixed and moving marginal pdfs, by summing over the joint pdf. */
-    this->ComputeMarginalPDF(this->m_JointPDF, this->m_FixedImageMarginalPDF, 0);
-    this->ComputeMarginalPDF(this->m_JointPDF, this->m_MovingImageMarginalPDF, 1);
+    this->ComputeMarginalPDF(this->m_JointPDFVector[pos], this->m_FixedImageMarginalPDFVector[pos], 0, pos);
+    this->ComputeMarginalPDF(this->m_JointPDFVector[pos], this->m_MovingImageMarginalPDFVector[pos], 1, pos);
 
     /** Compute the metric by double summation over histogram. */
 
@@ -94,19 +94,20 @@ MultiPWMutualInformationImageToImageMetric< TFixedImage, TMovingImage >
     typedef typename MarginalPDFType::const_iterator          MarginalPDFIteratorType;
 
     JointPDFIteratorType jointPDFit(
-      this->m_JointPDF, this->m_JointPDF->GetLargestPossibleRegion());
+      this->m_JointPDFVector[pos], this->m_JointPDFVector[pos]->GetLargestPossibleRegion());
     jointPDFit.SetDirection(0);
     jointPDFit.GoToBegin();
-    MarginalPDFIteratorType       fixedPDFit = this->m_FixedImageMarginalPDF.begin();
-    const MarginalPDFIteratorType fixedPDFend = this->m_FixedImageMarginalPDF.end();
-    MarginalPDFIteratorType       movingPDFit = this->m_MovingImageMarginalPDF.begin();
-    const MarginalPDFIteratorType movingPDFend = this->m_MovingImageMarginalPDF.end();
+    MarginalPDFIteratorType       fixedPDFit = this->m_FixedImageMarginalPDFVector[pos].begin();
+    const MarginalPDFIteratorType fixedPDFend = this->m_FixedImageMarginalPDFVector[pos].end();
+    MarginalPDFIteratorType       movingPDFit = this->m_MovingImageMarginalPDFVector[pos].begin();
+    const MarginalPDFIteratorType movingPDFend = this->m_MovingImageMarginalPDFVector[pos].end();
 
     /** Loop over histogram. */
+    MI = 0.0;
     while (fixedPDFit != fixedPDFend)
     {
       const double fixedImagePDFValue = *fixedPDFit;
-      movingPDFit = this->m_MovingImageMarginalPDF.begin();
+      movingPDFit = this->m_MovingImageMarginalPDFVector[pos].begin();
       while (movingPDFit != movingPDFend)
       {
         const double movingImagePDFValue = *movingPDFit;
@@ -150,24 +151,24 @@ MultiPWMutualInformationImageToImageMetric< TFixedImage, TMovingImage >
 
   const unsigned int clusterSize = this->GetNumberOfFixedImages();
   /** Loop over all the multiple images in the cluster */
+  /** Initialize some variables. */
+  value = NumericTraits< MeasureType >::Zero;
+  derivative = DerivativeType(this->GetNumberOfParameters());
+  derivative.Fill(NumericTraits< double >::ZeroValue());
   double MI = 0.0;
   for (unsigned int pos = 0; pos < clusterSize; ++pos)
   {
-    /** Initialize some variables. */
-    value = NumericTraits< MeasureType >::Zero;
-    derivative = DerivativeType(this->GetNumberOfParameters());
-    derivative.Fill(NumericTraits< double >::ZeroValue());
-
     {
       /** Construct the JointPDF, JointPDFDerivatives, Alpha and its derivatives. */
       this->ComputePDFsAndPDFDerivatives(parameters, pos);
       /** Normalize the pdfs: p = alpha h. */
-      this->NormalizeJointPDF(this->m_JointPDF, this->m_Alpha);
+      this->NormalizeJointPDF(this->m_JointPDFVector[pos], this->m_AlphaVector[pos]);
       /** Compute the fixed and moving marginal pdf by summing over the histogram. */
-      this->ComputeMarginalPDF(this->m_JointPDF, this->m_FixedImageMarginalPDF, 0);
-      this->ComputeMarginalPDF(this->m_JointPDF, this->m_MovingImageMarginalPDF, 1);
-      /** Compute the metric and derivatives by double summation over histogram. */
+      this->ComputeMarginalPDF(this->m_JointPDFVector[pos], this->m_FixedImageMarginalPDFVector[pos], 0, pos);
+      this->ComputeMarginalPDF(this->m_JointPDFVector[pos], this->m_MovingImageMarginalPDFVector[pos], 1, pos);
 
+      /** Compute the metric and derivatives by double summation over histogram. */
+      //itkWarningMacro(<< " SONGSHU m_JointPDF= " << *this->m_JointPDF);
       /** Setup iterators .*/
       typedef ImageLinearConstIteratorWithIndex<
         JointPDFType >                                 JointPDFIteratorType;
@@ -177,17 +178,17 @@ MultiPWMutualInformationImageToImageMetric< TFixedImage, TMovingImage >
       typedef typename DerivativeType::iterator        DerivativeIteratorType;
 
       JointPDFIteratorType jointPDFit(
-        this->m_JointPDF, this->m_JointPDF->GetLargestPossibleRegion());
+        this->m_JointPDFVector[pos], this->m_JointPDFVector[pos]->GetLargestPossibleRegion());
       jointPDFit.SetDirection(0);
       jointPDFit.GoToBegin();
       JointPDFDerivativesIteratorType jointPDFDerivativesit(
-        this->m_JointPDFDerivatives, this->m_JointPDFDerivatives->GetLargestPossibleRegion());
+        this->m_JointPDFDerivativesVector[pos], this->m_JointPDFDerivativesVector[pos]->GetLargestPossibleRegion());
       jointPDFDerivativesit.SetDirection(0);
       jointPDFDerivativesit.GoToBegin();
-      MarginalPDFIteratorType       fixedPDFit = this->m_FixedImageMarginalPDF.begin();
-      const MarginalPDFIteratorType fixedPDFend = this->m_FixedImageMarginalPDF.end();
-      MarginalPDFIteratorType       movingPDFit = this->m_MovingImageMarginalPDF.begin();
-      const MarginalPDFIteratorType movingPDFend = this->m_MovingImageMarginalPDF.end();
+      MarginalPDFIteratorType       fixedPDFit = this->m_FixedImageMarginalPDFVector[pos].begin();
+      const MarginalPDFIteratorType fixedPDFend = this->m_FixedImageMarginalPDFVector[pos].end();
+      MarginalPDFIteratorType       movingPDFit = this->m_MovingImageMarginalPDFVector[pos].begin();
+      const MarginalPDFIteratorType movingPDFend = this->m_MovingImageMarginalPDFVector[pos].end();
       DerivativeIteratorType        derivit = derivative.begin();
       const DerivativeIteratorType  derivbegin = derivative.begin();
       const DerivativeIteratorType  derivend = derivative.end();
@@ -195,7 +196,7 @@ MultiPWMutualInformationImageToImageMetric< TFixedImage, TMovingImage >
       while (fixedPDFit != fixedPDFend)
       {
         const double fixedImagePDFValue = *fixedPDFit;
-        movingPDFit = this->m_MovingImageMarginalPDF.begin();
+        movingPDFit = this->m_MovingImageMarginalPDFVector[pos].begin();
         while (movingPDFit != movingPDFend)
         {
           const double movingImagePDFValue = *movingPDFit;
@@ -207,8 +208,9 @@ MultiPWMutualInformationImageToImageMetric< TFixedImage, TMovingImage >
           {
             derivit = derivbegin;
             const double pRatio = std::log(jointPDFValue / fixPDFmovPDF);
-            const double pRatioAlpha = this->m_Alpha * pRatio;
+            const double pRatioAlpha = this->m_AlphaVector[pos] * pRatio;
             MI += jointPDFValue * pRatio;
+            //itkWarningMacro(<< " SONGSHU MI = " << MI);
             while (derivit != derivend)
             {
               /**  Ref: eq 23 of Thevenaz & Unser paper [3]. */
@@ -229,6 +231,7 @@ MultiPWMutualInformationImageToImageMetric< TFixedImage, TMovingImage >
     }
     value += static_cast<MeasureType>(-1.0 * MI);
   }
+  itkWarningMacro(<< " SONGSHU value= " << value << ", MI=" << MI  );
 } // end GetValueAndAnalyticDerivative()
 
 
