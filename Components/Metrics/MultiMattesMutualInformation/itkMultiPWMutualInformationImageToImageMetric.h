@@ -90,11 +90,12 @@ public:
   /** Run-time type information (and related methods). */
   itkTypeMacro(
     MultiPWMutualInformationImageToImageMetric,
-    MultiPWHistogramImageToImageMetric ); 
+    MultiPWHistogramImageToImageMetric);
 
   /** Typedefs from the superclass. */
   typedef typename
     Superclass::CoordinateRepresentationType CoordinateRepresentationType;
+  typedef typename Superclass::FixedImageContinuousIndexType FixedImageContinuousIndexType;
   typedef typename Superclass::MovingImageType            MovingImageType;
   typedef typename Superclass::MovingImagePixelType       MovingImagePixelType;
   typedef typename Superclass::MovingImageConstPointer    MovingImageConstPointer;

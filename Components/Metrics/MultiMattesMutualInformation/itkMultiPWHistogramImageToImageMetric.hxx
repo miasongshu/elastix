@@ -634,7 +634,9 @@ MultiPWHistogramImageToImageMetric< TFixedImage, TMovingImage >
       this->m_NumberOfPixelsCounted++;
 
       /** Get the fixed image value. */
-      RealType fixedImageValue = static_cast<RealType>((*fiter).Value().m_ImageValue);
+      FixedImageContinuousIndexType cindex;
+      this->m_FixedImageInterpolatorVector[pos]->ConvertPointToContinuousIndex(fixedPoint, cindex);
+      RealType fixedImageValue = this->GetFixedImageInterpolator(pos)->EvaluateAtContinuousIndex(cindex);
 
       /** Make sure the values fall within the histogram range. */
       fixedImageValue = this->GetFixedImageLimiter(pos)->Evaluate(fixedImageValue);
@@ -643,8 +645,8 @@ MultiPWHistogramImageToImageMetric< TFixedImage, TMovingImage >
       /** Compute this sample's contribution to the joint distributions. */
       this->UpdateJointPDFAndDerivatives(
         fixedImageValue, movingImageValue, 0, 0, this->m_JointPDFVector[pos].GetPointer(), pos);  // works automatically (?)
+    itkWarningMacro(<< " SONGSHU fixed/movingImageValue = " << fixedImageValue << ", " << movingImageValue << ", " << *this->m_JointPDFVector[pos].GetPointer());
     }
-
   } // end iterating over fixed image spatial sample container for loop
 
   /** Check if enough samples were valid. */
@@ -714,7 +716,9 @@ MultiPWHistogramImageToImageMetric< TFixedImage, TMovingImage >
         this->m_NumberOfPixelsCounted++;
 
         /** Get the fixed image value. */
-        RealType fixedImageValue = static_cast<RealType>((*fiter).Value().m_ImageValue);
+        FixedImageContinuousIndexType cindex;
+        this->m_FixedImageInterpolatorVector[pos]->ConvertPointToContinuousIndex(fixedPoint, cindex);
+        RealType fixedImageValue = this->GetFixedImageInterpolator(pos)->EvaluateAtContinuousIndex(cindex);
 
         /** Make sure the values fall within the histogram range. */
         fixedImageValue = this->GetFixedImageLimiter(pos)->Evaluate(fixedImageValue);
@@ -728,7 +732,7 @@ MultiPWHistogramImageToImageMetric< TFixedImage, TMovingImage >
         /** Update the joint pdf and the joint pdf derivatives. */
         this->UpdateJointPDFAndDerivatives(
           fixedImageValue, movingImageValue, &imageJacobian, &nzji, this->m_JointPDFVector[pos].GetPointer(), pos);
-
+        itkWarningMacro(<< " SONGSHU fixed/movingImageValue, = " << fixedImageValue << ", " << movingImageValue );
       } //end if-block check sampleOk
     } // end iterating over fixed image spatial sample container for loop
    
@@ -737,7 +741,6 @@ MultiPWHistogramImageToImageMetric< TFixedImage, TMovingImage >
       sampleContainer->Size(), this->m_NumberOfPixelsCounted);
 
     /** Compute alpha. */
-  this->m_AlphaVector[pos] = 0.0;
     if (this->m_NumberOfPixelsCounted > 0)
     {
     this->m_AlphaVector[pos] = 1.0 / static_cast< double >( this->m_NumberOfPixelsCounted );
