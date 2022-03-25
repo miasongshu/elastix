@@ -194,7 +194,9 @@ MultiNormalizedCorrelationImageToImageMetric< TFixedImage, TMovingImage >
         this->m_NumberOfPixelsCounted++;
 
         /** Get the fixed image value. */
-        const RealType& fixedImageValue = static_cast<double>((*fiter).Value().m_ImageValue);
+        FixedImageContinuousIndexType cindex;
+        this->m_FixedImageInterpolatorVector[pos]->ConvertPointToContinuousIndex(fixedPoint, cindex);
+        const RealType& fixedImageValue = this->GetFixedImageInterpolator(pos)->EvaluateAtContinuousIndex(cindex);
 
         /** Update some sums needed to calculate NC. */
         sff += fixedImageValue * fixedImageValue;
@@ -377,7 +379,9 @@ MultiNormalizedCorrelationImageToImageMetric< TFixedImage, TMovingImage >
       this->m_NumberOfPixelsCounted++;
 
       /** Get the fixed image value. */
-      const RealType& fixedImageValue = static_cast<RealType>((*fiter).Value().m_ImageValue);
+      FixedImageContinuousIndexType cindex;
+      this->m_FixedImageInterpolatorVector[pos]->ConvertPointToContinuousIndex(fixedPoint, cindex);
+      const RealType& fixedImageValue = this->GetFixedImageInterpolator(pos)->EvaluateAtContinuousIndex(cindex);
 
       /** Get the TransformJacobian dT/dmu. */
       this->EvaluateTransformJacobian(fixedPoint, jacobian, nzji);

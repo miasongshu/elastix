@@ -398,6 +398,10 @@ protected:
   ~MultiInputImageToImageMetricBase() override {}
 
   /** Typedef's from the Superclass. */
+  typedef typename Superclass::FixedImagePointType                     FixedImagePointType;
+  typedef typename Superclass::FixedImageIndexType                     FixedImageIndexType;
+  typedef typename FixedImageInterpolatorType::ContinuousIndexType     FixedImageContinuousIndexType;
+
   typedef typename Superclass::MovingImagePointType           MovingImagePointType;
   typedef typename Superclass::MovingImageIndexType           MovingImageIndexType;
   typedef typename Superclass::MovingImageDerivativeType      MovingImageDerivativeType;

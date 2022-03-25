@@ -222,6 +222,7 @@ protected:
   typedef typename Superclass::MovingImageIndexType                MovingImageIndexType;
   typedef typename Superclass::FixedImagePointType                 FixedImagePointType;
   typedef typename Superclass::MovingImagePointType                MovingImagePointType;
+  typedef typename Superclass::FixedImageContinuousIndexType       FixedImageContinuousIndexType;
   typedef typename Superclass::MovingImageContinuousIndexType      MovingImageContinuousIndexType;
   typedef typename Superclass::BSplineInterpolatorType             BSplineInterpolatorType;
   typedef typename Superclass::CentralDifferenceGradientFilterType CentralDifferenceGradientFilterType;
