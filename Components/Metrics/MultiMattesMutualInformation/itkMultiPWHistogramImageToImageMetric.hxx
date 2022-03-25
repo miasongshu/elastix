@@ -125,102 +125,102 @@ MultiPWHistogramImageToImageMetric< TFixedImage, TMovingImage >
     /** The ratio times the expected bin size will be added twice to the image range. */
     const double smallNumberRatio = 0.001;
     const double smallNumberFixed = smallNumberRatio
-    * (this->m_FixedImageMaxLimitVector[pos] - this->m_FixedImageMinLimitVector[pos])
-    / static_cast<double>(this->m_NumberOfFixedHistogramBins - 2 * fixedPadding - 1);
-  const double smallNumberMoving = smallNumberRatio
-    * (this->m_MovingImageMaxLimitVector[pos] - this->m_MovingImageMinLimitVector[pos])
-    / static_cast<double>(this->m_NumberOfFixedHistogramBins - 2 * movingPadding - 1);
+      * (this->m_FixedImageMaxLimitVector[pos] - this->m_FixedImageMinLimitVector[pos])
+      / static_cast<double>(this->m_NumberOfFixedHistogramBins - 2 * fixedPadding - 1);
+    const double smallNumberMoving = smallNumberRatio
+      * (this->m_MovingImageMaxLimitVector[pos] - this->m_MovingImageMinLimitVector[pos])
+      / static_cast<double>(this->m_NumberOfFixedHistogramBins - 2 * movingPadding - 1);
 
-  /** Compute binsizes. */
-  const double fixedHistogramWidth = static_cast<double>(
-    static_cast<OffsetValueType>(this->m_NumberOfFixedHistogramBins) // requires cast to signed type!
-    - 2.0 * fixedPadding - 1.0);
-  this->m_FixedImageBinSizeVector.push_back(
-    (this->m_FixedImageMaxLimitVector[pos] - this->m_FixedImageMinLimitVector[pos]
-      + 2.0 * smallNumberFixed) / fixedHistogramWidth);
-  this->m_FixedImageBinSizeVector[pos] = std::max(this->m_FixedImageBinSizeVector[pos], 1e-10);
-  this->m_FixedImageBinSizeVector[pos] = std::min(this->m_FixedImageBinSizeVector[pos], 1e+10);
-  this->m_FixedImageNormalizedMinVector.push_back(
-    (this->m_FixedImageMinLimitVector[pos] - smallNumberFixed)
-    / this->m_FixedImageBinSizeVector[pos] - static_cast<double>(fixedPadding));
+    /** Compute binsizes. */
+    const double fixedHistogramWidth = static_cast<double>(
+      static_cast<OffsetValueType>(this->m_NumberOfFixedHistogramBins) // requires cast to signed type!
+      - 2.0 * fixedPadding - 1.0);
+    this->m_FixedImageBinSizeVector.push_back(
+      (this->m_FixedImageMaxLimitVector[pos] - this->m_FixedImageMinLimitVector[pos]
+        + 2.0 * smallNumberFixed) / fixedHistogramWidth);
+    this->m_FixedImageBinSizeVector[pos] = std::max(this->m_FixedImageBinSizeVector[pos], 1e-10);
+    this->m_FixedImageBinSizeVector[pos] = std::min(this->m_FixedImageBinSizeVector[pos], 1e+10);
+    this->m_FixedImageNormalizedMinVector.push_back(
+      (this->m_FixedImageMinLimitVector[pos] - smallNumberFixed)
+      / this->m_FixedImageBinSizeVector[pos] - static_cast<double>(fixedPadding));
 
-  const double movingHistogramWidth = static_cast<double>(
-    static_cast<OffsetValueType>(this->m_NumberOfMovingHistogramBins) // requires cast to signed type!
-    - 2.0 * movingPadding - 1.0);
-  this->m_MovingImageBinSizeVector.push_back(
-    (this->m_MovingImageMaxLimitVector[pos] - this->m_MovingImageMinLimitVector[pos]
-      + 2.0 * smallNumberMoving) / movingHistogramWidth);
-  this->m_MovingImageBinSizeVector[pos] = std::max(this->m_MovingImageBinSizeVector[pos], 1e-10);
-  this->m_MovingImageBinSizeVector[pos] = std::min(this->m_MovingImageBinSizeVector[pos], 1e+10);
-  this->m_MovingImageNormalizedMinVector.push_back(
-    (this->m_MovingImageMinLimitVector[pos] - smallNumberMoving)
-    / this->m_MovingImageBinSizeVector[pos] - static_cast<double>(movingPadding));
+    const double movingHistogramWidth = static_cast<double>(
+      static_cast<OffsetValueType>(this->m_NumberOfMovingHistogramBins) // requires cast to signed type!
+      - 2.0 * movingPadding - 1.0);
+    this->m_MovingImageBinSizeVector.push_back(
+      (this->m_MovingImageMaxLimitVector[pos] - this->m_MovingImageMinLimitVector[pos]
+        + 2.0 * smallNumberMoving) / movingHistogramWidth);
+    this->m_MovingImageBinSizeVector[pos] = std::max(this->m_MovingImageBinSizeVector[pos], 1e-10);
+    this->m_MovingImageBinSizeVector[pos] = std::min(this->m_MovingImageBinSizeVector[pos], 1e+10);
+    this->m_MovingImageNormalizedMinVector.push_back(
+      (this->m_MovingImageMinLimitVector[pos] - smallNumberMoving)
+      / this->m_MovingImageBinSizeVector[pos] - static_cast<double>(movingPadding));
 
-  /** Allocate memory for the marginal PDF. */
-  MarginalPDFType FixedImageMarginalPDFDummy = {};
-  FixedImageMarginalPDFDummy.SetSize(this->m_NumberOfFixedHistogramBins);
-  this->m_FixedImageMarginalPDFVector.push_back(FixedImageMarginalPDFDummy);
-  MarginalPDFType MovingImageMarginalPDFDummy = {};
-  MovingImageMarginalPDFDummy.SetSize(this->m_NumberOfMovingHistogramBins);
-  this->m_MovingImageMarginalPDFVector.push_back(MovingImageMarginalPDFDummy);
+    /** Allocate memory for the marginal PDF. */
+    MarginalPDFType FixedImageMarginalPDFDummy = {};
+    FixedImageMarginalPDFDummy.SetSize(this->m_NumberOfFixedHistogramBins);
+    this->m_FixedImageMarginalPDFVector.push_back(FixedImageMarginalPDFDummy);
+    MarginalPDFType MovingImageMarginalPDFDummy = {};
+    MovingImageMarginalPDFDummy.SetSize(this->m_NumberOfMovingHistogramBins);
+    this->m_MovingImageMarginalPDFVector.push_back(MovingImageMarginalPDFDummy);
 
-  //this->m_FixedImageMarginalPDFVector.SetSize(this->m_NumberOfFixedHistogramBins);
-  //this->m_MovingImageMarginalPDFVector.SetSize(this->m_NumberOfMovingHistogramBins);
+    //this->m_FixedImageMarginalPDFVector.SetSize(this->m_NumberOfFixedHistogramBins);
+    //this->m_MovingImageMarginalPDFVector.SetSize(this->m_NumberOfMovingHistogramBins);
 
-  /** Allocate memory for the joint PDF and joint PDF derivatives. */
+    /** Allocate memory for the joint PDF and joint PDF derivatives. */
 
-  /** For the joint PDF define a region starting from {0,0}
-   * with size {this->m_NumberOfMovingHistogramBins, this->m_NumberOfFixedHistogramBins}
-   * The dimension represents moving image Parzen window index
-   * and fixed image Parzen window index, respectively.
-   * The moving Parzen index is chosen as the first dimension,
-   * because probably the moving B-spline kernel order will be larger
-   * than the fixed B-spline kernel order and it is faster to iterate along
-   * the first dimension.
-   */
-  this->m_JointPDFVector.push_back(JointPDFType::New());
-  JointPDFRegionType jointPDFRegion;
-  JointPDFIndexType  jointPDFIndex;
-  JointPDFSizeType   jointPDFSize;
-  jointPDFIndex.Fill(0);
-  jointPDFSize[0] = this->m_NumberOfMovingHistogramBins;
-  jointPDFSize[1] = this->m_NumberOfFixedHistogramBins;
-  jointPDFRegion.SetIndex(jointPDFIndex);
-  jointPDFRegion.SetSize(jointPDFSize);
-  this->m_JointPDFVector[pos]->SetRegions(jointPDFRegion);
-  this->m_JointPDFVector[pos]->Allocate();
-
-  this->m_AlphaVector.push_back(0);
-
-  if (this->GetUseDerivative())
-  {
-    /** For the derivatives of the joint PDF define a region starting from {0,0,0}
-     * with size {GetNumberOfParameters(),m_NumberOfMovingHistogramBins,
-     * m_NumberOfFixedHistogramBins}. The dimension represents transform parameters,
-     * moving image Parzen window index and fixed image Parzen window index,
-     * respectively.
+    /** For the joint PDF define a region starting from {0,0}
+     * with size {this->m_NumberOfMovingHistogramBins, this->m_NumberOfFixedHistogramBins}
+     * The dimension represents moving image Parzen window index
+     * and fixed image Parzen window index, respectively.
+     * The moving Parzen index is chosen as the first dimension,
+     * because probably the moving B-spline kernel order will be larger
+     * than the fixed B-spline kernel order and it is faster to iterate along
+     * the first dimension.
      */
+    this->m_JointPDFVector.push_back(JointPDFType::New());
+    JointPDFRegionType jointPDFRegion;
+    JointPDFIndexType  jointPDFIndex;
+    JointPDFSizeType   jointPDFSize;
+    jointPDFIndex.Fill(0);
+    jointPDFSize[0] = this->m_NumberOfMovingHistogramBins;
+    jointPDFSize[1] = this->m_NumberOfFixedHistogramBins;
+    jointPDFRegion.SetIndex(jointPDFIndex);
+    jointPDFRegion.SetSize(jointPDFSize);
+    this->m_JointPDFVector[pos]->SetRegions(jointPDFRegion);
+    this->m_JointPDFVector[pos]->Allocate();
 
-    JointPDFDerivativesRegionType jointPDFDerivativesRegion;
-    JointPDFDerivativesIndexType  jointPDFDerivativesIndex;
-    JointPDFDerivativesSizeType   jointPDFDerivativesSize;
-    jointPDFDerivativesIndex.Fill(0);
-    jointPDFDerivativesSize[0] = this->GetNumberOfParameters();
-    jointPDFDerivativesSize[1] = this->m_NumberOfMovingHistogramBins;
-    jointPDFDerivativesSize[2] = this->m_NumberOfFixedHistogramBins;
-    jointPDFDerivativesRegion.SetIndex(jointPDFDerivativesIndex);
-    jointPDFDerivativesRegion.SetSize(jointPDFDerivativesSize);
+    this->m_AlphaVector.push_back(0);
+
+    if (this->GetUseDerivative())
+    {
+      /** For the derivatives of the joint PDF define a region starting from {0,0,0}
+       * with size {GetNumberOfParameters(),m_NumberOfMovingHistogramBins,
+       * m_NumberOfFixedHistogramBins}. The dimension represents transform parameters,
+       * moving image Parzen window index and fixed image Parzen window index,
+       * respectively.
+       */
+
+      JointPDFDerivativesRegionType jointPDFDerivativesRegion;
+      JointPDFDerivativesIndexType  jointPDFDerivativesIndex;
+      JointPDFDerivativesSizeType   jointPDFDerivativesSize;
+      jointPDFDerivativesIndex.Fill(0);
+      jointPDFDerivativesSize[0] = this->GetNumberOfParameters();
+      jointPDFDerivativesSize[1] = this->m_NumberOfMovingHistogramBins;
+      jointPDFDerivativesSize[2] = this->m_NumberOfFixedHistogramBins;
+      jointPDFDerivativesRegion.SetIndex(jointPDFDerivativesIndex);
+      jointPDFDerivativesRegion.SetSize(jointPDFDerivativesSize);
 
 
-    this->m_JointPDFDerivativesVector.push_back(JointPDFDerivativesType::New());
-    this->m_JointPDFDerivativesVector[pos]->SetRegions(jointPDFDerivativesRegion);
-    this->m_JointPDFDerivativesVector[pos]->Allocate();
-  }
-  else
-  {
-    this->m_JointPDFDerivativesVector.push_back(nullptr);
-  }
-}// end loop over pos
+      this->m_JointPDFDerivativesVector.push_back(JointPDFDerivativesType::New());
+      this->m_JointPDFDerivativesVector[pos]->SetRegions(jointPDFDerivativesRegion);
+      this->m_JointPDFDerivativesVector[pos]->Allocate();
+    }
+    else
+    {
+      this->m_JointPDFDerivativesVector.push_back(nullptr);
+    }
+  }// end loop over pos
 } // end InitializeHistograms()
 
 
@@ -639,8 +639,10 @@ MultiPWHistogramImageToImageMetric< TFixedImage, TMovingImage >
       RealType fixedImageValue = this->GetFixedImageInterpolator(pos)->EvaluateAtContinuousIndex(cindex);
 
       /** Make sure the values fall within the histogram range. */
-      fixedImageValue = this->GetFixedImageLimiter(pos)->Evaluate(fixedImageValue);
-      movingImageValue = this->GetMovingImageLimiter(pos)->Evaluate(movingImageValue);
+      if (this->GetUseFixedImageLimiter())
+        fixedImageValue = this->GetFixedImageLimiter(pos)->Evaluate(fixedImageValue);
+      if (this->GetUseMovingImageLimiter())
+        movingImageValue = this->GetMovingImageLimiter(pos)->Evaluate(movingImageValue);
 
       /** Compute this sample's contribution to the joint distributions. */
       this->UpdateJointPDFAndDerivatives(
@@ -721,9 +723,11 @@ MultiPWHistogramImageToImageMetric< TFixedImage, TMovingImage >
         RealType fixedImageValue = this->GetFixedImageInterpolator(pos)->EvaluateAtContinuousIndex(cindex);
 
         /** Make sure the values fall within the histogram range. */
-        fixedImageValue = this->GetFixedImageLimiter(pos)->Evaluate(fixedImageValue);
-        movingImageValue = this->GetMovingImageLimiter(pos)->Evaluate(
-          movingImageValue, movingImageDerivative);
+        if (this->GetUseFixedImageLimiter())
+          fixedImageValue = this->GetFixedImageLimiter(pos)->Evaluate(fixedImageValue);
+        if (this->GetUseMovingImageLimiter())
+          movingImageValue = this->GetMovingImageLimiter(pos)->Evaluate(
+            movingImageValue, movingImageDerivative);
         /** Get the TransformJacobian dT/dmu. */
         this->EvaluateTransformJacobian(fixedPoint, jacobian, nzji);
         /** Compute the inner product (dM/dx)^T (dT/dmu). */

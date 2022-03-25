@@ -273,14 +273,20 @@ void
 MultiInputImageToImageMetricBase< TFixedImage, TMovingImage >
 ::InitializeLimiters(void)
 {
+  this->m_FixedImageLimiterVector = {};
+  this->m_MovingImageLimiterVector = {};
+  this->m_FixedImageTrueMinVector = {};
+  this->m_FixedImageTrueMaxVector = {};
+  this->m_MovingImageTrueMinVector = {};
+  this->m_MovingImageTrueMaxVector = {};
+  this->m_FixedImageMinLimitVector = {};
+  this->m_FixedImageMaxLimitVector = {};
+  this->m_MovingImageMinLimitVector = {};
+  this->m_MovingImageMaxLimitVector = {};
+
   /** Set up fixed limiter. */
   if (this->GetUseFixedImageLimiter())
   {
-    if (this->GetFixedImageLimiter() == 0)
-    {
-      itkExceptionMacro(<< "No fixed image limiter has been set!");
-    }
-
     for (unsigned int i = 0; i < this->GetNumberOfFixedImages(); ++i)
     {
       itk::TimeProbe timer;
@@ -335,15 +341,20 @@ MultiInputImageToImageMetricBase< TFixedImage, TMovingImage >
       this->SetFixedImageLimiter(fixedLimiter, i);
     }
   }
-
+  else
+  {
+    for (unsigned int i = 0; i < this->GetNumberOfFixedImages(); ++i)
+    {
+      this->m_FixedImageLimiterVector.push_back(nullptr);
+      this->m_FixedImageTrueMinVector.push_back(NumericTraits< FixedImagePixelType  >::Zero);
+      this->m_FixedImageTrueMaxVector.push_back(NumericTraits< FixedImagePixelType  >::One);
+      this->m_FixedImageMinLimitVector.push_back(NumericTraits< FixedImageLimiterOutputType  >::Zero);
+      this->m_FixedImageMaxLimitVector.push_back(NumericTraits< FixedImageLimiterOutputType  >::One);
+    }
+  }
   /** Set up moving limiter. */
   if (this->GetUseMovingImageLimiter())
   {
-    if (this->GetMovingImageLimiter() == 0)
-    {
-      itkExceptionMacro(<< "No moving image limiter has been set!");
-    }
-
     for (unsigned int i = 0; i < this->GetNumberOfMovingImages(); ++i)
     {
       itk::TimeProbe timer;
@@ -395,6 +406,17 @@ MultiInputImageToImageMetricBase< TFixedImage, TMovingImage >
       movingLimiter->Initialize();
 
       this->SetMovingImageLimiter(movingLimiter, i);
+    }
+  }
+  else
+  {
+    for (unsigned int i = 0; i < this->GetNumberOfMovingImages(); ++i)
+    {
+      this->m_MovingImageLimiterVector.push_back(nullptr);
+      this->m_MovingImageTrueMinVector.push_back(NumericTraits< MovingImagePixelType >::Zero);
+      this->m_MovingImageTrueMaxVector.push_back(NumericTraits< MovingImagePixelType >::One);
+      this->m_MovingImageMinLimitVector.push_back(NumericTraits< MovingImageLimiterOutputType >::Zero);
+      this->m_MovingImageMaxLimitVector.push_back(NumericTraits< MovingImageLimiterOutputType >::One);
     }
   }
 
