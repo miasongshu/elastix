@@ -90,7 +90,7 @@ public:
   /** Run-time type information (and related methods). */
   itkTypeMacro(
     MultiPWMutualInformationImageToImageMetric,
-    ParzenWindowHistogramImageToImageMetric );
+    MultiPWHistogramImageToImageMetric ); 
 
   /** Typedefs from the superclass. */
   typedef typename
