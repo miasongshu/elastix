@@ -166,9 +166,7 @@ MultiPWMutualInformationImageToImageMetric< TFixedImage, TMovingImage >
       /** Compute the fixed and moving marginal pdf by summing over the histogram. */
       this->ComputeMarginalPDF(this->m_JointPDFVector[pos], this->m_FixedImageMarginalPDFVector[pos], 0, pos);
       this->ComputeMarginalPDF(this->m_JointPDFVector[pos], this->m_MovingImageMarginalPDFVector[pos], 1, pos);
-      itkWarningMacro(<< " SONGSHU m_AlphaVector[pos]= " << this->m_AlphaVector[pos]);
       /** Compute the metric and derivatives by double summation over histogram. */
-      //itkWarningMacro(<< " SONGSHU m_JointPDF= " << *this->m_JointPDF);
       /** Setup iterators .*/
       typedef ImageLinearConstIteratorWithIndex<
         JointPDFType >                                 JointPDFIteratorType;
@@ -210,7 +208,6 @@ MultiPWMutualInformationImageToImageMetric< TFixedImage, TMovingImage >
             const double pRatio = std::log(jointPDFValue / fixPDFmovPDF);
             const double pRatioAlpha = this->m_AlphaVector[pos] * pRatio;
             MI += jointPDFValue * pRatio;
-            //itkWarningMacro(<< " SONGSHU MI = " << MI);
             while (derivit != derivend)
             {
               /**  Ref: eq 23 of Thevenaz & Unser paper [3]. */
@@ -231,7 +228,6 @@ MultiPWMutualInformationImageToImageMetric< TFixedImage, TMovingImage >
     }
     value += static_cast<MeasureType>(-1.0 * MI);
   }
-  //itkWarningMacro(<< " SONGSHU value= " << value << ", MI=" << MI  );
 } // end GetValueAndAnalyticDerivative()
 
 

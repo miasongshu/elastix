@@ -18,6 +18,7 @@
 #ifndef _itkMultiPWHistogramImageToImageMetric_HXX__
 #define _itkMultiPWHistogramImageToImageMetric_HXX__
 
+#include <algorithm>
 #include "itkMultiPWHistogramImageToImageMetric.h"
 
 #include "itkBSplineKernelFunction2.h"
@@ -376,11 +377,11 @@ MultiPWHistogramImageToImageMetric< TFixedImage, TMovingImage >
 
   /** The lowest bin numbers affected by this pixel: */
   const OffsetValueType fixedImageParzenWindowIndex
-    = static_cast< OffsetValueType >( std::floor(
-    fixedImageParzenWindowTerm + this->m_FixedParzenTermToIndexOffset ) );
+    = static_cast< OffsetValueType >( std::min(std::max(std::floor(
+      fixedImageParzenWindowTerm + this->m_FixedParzenTermToIndexOffset), 0.0), static_cast<double>(this->m_JointPDFWindow.GetSize()[1] - 1)));
   const OffsetValueType movingImageParzenWindowIndex
-    = static_cast< OffsetValueType >( std::floor(
-    movingImageParzenWindowTerm + this->m_MovingParzenTermToIndexOffset ) );
+    = static_cast< OffsetValueType >(std::min(std::max(std::floor(
+    movingImageParzenWindowTerm + this->m_MovingParzenTermToIndexOffset ),0.0), static_cast<double>(this->m_JointPDFWindow.GetSize()[0] - 1)));
 
   /** The Parzen values. */
   ParzenValueContainerType fixedParzenValues( this->m_JointPDFWindow.GetSize()[ 1 ] );
@@ -557,7 +558,7 @@ MultiPWHistogramImageToImageMetric< TFixedImage, TMovingImage >
   typedef ImageLinearIteratorWithIndex< JointPDFType > JointPDFLinearIterator;
   // \todo: bug? shouldn't this be over the function argument jointPDF ?
   JointPDFLinearIterator linearIter(this->m_JointPDFVector[pos], this->m_JointPDFVector[pos]->GetBufferedRegion());
-  //JointPDFLinearIterator linearIter( jointPDF, jointPDF->GetBufferedRegion() ); // not possible??? Songshu
+  //JointPDFLinearIterator linearIter( jointPDF, jointPDF->GetBufferedRegion() ); // not possible???
   linearIter.SetDirection( direction );
   linearIter.GoToBegin();
   unsigned int marginalIndex = 0;
@@ -592,8 +593,7 @@ MultiPWHistogramImageToImageMetric< TFixedImage, TMovingImage >
   /** Initialize some variables. */
   this->m_JointPDFVector[pos]->FillBuffer(0.0);
   this->m_NumberOfPixelsCounted = 0;
-  this->m_AlphaVector[pos] = 0.0;  // not possible??? Songshu
-
+  this->m_AlphaVector[pos] = 0.0;
 
   /** Get a handle to the sample container. */
   ImageSampleContainerPointer sampleContainer = this->GetImageSampler()->GetOutput();
@@ -647,7 +647,6 @@ MultiPWHistogramImageToImageMetric< TFixedImage, TMovingImage >
       /** Compute this sample's contribution to the joint distributions. */
       this->UpdateJointPDFAndDerivatives(
         fixedImageValue, movingImageValue, 0, 0, this->m_JointPDFVector[pos].GetPointer(), pos);  // works automatically (?)
-    itkWarningMacro(<< " SONGSHU fixed/movingImageValue = " << fixedImageValue << ", " << movingImageValue << ", " << *this->m_JointPDFVector[pos].GetPointer());
     }
   } // end iterating over fixed image spatial sample container for loop
 
@@ -674,8 +673,9 @@ MultiPWHistogramImageToImageMetric< TFixedImage, TMovingImage >
   /** Initialize some variables. */
   this->m_JointPDFVector[pos]->FillBuffer( 0.0 );
   this->m_JointPDFDerivativesVector[pos]->FillBuffer( 0.0 );
-  this->m_AlphaVector[pos] = 0.0;  // not possible??? Songshu
+  this->m_AlphaVector[pos] = 0.0;
   this->m_NumberOfPixelsCounted = 0;
+  
   /** Array that stores dM(x)/dmu, and the sparse jacobian+indices. */
   NonZeroJacobianIndicesType nzji( this->m_AdvancedTransform->GetNumberOfNonZeroJacobianIndices() );
   DerivativeType             imageJacobian( nzji.size() );
@@ -705,6 +705,7 @@ MultiPWHistogramImageToImageMetric< TFixedImage, TMovingImage >
       {
         sampleOk = this->IsInsideMovingMask(mappedPoint);
       }
+      
       /** Compute the moving image value M(T(x)) and derivative dM/dx and check if
        * the point is inside the moving image buffer.
        */
@@ -713,6 +714,8 @@ MultiPWHistogramImageToImageMetric< TFixedImage, TMovingImage >
         sampleOk = this->EvaluateMovingImageValueAndDerivative(
         mappedPoint, movingImageValue, &movingImageDerivative, pos );
       }
+      
+  
       if (sampleOk)
       {
         this->m_NumberOfPixelsCounted++;
@@ -726,8 +729,8 @@ MultiPWHistogramImageToImageMetric< TFixedImage, TMovingImage >
         if (this->GetUseFixedImageLimiter())
           fixedImageValue = this->GetFixedImageLimiter(pos)->Evaluate(fixedImageValue);
         if (this->GetUseMovingImageLimiter())
-          movingImageValue = this->GetMovingImageLimiter(pos)->Evaluate(
-            movingImageValue, movingImageDerivative);
+          movingImageValue = this->GetMovingImageLimiter(pos)->Evaluate(movingImageValue, movingImageDerivative);
+
         /** Get the TransformJacobian dT/dmu. */
         this->EvaluateTransformJacobian(fixedPoint, jacobian, nzji);
         /** Compute the inner product (dM/dx)^T (dT/dmu). */
@@ -736,21 +739,19 @@ MultiPWHistogramImageToImageMetric< TFixedImage, TMovingImage >
         /** Update the joint pdf and the joint pdf derivatives. */
         this->UpdateJointPDFAndDerivatives(
           fixedImageValue, movingImageValue, &imageJacobian, &nzji, this->m_JointPDFVector[pos].GetPointer(), pos);
-        itkWarningMacro(<< " SONGSHU fixed/movingImageValue, = " << fixedImageValue << ", " << movingImageValue );
       } //end if-block check sampleOk
+
+
     } // end iterating over fixed image spatial sample container for loop
-   
     /** Check if enough samples were valid. */
     this->CheckNumberOfSamples(
       sampleContainer->Size(), this->m_NumberOfPixelsCounted);
-
     /** Compute alpha. */
     if (this->m_NumberOfPixelsCounted > 0)
     {
     this->m_AlphaVector[pos] = 1.0 / static_cast< double >( this->m_NumberOfPixelsCounted );
     }
 } // end ComputePDFsAndPDFDerivatives()
-
 
 } // end namespace itk
 
