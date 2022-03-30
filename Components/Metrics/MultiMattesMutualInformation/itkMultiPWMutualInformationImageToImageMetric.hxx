@@ -161,11 +161,13 @@ MultiPWMutualInformationImageToImageMetric< TFixedImage, TMovingImage >
     {
       /** Construct the JointPDF, JointPDFDerivatives, Alpha and its derivatives. */
       this->ComputePDFsAndPDFDerivatives(parameters, pos);
+
       /** Normalize the pdfs: p = alpha h. */
       this->NormalizeJointPDF(this->m_JointPDFVector[pos], this->m_AlphaVector[pos]);
       /** Compute the fixed and moving marginal pdf by summing over the histogram. */
       this->ComputeMarginalPDF(this->m_JointPDFVector[pos], this->m_FixedImageMarginalPDFVector[pos], 0, pos);
       this->ComputeMarginalPDF(this->m_JointPDFVector[pos], this->m_MovingImageMarginalPDFVector[pos], 1, pos);
+
       /** Compute the metric and derivatives by double summation over histogram. */
       /** Setup iterators .*/
       typedef ImageLinearConstIteratorWithIndex<

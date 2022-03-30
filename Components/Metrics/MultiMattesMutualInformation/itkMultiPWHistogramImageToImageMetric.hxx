@@ -595,6 +595,22 @@ MultiPWHistogramImageToImageMetric< TFixedImage, TMovingImage >
   this->m_NumberOfPixelsCounted = 0;
   this->m_AlphaVector[pos] = 0.0;
 
+
+  /** Call non-thread-safe stuff, such as:
+ *   this->SetTransformParameters( parameters );
+ *   this->GetImageSampler()->Update();
+ * Because of these calls GetValueAndDerivative itself is not thread-safe,
+ * so cannot be called multiple times simultaneously.
+ * This is however needed in the CombinationImageToImageMetric.
+ * In that case, you need to:
+ * - switch the use of this function to on, using m_UseMetricSingleThreaded = true
+ * - call BeforeThreadedGetValueAndDerivative once (single-threaded) before
+ *   calling GetValueAndDerivative
+ * - switch the use of this function to off, using m_UseMetricSingleThreaded = false
+ * - Now you can call GetValueAndDerivative multi-threaded.
+ */
+  this->BeforeThreadedGetValueAndDerivative(parameters);
+
   /** Get a handle to the sample container. */
   ImageSampleContainerPointer sampleContainer = this->GetImageSampler()->GetOutput();
 
@@ -682,6 +698,22 @@ MultiPWHistogramImageToImageMetric< TFixedImage, TMovingImage >
   TransformJacobianType      jacobian;
 
 
+  /** Call non-thread-safe stuff, such as:
+ *   this->SetTransformParameters( parameters );
+ *   this->GetImageSampler()->Update();
+ * Because of these calls GetValueAndDerivative itself is not thread-safe,
+ * so cannot be called multiple times simultaneously.
+ * This is however needed in the CombinationImageToImageMetric.
+ * In that case, you need to:
+ * - switch the use of this function to on, using m_UseMetricSingleThreaded = true
+ * - call BeforeThreadedGetValueAndDerivative once (single-threaded) before
+ *   calling GetValueAndDerivative
+ * - switch the use of this function to off, using m_UseMetricSingleThreaded = false
+ * - Now you can call GetValueAndDerivative multi-threaded.
+ */
+  this->BeforeThreadedGetValueAndDerivative(parameters);
+
+
     /** Get a handle to the sample container. */
     ImageSampleContainerPointer sampleContainer = this->GetImageSampler()->GetOutput();
     /** Create iterator over the sample container. */
@@ -720,7 +752,9 @@ MultiPWHistogramImageToImageMetric< TFixedImage, TMovingImage >
       {
         this->m_NumberOfPixelsCounted++;
 
-        /** Get the fixed image value. */
+        /** Get the fixed image value. 
+        We need to interpolate now, because we have more than one fixed image, 
+        and they are registered against each other*/
         FixedImageContinuousIndexType cindex;
         this->m_FixedImageInterpolatorVector[pos]->ConvertPointToContinuousIndex(fixedPoint, cindex);
         RealType fixedImageValue = this->GetFixedImageInterpolator(pos)->EvaluateAtContinuousIndex(cindex);
