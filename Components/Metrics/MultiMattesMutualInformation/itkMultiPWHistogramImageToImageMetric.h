@@ -177,9 +177,7 @@ public:
     DerivativeType & Derivative ) const override;
 
   /**  Get the value and derivatives for single valued optimizers.
-   * This method calls this->GetValueAndAnalyticDerivative or
-   * this->GetValueAndFiniteDifferenceDerivative, depending on the bool
-   * m_UseFiniteDifferenceDerivative.
+   * This method calls this->GetValueAndAnalyticDerivative
    */
   void GetValueAndDerivative( const ParametersType & parameters,
     MeasureType & value, DerivativeType & derivative ) const override;
@@ -217,6 +215,14 @@ public:
  */
   itkSetMacro(UseDerivative, bool);
   itkGetConstMacro(UseDerivative, bool);
+
+  // Just for TESTING via GetValueAndAnalyticDerivative
+  /** For computing the finite difference derivative, the perturbation (delta) of the
+ * transform parameters; default: 1.0.
+ * mu_right= mu + delta*e_k
+ */
+  itkSetMacro(FiniteDifferencePerturbation, double);
+  itkGetConstMacro(FiniteDifferencePerturbation, double);
 
 protected:
 
@@ -263,6 +269,14 @@ protected:
   typedef KernelFunctionBase2< PDFValueType >  KernelFunctionType;
   typedef typename KernelFunctionType::Pointer KernelFunctionPointer;
 
+
+  /** Just for TESTING: variables used in  GetValueAndAnalyticDerivative */
+  typedef Image< PDFValueType, 2 >                     IncrementalMarginalPDFType;
+  typedef typename IncrementalMarginalPDFType::Pointer IncrementalMarginalPDFPointer;
+  typedef IncrementalMarginalPDFType::IndexType        IncrementalMarginalPDFIndexType;
+  typedef IncrementalMarginalPDFType::RegionType       IncrementalMarginalPDFRegionType;
+  typedef IncrementalMarginalPDFType::SizeType         IncrementalMarginalPDFSizeType;
+
   /** Protected variables **************************** */
 
   /** Variables for Alpha (the normalization factor of the histogram). */
@@ -287,7 +301,18 @@ protected:
   KernelFunctionPointer m_DerivativeMovingKernel;
 
 
-  /** Compute the Parzen values given an image value and a starting histogram index
+  /** Just for TESTING: variables used in  GetValueAndAnalyticDerivative */
+  std::vector < JointPDFDerivativesPointer >    m_IncrementalJointPDFRightVector;
+  std::vector < JointPDFDerivativesPointer >    m_IncrementalJointPDFLeftVector;
+  std::vector < IncrementalMarginalPDFPointer>  m_FixedIncrementalMarginalPDFRightVector;
+  std::vector < IncrementalMarginalPDFPointer>  m_MovingIncrementalMarginalPDFRightVector;
+  std::vector < IncrementalMarginalPDFPointer>  m_FixedIncrementalMarginalPDFLeftVector;
+  std::vector < IncrementalMarginalPDFPointer>  m_MovingIncrementalMarginalPDFLeftVector;
+  mutable DerivativeType m_PerturbedAlphaRight;
+  mutable DerivativeType m_PerturbedAlphaLeft;
+
+  /** only needed for TESTING via GetValueAndAnalyticDerivative ???
+   * Compute the Parzen values given an image value and a starting histogram index
    * Compute the values at (parzenWindowIndex - parzenWindowTerm + k) for
    * k = 0 ... kernelsize-1
    * Returns the values in a ParzenValueContainer, which is supposed to have
@@ -310,6 +335,26 @@ protected:
     const unsigned int pos) const;
 
 
+  /** Update the joint PDF and the incremental pdfs.
+* The input is a pixel pair (fixed, moving, moving mask) and
+* a set of moving image/mask values when using mu+delta*e_k, for
+* each k that has a nonzero Jacobian. And for mu-delta*e_k of course.
+* Also updates the PerturbedAlpha's
+* This function used for testing via GetValueAndFiniteDifferenceDerivative
+*
+* \todo The IsInsideMovingMask return bools are converted to doubles (1 or 0) to
+* simplify the computation. But this may not be necessary.
+*/
+  virtual void UpdateJointPDFAndIncrementalPDFs(
+    RealType fixedImageValue, RealType movingImageValue, RealType movingMaskValue,
+    const DerivativeType& movingImageValuesRight,
+    const DerivativeType& movingImageValuesLeft,
+    const DerivativeType& movingMaskValuesRight,
+    const DerivativeType& movingMaskValuesLeft,
+    const NonZeroJacobianIndicesType& nzji,
+    const unsigned int pos) const; // TESTING
+
+
   /** Update the pdf derivatives
    * adds -image_jac[mu]*factor to the bin
    * with index [ mu, pdfIndex[0], pdfIndex[1] ] for all mu.
@@ -321,6 +366,8 @@ protected:
     const NonZeroJacobianIndicesType& nzji,
     const unsigned int pos) const;
 
+
+
   /** Multiply the pdf entries by the given normalization factor. */
   virtual void NormalizeJointPDF(
     JointPDFType * pdf, const double & factor ) const;
@@ -328,6 +375,7 @@ protected:
   /** Multiply the pdf derivatives entries by the given normalization factor. */
   virtual void NormalizeJointPDFDerivatives(
     JointPDFDerivativesType * pdf, const double & factor ) const;
+
 
   /** Compute marginal pdfs by summing over the joint pdf
    * direction = 0: fixed marginal pdf
@@ -338,6 +386,16 @@ protected:
     MarginalPDFType & marginalPDF,
     const unsigned int& direction,
     const unsigned int pos) const;
+
+  /** Compute incremental marginal pdfs. Integrates the incremental PDF
+ * to obtain the fixed and moving marginal pdfs at once.
+ */
+  virtual void ComputeIncrementalMarginalPDFs(
+    const JointPDFDerivativesType* incrementalPDF,
+    IncrementalMarginalPDFType* fixedIncrementalMarginalPDF,
+    IncrementalMarginalPDFType* movingIncrementalMarginalPDF) const; // TESTING
+
+
 
   /** Compute PDFs and pdf derivatives; Loops over the fixed image samples and constructs
    * the m_JointPDF, m_JointPDFDerivatives, and m_Alpha.
@@ -351,6 +409,33 @@ protected:
   virtual void ComputePDFsAndPDFDerivatives( const ParametersType & parameters, const unsigned int pos) const;
 
 
+  /** Compute PDFs and incremental pdfs (which you can use to compute finite
+ * difference estimate of the derivative).
+ * Loops over the fixed image samples and constructs the m_JointPDF,
+ * m_IncrementalJointPDF<Right/Left>, m_Alpha, and m_PerturbedAlpha<Right/Left>.
+ *
+ * mu = input parameters vector
+ * jh(mu) = m_JointPDF(:,:) = joint histogram
+ * ihr(k) = m_IncrementalJointPDFRight(k,:,:)
+ * ihl(k) = m_IncrementalJointPDFLeft(k,:,:)
+ * a(mu) = m_Alpha
+ * par(k) = m_PerturbedAlphaRight(k)
+ * pal(k) = m_PerturbedAlphaLeft(k)
+ * size(ihr) = = size(ihl) = nrofparams * nrofmovingbins * nroffixedbins
+ *
+ * ihr and ihl are determined such that:
+ * jh(mu+delta*e_k) = jh(mu) + ihr(k)
+ * jh(mu-delta*e_k) = jh(mu) + ihl(k)
+ * where e_k is the unit vector.
+ *
+ * the pdf can be derived with:
+ * p(mu+delta*e_k) = ( par(k) ) * jh(mu+delta*e_k)
+ * p(mu-delta*e_k) = ( pal(k) ) * jh(mu-delta*e_k)
+ */
+  virtual void ComputePDFsAndIncrementalPDFs(const ParametersType& parameters,
+    const unsigned int pos) const; // TESTING
+
+
   /** Compute PDFs; Loops over the fixed image samples and constructs
    * the m_JointPDF and m_Alpha
    * The JointPDF and Alpha are related as follows:
@@ -359,7 +444,6 @@ protected:
    * The histogram is left unnormalised since it may be faster to
    * not do this explicitly.
    */
-
   virtual void ComputePDFs( const ParametersType & parameters, const unsigned int pos ) const;
 
   /** Some initialization functions, called by Initialize. */
@@ -376,6 +460,17 @@ protected:
     MeasureType & itkNotUsed( value ),
     DerivativeType & itkNotUsed( derivative ) ) const {}
 
+  /* From here to private keyword:
+  * Just for TESTING: methods used in  GetValueAndAnalyticDerivative */
+
+   /*  Get the value and finite difference derivatives for single valued optimizers.
+    * Called by GetValueAndDerivative for testing
+    * Implement this method in subclasses.
+    */
+    virtual void GetValueAndFiniteDifferenceDerivative(
+      const ParametersType & itkNotUsed(parameters),
+      MeasureType & itkNotUsed(value),
+      DerivativeType & itkNotUsed(derivative)) const {} // TESTING
 
 private:
 
@@ -390,6 +485,9 @@ private:
   unsigned int  m_FixedKernelBSplineOrder;
   unsigned int  m_MovingKernelBSplineOrder;
   bool          m_UseDerivative;
+
+  /** Just for TESTING: variable used in  GetValueAndAnalyticDerivative */
+  double        m_FiniteDifferencePerturbation;
 
 };
 

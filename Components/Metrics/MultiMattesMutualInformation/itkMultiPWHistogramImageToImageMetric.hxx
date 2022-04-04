@@ -62,6 +62,15 @@ MultiPWHistogramImageToImageMetric< TFixedImage, TMovingImage >
   this->SetUseFixedImageLimiter( true );
   this->SetUseMovingImageLimiter( true );
 
+  /** Just for TESTING via GetValueAndAnalyticDerivative */
+  this->m_FiniteDifferencePerturbation = 1.0;
+  this->m_IncrementalJointPDFRightVector = {};
+  this->m_IncrementalJointPDFLeftVector = {};
+  this->m_FixedIncrementalMarginalPDFRightVector = {};
+  this->m_MovingIncrementalMarginalPDFRightVector = {};
+  this->m_FixedIncrementalMarginalPDFLeftVector = {};
+  this->m_MovingIncrementalMarginalPDFLeftVector = {};
+
 
 } // end Constructor
 
@@ -86,6 +95,9 @@ MultiPWHistogramImageToImageMetric< TFixedImage, TMovingImage >
   /** Set up the Parzen windows. */
   this->InitializeKernels();
 
+  // for TESTING:
+  this->m_PerturbedAlphaRight.SetSize(this->GetNumberOfParameters());
+  this->m_PerturbedAlphaLeft.SetSize(this->GetNumberOfParameters());
 
 } // end Initialize()
 
@@ -216,10 +228,64 @@ MultiPWHistogramImageToImageMetric< TFixedImage, TMovingImage >
       this->m_JointPDFDerivativesVector.push_back(JointPDFDerivativesType::New());
       this->m_JointPDFDerivativesVector[pos]->SetRegions(jointPDFDerivativesRegion);
       this->m_JointPDFDerivativesVector[pos]->Allocate();
+
+
+
+    /* for TESTING */
+    /** First set these ones to zero */
+    this->m_FixedIncrementalMarginalPDFRightVector.push_back(IncrementalMarginalPDFType::New());
+    this->m_MovingIncrementalMarginalPDFRightVector.push_back(IncrementalMarginalPDFType::New());
+    this->m_FixedIncrementalMarginalPDFLeftVector.push_back(IncrementalMarginalPDFType::New());
+    this->m_MovingIncrementalMarginalPDFLeftVector.push_back(IncrementalMarginalPDFType::New());
+
+    this->m_IncrementalJointPDFRightVector.push_back(JointPDFDerivativesType::New());
+    this->m_IncrementalJointPDFLeftVector.push_back(JointPDFDerivativesType::New());
+    this->m_IncrementalJointPDFRightVector[pos]->SetRegions(jointPDFDerivativesRegion);
+    this->m_IncrementalJointPDFLeftVector[pos]->SetRegions(jointPDFDerivativesRegion);
+    this->m_IncrementalJointPDFRightVector[pos]->Allocate();
+    this->m_IncrementalJointPDFLeftVector[pos]->Allocate();
+
+    /** Also initialize the incremental marginal pdfs. */
+    IncrementalMarginalPDFRegionType fixedIMPDFRegion;
+    IncrementalMarginalPDFIndexType  fixedIMPDFIndex;
+    IncrementalMarginalPDFSizeType   fixedIMPDFSize;
+
+    IncrementalMarginalPDFRegionType movingIMPDFRegion;
+    IncrementalMarginalPDFIndexType  movingIMPDFIndex;
+    IncrementalMarginalPDFSizeType   movingIMPDFSize;
+
+    fixedIMPDFIndex.Fill(0);
+    fixedIMPDFSize[0] = this->GetNumberOfParameters();
+    fixedIMPDFSize[1] = this->m_NumberOfFixedHistogramBins;
+    fixedIMPDFRegion.SetSize(fixedIMPDFSize);
+    fixedIMPDFRegion.SetIndex(fixedIMPDFIndex);
+
+    movingIMPDFIndex.Fill(0);
+    movingIMPDFSize[0] = this->GetNumberOfParameters();
+    movingIMPDFSize[1] = this->m_NumberOfMovingHistogramBins;
+    movingIMPDFRegion.SetSize(movingIMPDFSize);
+    movingIMPDFRegion.SetIndex(movingIMPDFIndex);
+
+    this->m_FixedIncrementalMarginalPDFRightVector.push_back(IncrementalMarginalPDFType::New());
+    this->m_MovingIncrementalMarginalPDFRightVector.push_back(IncrementalMarginalPDFType::New());
+    this->m_FixedIncrementalMarginalPDFLeftVector.push_back(IncrementalMarginalPDFType::New());
+    this->m_MovingIncrementalMarginalPDFLeftVector.push_back(IncrementalMarginalPDFType::New());
+
+    this->m_FixedIncrementalMarginalPDFRightVector[pos]->SetRegions(fixedIMPDFRegion);
+    this->m_MovingIncrementalMarginalPDFRightVector[pos]->SetRegions(movingIMPDFRegion);
+    this->m_FixedIncrementalMarginalPDFLeftVector[pos]->SetRegions(fixedIMPDFRegion);
+    this->m_MovingIncrementalMarginalPDFLeftVector[pos]->SetRegions(movingIMPDFRegion);
+
+    this->m_FixedIncrementalMarginalPDFRightVector[pos]->Allocate();
+    this->m_MovingIncrementalMarginalPDFRightVector[pos]->Allocate();
+    this->m_FixedIncrementalMarginalPDFLeftVector[pos]->Allocate();
+    this->m_MovingIncrementalMarginalPDFLeftVector[pos]->Allocate();
+
     }
     else
     {
       this->m_JointPDFDerivativesVector.push_back(nullptr);
+      itkExceptionMacro("Not finished implementation of !GetUseDerivative() !!!! Exiting");
     }
   }// end loop over pos
 } // end InitializeHistograms()
@@ -333,11 +399,22 @@ MultiPWHistogramImageToImageMetric< TFixedImage, TMovingImage >
 ::GetValueAndDerivative( const ParametersType & parameters,
   MeasureType & value, DerivativeType & derivative ) const
 {
-   this->GetValueAndAnalyticDerivative( parameters, value, derivative );
+   this->GetValueAndFiniteDifferenceDerivative(parameters, value, derivative);
+   itkWarningMacro(<< "Testing: numeric deriv. = " <<
+     derivative[0] << ", " << derivative[10] << ", " << derivative[25] << ", " << derivative[100] << " !!!!!!!!!!!!");
+
+   //this->GetValueAndAnalyticDerivative( parameters, value, derivative );
+   //itkWarningMacro(<< "Testing: analytic deriv. = " << 
+   //  derivative[0] << ", " << derivative[10] << ", " << derivative[25] << ", " << derivative[100] << " XXXXXXXXXXX");//std::accumulate(derivative.begin(), derivative.end(), 0));
+   /* For TESTING: benchmark analytic against finite difference derivative */
+   //MeasureType benchValue;
+   //DerivativeType benchDerivative(derivative.size());
+   //this->GetValueAndFiniteDifferenceDerivative(parameters, &benchValue, &benchDerivative);
+   //itkWarningMacro(<< "Testing: analytic deriv. = " << derivative << "  finite deriv. = " << benchDerivative );
 } // end GetValueAndDerivative()
 
 
-/**
+/** only needed for TESTING via GetValueAndAnalyticDerivative ???
  * ********************** EvaluateParzenValues ***************
  */
 
@@ -649,7 +726,9 @@ MultiPWHistogramImageToImageMetric< TFixedImage, TMovingImage >
     {
       this->m_NumberOfPixelsCounted++;
 
-      /** Get the fixed image value. */
+      /** Get the fixed image value. 
+        We need to interpolate now, because we have more than one fixed image,
+        and they are registered against each other */
       FixedImageContinuousIndexType cindex;
       this->m_FixedImageInterpolatorVector[pos]->ConvertPointToContinuousIndex(fixedPoint, cindex);
       RealType fixedImageValue = this->GetFixedImageInterpolator(pos)->EvaluateAtContinuousIndex(cindex);
@@ -786,6 +865,483 @@ MultiPWHistogramImageToImageMetric< TFixedImage, TMovingImage >
     this->m_AlphaVector[pos] = 1.0 / static_cast< double >( this->m_NumberOfPixelsCounted );
     }
 } // end ComputePDFsAndPDFDerivatives()
+
+
+
+  /** From here to end of file: 
+  * Just for TESTING: methods used in  GetValueAndAnalyticDerivative */
+/**
+ * ************************ ComputePDFsAndIncrementalPDFs *******************
+ */
+
+template< class TFixedImage, class TMovingImage >
+void
+MultiPWHistogramImageToImageMetric< TFixedImage, TMovingImage >
+::ComputePDFsAndIncrementalPDFs(const ParametersType& parameters, const unsigned int pos) const
+{
+  /** Initialize some variables. */
+  this->m_JointPDFVector[pos]->FillBuffer(0.0);
+  this->m_IncrementalJointPDFRightVector[pos]->FillBuffer(0.0);
+  this->m_IncrementalJointPDFLeftVector[pos]->FillBuffer(0.0);
+  this->m_AlphaVector[pos] = 0.0;
+  this->m_PerturbedAlphaRight.Fill(0.0);
+  this->m_PerturbedAlphaLeft.Fill(0.0);
+
+  this->m_NumberOfPixelsCounted = 0;
+  double       sumOfMovingMaskValues = 0.0;
+  const double delta = this->GetFiniteDifferencePerturbation();
+
+  /** sparse jacobian+indices. */
+  NonZeroJacobianIndicesType nzji(this->m_AdvancedTransform->GetNumberOfNonZeroJacobianIndices());
+  TransformJacobianType      jacobian;
+
+  /** Arrays that store dM(x)/dmu and dMask(x)/dmu. */
+  DerivativeType movingImageValuesRight(nzji.size());
+  DerivativeType movingImageValuesLeft(nzji.size());
+  DerivativeType movingMaskValuesRight(nzji.size());
+  DerivativeType movingMaskValuesLeft(nzji.size());
+
+  /** Call non-thread-safe stuff, such as:
+   *   this->SetTransformParameters( parameters );
+   *   this->GetImageSampler()->Update();
+   * Because of these calls GetValueAndDerivative itself is not thread-safe,
+   * so cannot be called multiple times simultaneously.
+   * This is however needed in the CombinationImageToImageMetric.
+   * In that case, you need to:
+   * - switch the use of this function to on, using m_UseMetricSingleThreaded = true
+   * - call BeforeThreadedGetValueAndDerivative once (single-threaded) before
+   *   calling GetValueAndDerivative
+   * - switch the use of this function to off, using m_UseMetricSingleThreaded = false
+   * - Now you can call GetValueAndDerivative multi-threaded.
+   */
+  this->BeforeThreadedGetValueAndDerivative(parameters);
+
+  /** Get a handle to the sample container. */
+  ImageSampleContainerPointer sampleContainer = this->GetImageSampler()->GetOutput();
+
+  /** Create iterator over the sample container. */
+  typename ImageSampleContainerType::ConstIterator fiter;
+  typename ImageSampleContainerType::ConstIterator fbegin = sampleContainer->Begin();
+  typename ImageSampleContainerType::ConstIterator fend = sampleContainer->End();
+
+  /** Loop over sample container and compute contribution of each sample to pdfs. */
+  for (fiter = fbegin; fiter != fend; ++fiter)
+  {
+    /** Read fixed coordinates. */
+    const FixedImagePointType& fixedPoint = (*fiter).Value().m_ImageCoordinates;
+
+    /** Transform point and check if it is inside the B-spline support region.
+     * if not, skip this sample.
+     */
+    MovingImagePointType mappedPoint;
+    bool                 sampleOk = this->TransformPoint(fixedPoint, mappedPoint);
+
+    if (sampleOk)
+    {
+
+      /** Check if point is inside mask. */
+      sampleOk = this->IsInsideMovingMask(mappedPoint);
+      RealType movingMaskValue
+        = static_cast<RealType>(static_cast<unsigned char>(sampleOk));
+      if (!sampleOk) { continue; }
+
+      /** Get the fixed image value.
+      We need to interpolate now, because we have more than one fixed image,
+      and they are registered against each other*/
+      FixedImageContinuousIndexType cindex;
+      this->m_FixedImageInterpolatorVector[pos]->ConvertPointToContinuousIndex(fixedPoint, cindex);
+      RealType fixedImageValue = this->GetFixedImageInterpolator(pos)->EvaluateAtContinuousIndex(cindex);
+
+
+      /** Make sure the values fall within the histogram range. */
+      if (this->GetUseFixedImageLimiter())
+        fixedImageValue = this->GetFixedImageLimiter(pos)->Evaluate(fixedImageValue);
+
+      /** Compute the moving image value M(T(x)) and check if
+      * the point is inside the moving image buffer.
+      */
+      RealType movingImageValue = itk::NumericTraits< RealType >::Zero;
+      if (sampleOk)
+      {
+        sampleOk = this->EvaluateMovingImageValueAndDerivative(
+          mappedPoint, movingImageValue, 0, pos);
+        if (sampleOk)
+        {
+          movingImageValue = this->GetMovingImageLimiter(pos)->Evaluate(movingImageValue);
+        }
+        else
+        {
+          /** this movingImageValueRight is invalid, even though the mask indicated it is valid. */
+          movingMaskValue = 0.0;
+        }
+      }
+
+      /** Stop with this sample. It may be possible that with a perturbed parameter
+       * a valid voxel pair is obtained, but:
+       * - this chance is small,
+       * - quitting now saves a lot of time, especially because this situation
+       *   occurs at border pixels (there are a lot of those)
+       * - if we would analytically compute the gradient the same choice is
+       *   somehow made.
+       */
+      if (!sampleOk) { continue; }
+
+      /** Count how many samples were used. */
+      sumOfMovingMaskValues += movingMaskValue;
+      this->m_NumberOfPixelsCounted += static_cast<unsigned int>(sampleOk);
+
+      /** Get the TransformJacobian dT/dmu. We assume the transform is a linear
+       * function of its parameters, so that we can evaluate T(x;\mu+delta_ek)
+       * as T(x) + delta * dT/dmu_k.
+       */
+      this->EvaluateTransformJacobian(fixedPoint, jacobian, nzji);
+
+      MovingImagePointType mappedPointRight;
+      MovingImagePointType mappedPointLeft;
+
+      /** Loop over all parameters to perturb (parameters with nonzero Jacobian). */
+      for (unsigned int i = 0; i < nzji.size(); ++i)
+      {
+        /** Compute the transformed input point after perturbation. */
+        for (unsigned int j = 0; j < MovingImageDimension; ++j)
+        {
+          const double delta_jac = delta * jacobian[j][i];
+          mappedPointRight[j] = mappedPoint[j] + delta_jac;
+          mappedPointLeft[j] = mappedPoint[j] - delta_jac;
+        }
+
+        /** Compute the moving mask 'value' and moving image value at the right perturbed positions. */
+        sampleOk = this->IsInsideMovingMask(mappedPointRight);
+        RealType movingMaskValueRight
+          = static_cast<RealType>(static_cast<unsigned char>(sampleOk));
+        if (sampleOk)
+        {
+          RealType movingImageValueRight = 0.0;
+          sampleOk = this->EvaluateMovingImageValueAndDerivative(
+            mappedPointRight, movingImageValueRight, 0, pos);
+          if (sampleOk)
+          {
+            movingImageValueRight
+              = this->GetMovingImageLimiter(pos)->Evaluate(movingImageValueRight);
+            movingImageValuesRight[i] = movingImageValueRight;
+          }
+          else
+          {
+            /** this movingImageValueRight is invalid, even though the mask indicated it is valid. */
+            movingMaskValueRight = 0.0;
+          }
+        }
+        movingMaskValuesRight[i] = movingMaskValueRight;
+
+        /** Compute the moving mask and moving image value at the left perturbed positions. */
+        sampleOk = this->IsInsideMovingMask(mappedPointLeft);
+        RealType movingMaskValueLeft
+          = static_cast<RealType>(static_cast<unsigned char>(sampleOk));
+        if (sampleOk)
+        {
+          RealType movingImageValueLeft = 0.0;
+          sampleOk = this->EvaluateMovingImageValueAndDerivative(
+            mappedPointLeft, movingImageValueLeft, 0, pos);
+          if (sampleOk)
+          {
+            movingImageValueLeft
+              = this->GetMovingImageLimiter(pos)->Evaluate(movingImageValueLeft);
+            movingImageValuesLeft[i] = movingImageValueLeft;
+          }
+          else
+          {
+            /** this movingImageValueLeft is invalid, even though the mask indicated it is valid. */
+            movingMaskValueLeft = 0.0;
+          }
+        }
+        movingMaskValuesLeft[i] = movingMaskValueLeft;
+
+      } // next parameter to perturb
+
+      /** Update the joint pdf and the incremental joint pdfs, and the
+       * perturbed alpha arrays.
+       */
+      this->UpdateJointPDFAndIncrementalPDFs(
+        fixedImageValue, movingImageValue, movingMaskValue,
+        movingImageValuesRight, movingImageValuesLeft,
+        movingMaskValuesRight, movingMaskValuesLeft, nzji, pos);
+
+    } //end if-block check sampleOk
+  } // end iterating over fixed image spatial sample container for loop
+
+  /** Check if enough samples were valid. */
+  this->CheckNumberOfSamples(
+    sampleContainer->Size(), this->m_NumberOfPixelsCounted);
+
+  /** Compute alpha and its perturbed versions. */
+  this->m_AlphaVector[pos] = 0.0;
+  if (sumOfMovingMaskValues > 1e-14)
+  {
+    this->m_AlphaVector[pos] = 1.0 / sumOfMovingMaskValues;
+  }
+  for (unsigned int i = 0; i < this->GetNumberOfParameters(); ++i)
+  {
+    this->m_PerturbedAlphaRight[i] += sumOfMovingMaskValues;
+    this->m_PerturbedAlphaLeft[i] += sumOfMovingMaskValues;
+    if (this->m_PerturbedAlphaRight[i] > 1e-10)
+    {
+      this->m_PerturbedAlphaRight[i] = 1.0 / this->m_PerturbedAlphaRight[i];
+    }
+    else
+    {
+      this->m_PerturbedAlphaRight[i] = 0.0;
+    }
+    if (this->m_PerturbedAlphaLeft[i] > 1e-10)
+    {
+      this->m_PerturbedAlphaLeft[i] = 1.0 / this->m_PerturbedAlphaLeft[i];
+    }
+    else
+    {
+      this->m_PerturbedAlphaLeft[i] = 0.0;
+    }
+  }
+} // end ComputePDFsAndIncrementalPDFs()
+
+
+/**
+ * ******************** ComputeIncrementalMarginalPDFs *******************
+ */
+
+template< class TFixedImage, class TMovingImage >
+void
+MultiPWHistogramImageToImageMetric< TFixedImage, TMovingImage >
+::ComputeIncrementalMarginalPDFs(
+  const JointPDFDerivativesType* incrementalPDF,
+  IncrementalMarginalPDFType* fixedIncrementalMarginalPDF,
+  IncrementalMarginalPDFType* movingIncrementalMarginalPDF) const
+{ 
+  typedef itk::ImageRegionConstIterator< JointPDFDerivativesType >        IncIteratorType;
+  typedef itk::ImageLinearIteratorWithIndex< IncrementalMarginalPDFType > IncMargIteratorType;
+
+  fixedIncrementalMarginalPDF->FillBuffer(itk::NumericTraits< PDFValueType >::ZeroValue());
+  movingIncrementalMarginalPDF->FillBuffer(itk::NumericTraits< PDFValueType >::ZeroValue());
+
+  IncIteratorType     incit(incrementalPDF, incrementalPDF->GetLargestPossibleRegion());
+  IncMargIteratorType fixincit(fixedIncrementalMarginalPDF,
+    fixedIncrementalMarginalPDF->GetLargestPossibleRegion());
+  IncMargIteratorType movincit(movingIncrementalMarginalPDF,
+    movingIncrementalMarginalPDF->GetLargestPossibleRegion());
+
+  incit.GoToBegin();
+  fixincit.GoToBegin();
+  movincit.GoToBegin();
+
+  /** Loop over the incremental pdf and update the incremental marginal pdfs. */
+  for (unsigned int f = 0; f < this->m_NumberOfFixedHistogramBins; ++f)
+  {
+    for (unsigned int m = 0; m < this->m_NumberOfMovingHistogramBins; ++m)
+    {
+      for (unsigned int p = 0; p < this->GetNumberOfParameters(); ++p)
+      {
+        fixincit.Value() += incit.Get();
+        movincit.Value() += incit.Get();
+        ++incit;
+        ++fixincit;
+        ++movincit;
+      }
+      fixincit.GoToBeginOfLine();
+      movincit.NextLine();
+    }
+    fixincit.NextLine();
+    movincit.GoToBegin();
+  }
+} // end ComputeIncrementalMarginalPDFs()
+
+
+/**
+ * ******************* UpdateJointPDFAndIncrementalPDFs *******************
+ */
+
+template< class TFixedImage, class TMovingImage >
+void
+MultiPWHistogramImageToImageMetric< TFixedImage, TMovingImage >
+::UpdateJointPDFAndIncrementalPDFs(
+  RealType fixedImageValue, RealType movingImageValue, RealType movingMaskValue,
+  const DerivativeType& movingImageValuesRight,
+  const DerivativeType& movingImageValuesLeft,
+  const DerivativeType& movingMaskValuesRight,
+  const DerivativeType& movingMaskValuesLeft,
+  const NonZeroJacobianIndicesType& nzji,
+  const unsigned int pos) const
+{ 
+  /** Pointers to the first pixels in the incremental joint pdfs. */
+  PDFDerivativeValueType* incRightBasePtr = this->m_IncrementalJointPDFRightVector[pos]->GetBufferPointer();
+  PDFDerivativeValueType* incLeftBasePtr = this->m_IncrementalJointPDFLeftVector[pos]->GetBufferPointer();
+
+  /** The Parzen value containers. */
+  ParzenValueContainerType fixedParzenValues(this->m_JointPDFWindow.GetSize()[1]);
+  ParzenValueContainerType movingParzenValues(this->m_JointPDFWindow.GetSize()[0]);
+
+  /** Determine fixed image Parzen window arguments (see eq. 6 of Mattes paper [2]). */
+  const double fixedImageParzenWindowTerm
+    = fixedImageValue / this->m_FixedImageBinSizeVector[pos] - this->m_FixedImageNormalizedMinVector[pos];
+
+  /** The lowest bin numbers affected by this pixel: */
+  const OffsetValueType fixedImageParzenWindowIndex
+    = static_cast<OffsetValueType>(std::floor(
+      fixedImageParzenWindowTerm + this->m_FixedParzenTermToIndexOffset));
+  this->EvaluateParzenValues(
+    fixedImageParzenWindowTerm, fixedImageParzenWindowIndex,
+    this->m_FixedKernel, fixedParzenValues);
+
+  if (movingMaskValue > 1e-10)
+  {
+    /** Determine moving image Parzen window arguments (see eq. 6 of Mattes paper [2]). */
+    const double movingImageParzenWindowTerm
+      = movingImageValue / this->m_MovingImageBinSizeVector[pos] - this->m_MovingImageNormalizedMinVector[pos];
+    const OffsetValueType movingImageParzenWindowIndex
+      = static_cast<OffsetValueType>(std::floor(
+        movingImageParzenWindowTerm + this->m_MovingParzenTermToIndexOffset));
+    this->EvaluateParzenValues(
+      movingImageParzenWindowTerm, movingImageParzenWindowIndex,
+      this->m_MovingKernel, movingParzenValues);
+
+    /** Position the JointPDFWindow (set the start index). */
+    JointPDFIndexType pdfIndex;
+    pdfIndex[0] = movingImageParzenWindowIndex;
+    pdfIndex[1] = fixedImageParzenWindowIndex;
+
+    /** Loop over the Parzen window region and do the following update:
+     *
+     * m_JointPDF(M,F) += movingMask * fixedParzen(F) * movingParzen(M);
+     * m_IncrementalJointPDF<Right/Left>(k,M,F) -= movingMask * fixedParzen(F) * movingParzen(M);
+     * for all k with nonzero Jacobian.
+     */
+    for (unsigned int f = 0; f < fixedParzenValues.GetSize(); ++f)
+    {
+      const double fv_mask = fixedParzenValues[f] * movingMaskValue;
+      for (unsigned int m = 0; m < movingParzenValues.GetSize(); ++m)
+      {
+        const PDFValueType fv_mask_mv
+          = static_cast<PDFValueType>(fv_mask * movingParzenValues[m]);
+        this->m_JointPDFVector[pos]->GetPixel(pdfIndex) += fv_mask_mv;
+
+        unsigned long offset = static_cast<unsigned long>(
+          pdfIndex[0] * this->m_IncrementalJointPDFRightVector[pos]->GetOffsetTable()[1]
+          + pdfIndex[1] * this->m_IncrementalJointPDFRightVector[pos]->GetOffsetTable()[2]);
+
+        /** Get the pointer to the element with index [0, pdfIndex[0], pdfIndex[1]]. */
+        PDFDerivativeValueType* incRightPtr = incRightBasePtr + offset;
+        PDFDerivativeValueType* incLeftPtr = incLeftBasePtr + offset;
+
+        /** Loop only over the non-zero Jacobians. */
+        for (unsigned int i = 0; i < nzji.size(); ++i)
+        {
+          const unsigned int       mu = nzji[i];
+          PDFDerivativeValueType* rPtr = incRightPtr + mu;
+          PDFDerivativeValueType* lPtr = incLeftPtr + mu;
+          *(rPtr) -= fv_mask_mv;
+          *(lPtr) -= fv_mask_mv;
+        } // end for i
+
+        ++(pdfIndex[0]);
+      } // end for m
+
+      pdfIndex[0] = movingImageParzenWindowIndex;
+      ++(pdfIndex[1]);
+
+    } // end for f
+
+  } // end if movingMaskValue > 1e-10
+
+  /** Loop only over the non-zero Jacobians and update the incremental pdfs and
+   * update the perturbed alphas:
+   *
+   * m_IncrementalJointPDF<Right/Left>(k,M,F) +=
+   *   movingMask<Right/Left>[k] * fixedParzen(F) * movingParzen<Right/Left>(M)[k];
+   * m_PerturbedAlpha<Right/Left>[k] += movingMask<Right/Left>[k] - movingMask;
+   * for all k with nonzero Jacobian.
+   */
+  JointPDFDerivativesIndexType rindex;
+  JointPDFDerivativesIndexType lindex;
+  for (unsigned int i = 0; i < nzji.size(); ++i)
+  {
+    const unsigned int mu = nzji[i];
+    const double       maskr = movingMaskValuesRight[i];
+    const double       maskl = movingMaskValuesLeft[i];
+
+    if (maskr > 1e-10)
+    {
+      /** Compute Parzen stuff; note: we reuse the movingParzenValues container. */
+      const double movr = movingImageValuesRight[i];
+      const double movParzenWindowTermRight
+        = movr / this->m_MovingImageBinSizeVector[pos] - this->m_MovingImageNormalizedMinVector[pos];
+      const OffsetValueType movParzenWindowIndexRight
+        = static_cast<OffsetValueType>(std::floor(
+          movParzenWindowTermRight + this->m_MovingParzenTermToIndexOffset));
+      this->EvaluateParzenValues(
+        movParzenWindowTermRight, movParzenWindowIndexRight,
+        this->m_MovingKernel, movingParzenValues);
+
+      /** Initialize index in IncrementalJointPDFRight. */
+      rindex[0] = mu;
+      rindex[1] = movParzenWindowIndexRight;
+      rindex[2] = fixedImageParzenWindowIndex;
+
+      /** Loop over Parzen window and update IncrementalJointPDFRight. */
+      for (unsigned int f = 0; f < fixedParzenValues.GetSize(); ++f)
+      {
+        const double fv_mask = fixedParzenValues[f] * maskr;
+        for (unsigned int m = 0; m < movingParzenValues.GetSize(); ++m)
+        {
+          const PDFValueType fv_mask_mv = static_cast<PDFValueType>(fv_mask * movingParzenValues[m]);
+          this->m_IncrementalJointPDFRightVector[pos]->GetPixel(rindex) += fv_mask_mv;
+          ++(rindex[1]);
+        } // end for m
+
+        ++(rindex[2]);
+        rindex[1] = movParzenWindowIndexRight;
+
+      } // end for f
+    } // end if maskr
+
+    if (maskl > 1e-10)
+    {
+      /** Compute Parzen stuff; note: we reuse the movingParzenValues container. */
+      const double movl = movingImageValuesLeft[i];
+      const double movParzenWindowTermLeft
+        = movl / this->m_MovingImageBinSizeVector[pos] - this->m_MovingImageNormalizedMinVector[pos];
+      const OffsetValueType movParzenWindowIndexLeft
+        = static_cast<OffsetValueType>(std::floor(
+          movParzenWindowTermLeft + this->m_MovingParzenTermToIndexOffset));
+      this->EvaluateParzenValues(
+        movParzenWindowTermLeft, movParzenWindowIndexLeft,
+        this->m_MovingKernel, movingParzenValues);
+
+      /** Initialize index in IncrementalJointPDFLeft. */
+      lindex[0] = mu;
+      lindex[1] = movParzenWindowIndexLeft;
+      lindex[2] = fixedImageParzenWindowIndex;
+
+      /** Loop over Parzen window and update IncrementalJointPDFLeft. */
+      for (unsigned int f = 0; f < fixedParzenValues.GetSize(); ++f)
+      {
+        const double fv_mask = fixedParzenValues[f] * maskl;
+        for (unsigned int m = 0; m < movingParzenValues.GetSize(); ++m)
+        {
+          const PDFValueType fv_mask_mv = static_cast<PDFValueType>(fv_mask * movingParzenValues[m]);
+          this->m_IncrementalJointPDFLeftVector[pos]->GetPixel(lindex) += fv_mask_mv;
+          ++(lindex[1]);
+        } // end for m
+
+        ++(lindex[2]);
+        lindex[1] = movParzenWindowIndexLeft;
+
+      } // end for f
+    } // end if maskl
+
+    /** Update the perturbed alphas. */
+    this->m_PerturbedAlphaRight[mu] += (maskr - movingMaskValue);
+    this->m_PerturbedAlphaLeft[mu] += (maskl - movingMaskValue);
+  } // end for i
+} // end UpdateJointPDFAndIncrementalPDFs()
+
+
 
 } // end namespace itk
 

@@ -204,6 +204,13 @@ protected:
   void InitializeHistograms( void ) override;
 
 
+  /**  Get the value and finite difference derivative.
+ *
+ * This is really only TESTING purposes.
+ */
+  void GetValueAndFiniteDifferenceDerivative(
+    const ParametersType& parameters,
+    MeasureType& value, DerivativeType& derivative) const override;
 
 private:
 
