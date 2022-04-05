@@ -27,6 +27,9 @@
  /** Include for the spatial derivatives. */
 #include "itkArray2D.h"
 
+#define BENCHMARK /* Switch on for TESTING analytic derivative vs. numeric (finite difference) */
+
+
 namespace itk
 {
 /**
@@ -216,13 +219,14 @@ public:
   itkSetMacro(UseDerivative, bool);
   itkGetConstMacro(UseDerivative, bool);
 
-  // Just for TESTING via GetValueAndAnalyticDerivative
+#ifdef BENCHMARK  /* Just for TESTING analytic derivative vs. numeric (finite difference) */
   /** For computing the finite difference derivative, the perturbation (delta) of the
  * transform parameters; default: 1.0.
  * mu_right= mu + delta*e_k
  */
   itkSetMacro(FiniteDifferencePerturbation, double);
   itkGetConstMacro(FiniteDifferencePerturbation, double);
+#endif
 
 protected:
 
@@ -270,12 +274,13 @@ protected:
   typedef typename KernelFunctionType::Pointer KernelFunctionPointer;
 
 
-  /** Just for TESTING: variables used in  GetValueAndAnalyticDerivative */
+#ifdef BENCHMARK  /* Just for TESTING analytic derivative vs. numeric (finite difference) */
   typedef Image< PDFValueType, 2 >                     IncrementalMarginalPDFType;
   typedef typename IncrementalMarginalPDFType::Pointer IncrementalMarginalPDFPointer;
   typedef IncrementalMarginalPDFType::IndexType        IncrementalMarginalPDFIndexType;
   typedef IncrementalMarginalPDFType::RegionType       IncrementalMarginalPDFRegionType;
   typedef IncrementalMarginalPDFType::SizeType         IncrementalMarginalPDFSizeType;
+#endif
 
   /** Protected variables **************************** */
 
@@ -301,7 +306,7 @@ protected:
   KernelFunctionPointer m_DerivativeMovingKernel;
 
 
-  /** Just for TESTING: variables used in  GetValueAndAnalyticDerivative */
+#ifdef BENCHMARK  /* Just for TESTING analytic derivative vs. numeric (finite difference) */
   std::vector < JointPDFDerivativesPointer >    m_IncrementalJointPDFRightVector;
   std::vector < JointPDFDerivativesPointer >    m_IncrementalJointPDFLeftVector;
   std::vector < IncrementalMarginalPDFPointer>  m_FixedIncrementalMarginalPDFRightVector;
@@ -310,9 +315,9 @@ protected:
   std::vector < IncrementalMarginalPDFPointer>  m_MovingIncrementalMarginalPDFLeftVector;
   mutable DerivativeType m_PerturbedAlphaRight;
   mutable DerivativeType m_PerturbedAlphaLeft;
+#endif
 
-  /** only needed for TESTING via GetValueAndAnalyticDerivative ???
-   * Compute the Parzen values given an image value and a starting histogram index
+  /** Compute the Parzen values given an image value and a starting histogram index
    * Compute the values at (parzenWindowIndex - parzenWindowTerm + k) for
    * k = 0 ... kernelsize-1
    * Returns the values in a ParzenValueContainer, which is supposed to have
@@ -322,6 +327,7 @@ protected:
     double parzenWindowTerm, OffsetValueType parzenWindowIndex,
     const KernelFunctionType * kernel,
     ParzenValueContainerType & parzenValues ) const;
+
 
   /** Update the joint PDF with a pixel pair; on demand also updates the
    * pdf derivatives (if the Jacobian pointers are nonzero).
@@ -334,7 +340,7 @@ protected:
     JointPDFType * jointPDF,
     const unsigned int pos) const;
 
-
+#ifdef BENCHMARK  /* Just for TESTING analytic derivative vs. numeric (finite difference) */
   /** Update the joint PDF and the incremental pdfs.
 * The input is a pixel pair (fixed, moving, moving mask) and
 * a set of moving image/mask values when using mu+delta*e_k, for
@@ -352,8 +358,8 @@ protected:
     const DerivativeType& movingMaskValuesRight,
     const DerivativeType& movingMaskValuesLeft,
     const NonZeroJacobianIndicesType& nzji,
-    const unsigned int pos) const; // TESTING
-
+    const unsigned int pos) const;
+#endif
 
   /** Update the pdf derivatives
    * adds -image_jac[mu]*factor to the bin
@@ -387,14 +393,15 @@ protected:
     const unsigned int& direction,
     const unsigned int pos) const;
 
+#ifdef BENCHMARK  /* Just for TESTING analytic derivative vs. numeric (finite difference) */
   /** Compute incremental marginal pdfs. Integrates the incremental PDF
  * to obtain the fixed and moving marginal pdfs at once.
  */
   virtual void ComputeIncrementalMarginalPDFs(
     const JointPDFDerivativesType* incrementalPDF,
     IncrementalMarginalPDFType* fixedIncrementalMarginalPDF,
-    IncrementalMarginalPDFType* movingIncrementalMarginalPDF) const; // TESTING
-
+    IncrementalMarginalPDFType* movingIncrementalMarginalPDF) const;
+#endif
 
 
   /** Compute PDFs and pdf derivatives; Loops over the fixed image samples and constructs
@@ -408,7 +415,7 @@ protected:
    */
   virtual void ComputePDFsAndPDFDerivatives( const ParametersType & parameters, const unsigned int pos) const;
 
-
+#ifdef BENCHMARK  /* Just for TESTING analytic derivative vs. numeric (finite difference) */
   /** Compute PDFs and incremental pdfs (which you can use to compute finite
  * difference estimate of the derivative).
  * Loops over the fixed image samples and constructs the m_JointPDF,
@@ -433,7 +440,8 @@ protected:
  * p(mu-delta*e_k) = ( pal(k) ) * jh(mu-delta*e_k)
  */
   virtual void ComputePDFsAndIncrementalPDFs(const ParametersType& parameters,
-    const unsigned int pos) const; // TESTING
+    const unsigned int pos) const;
+#endif
 
 
   /** Compute PDFs; Loops over the fixed image samples and constructs
@@ -460,9 +468,7 @@ protected:
     MeasureType & itkNotUsed( value ),
     DerivativeType & itkNotUsed( derivative ) ) const {}
 
-  /* From here to private keyword:
-  * Just for TESTING: methods used in  GetValueAndAnalyticDerivative */
-
+#ifdef BENCHMARK  /* Just for TESTING analytic derivative vs. numeric (finite difference) */
    /*  Get the value and finite difference derivatives for single valued optimizers.
     * Called by GetValueAndDerivative for testing
     * Implement this method in subclasses.
@@ -471,6 +477,7 @@ protected:
       const ParametersType & itkNotUsed(parameters),
       MeasureType & itkNotUsed(value),
       DerivativeType & itkNotUsed(derivative)) const {} // TESTING
+#endif
 
 private:
 
@@ -486,9 +493,9 @@ private:
   unsigned int  m_MovingKernelBSplineOrder;
   bool          m_UseDerivative;
 
-  /** Just for TESTING: variable used in  GetValueAndAnalyticDerivative */
+#ifdef BENCHMARK  /* Just for TESTING analytic derivative vs. numeric (finite difference) */
   double        m_FiniteDifferencePerturbation;
-
+#endif
 };
 
 } // end namespace itk

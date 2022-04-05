@@ -123,7 +123,7 @@ MultiMattesMutualInformationMetric< TElastix >
 
   /** Prepare for computing the perturbation gain c_k. */
   this->SetCurrentIteration( 0 );
-  //if (useFiniteDifferenceDerivative)
+#ifdef BENCHMARK  /* Just for TESTING analytic derivative vs. numeric (finite difference) */
   {
     double c = 1.0;
     double gamma = 0.101;
@@ -135,7 +135,7 @@ MultiMattesMutualInformationMetric< TElastix >
     this->SetParam_gamma(gamma);
     this->SetFiniteDifferencePerturbation(this->Compute_c(0));
   }
-
+#endif
 } // end BeforeEachResolution()
 
 

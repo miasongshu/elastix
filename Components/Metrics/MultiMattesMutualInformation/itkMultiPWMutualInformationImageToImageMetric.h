@@ -203,14 +203,13 @@ protected:
   /** Some initialization functions, called by Initialize. */
   void InitializeHistograms( void ) override;
 
-
-  /**  Get the value and finite difference derivative.
- *
- * This is really only TESTING purposes.
- */
+#ifdef BENCHMARK  /* Just for TESTING analytic derivative vs. numeric (finite difference) */
+  /**  Get the value and finite difference derivative. */
   void GetValueAndFiniteDifferenceDerivative(
     const ParametersType& parameters,
     MeasureType& value, DerivativeType& derivative) const override;
+#endif
+
 
 private:
 

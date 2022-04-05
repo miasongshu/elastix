@@ -232,7 +232,7 @@ MultiPWMutualInformationImageToImageMetric< TFixedImage, TMovingImage >
 
 
 
-  /* Just for TESTING:*/
+#ifdef BENCHMARK  /* Just for TESTING analytic derivative vs. numeric (finite difference) */
 /**
  * ******************** GetValueAndFiniteDifferenceDerivative *******************
  */
@@ -442,6 +442,7 @@ MultiPWMutualInformationImageToImageMetric< TFixedImage, TMovingImage >
   }
 } // end GetValueAndFiniteDifferenceDerivative
 
+#endif
 
 
 } // end namespace itk

@@ -65,7 +65,7 @@ MultiPWHistogramImageToImageMetric< TFixedImage, TMovingImage >
   this->SetUseFixedImageLimiter( true );
   this->SetUseMovingImageLimiter( true );
 
-  /** Just for TESTING via GetValueAndAnalyticDerivative */
+#ifdef BENCHMARK  /* Just for TESTING analytic derivative vs. numeric (finite difference) */
   this->m_FiniteDifferencePerturbation = 1.0;
   this->m_IncrementalJointPDFRightVector = {};
   this->m_IncrementalJointPDFLeftVector = {};
@@ -73,7 +73,7 @@ MultiPWHistogramImageToImageMetric< TFixedImage, TMovingImage >
   this->m_MovingIncrementalMarginalPDFRightVector = {};
   this->m_FixedIncrementalMarginalPDFLeftVector = {};
   this->m_MovingIncrementalMarginalPDFLeftVector = {};
-
+#endif
 
 } // end Constructor
 
@@ -98,10 +98,10 @@ MultiPWHistogramImageToImageMetric< TFixedImage, TMovingImage >
   /** Set up the Parzen windows. */
   this->InitializeKernels();
 
-  // for TESTING:
+#ifdef BENCHMARK  /* Just for TESTING analytic derivative vs. numeric (finite difference) */
   this->m_PerturbedAlphaRight.SetSize(this->GetNumberOfParameters());
   this->m_PerturbedAlphaLeft.SetSize(this->GetNumberOfParameters());
-
+#endif
 } // end Initialize()
 
 
@@ -234,7 +234,7 @@ MultiPWHistogramImageToImageMetric< TFixedImage, TMovingImage >
 
 
 
-    /* for TESTING */
+#ifdef BENCHMARK  /* Just for TESTING analytic derivative vs. numeric (finite difference) */
     /** First set these ones to zero */
     this->m_FixedIncrementalMarginalPDFRightVector.push_back(IncrementalMarginalPDFType::New());
     this->m_MovingIncrementalMarginalPDFRightVector.push_back(IncrementalMarginalPDFType::New());
@@ -283,12 +283,14 @@ MultiPWHistogramImageToImageMetric< TFixedImage, TMovingImage >
     this->m_MovingIncrementalMarginalPDFRightVector[pos]->Allocate();
     this->m_FixedIncrementalMarginalPDFLeftVector[pos]->Allocate();
     this->m_MovingIncrementalMarginalPDFLeftVector[pos]->Allocate();
-
+#endif
     }
     else
     {
       this->m_JointPDFDerivativesVector.push_back(nullptr);
+#ifdef BENCHMARK
       itkExceptionMacro("Not finished implementation of !GetUseDerivative() !!!! Exiting");
+#endif
     }
   }// end loop over pos
 } // end InitializeHistograms()
@@ -402,6 +404,7 @@ MultiPWHistogramImageToImageMetric< TFixedImage, TMovingImage >
 ::GetValueAndDerivative( const ParametersType & parameters,
   MeasureType & value, DerivativeType & derivative ) const
 {
+#ifdef BENCHMARK  /* Just for TESTING analytic derivative vs. numeric (finite difference) */
    this->GetValueAndFiniteDifferenceDerivative(parameters, value, derivative);
 
    MeasureType sum{};
@@ -415,7 +418,9 @@ MultiPWHistogramImageToImageMetric< TFixedImage, TMovingImage >
 
    itkWarningMacro(<< "FD = " << sum << ", Analytical = " << sum2 << "!!!!!!!!!!!!");
    std::this_thread::sleep_for(std::chrono::milliseconds(100));
-
+#else
+  this->GetValueAndAnalyticDerivative(parameters, value, derivative);
+#endif
    //this->GetValueAndAnalyticDerivative( parameters, value, derivative );
    //itkWarningMacro(<< "Testing: analytic deriv. = " << 
    //  derivative[0] << ", " << derivative[10] << ", " << derivative[25] << ", " << derivative[100] << " XXXXXXXXXXX");//std::accumulate(derivative.begin(), derivative.end(), 0));
@@ -427,10 +432,9 @@ MultiPWHistogramImageToImageMetric< TFixedImage, TMovingImage >
 } // end GetValueAndDerivative()
 
 
-/** only needed for TESTING via GetValueAndAnalyticDerivative ???
- * ********************** EvaluateParzenValues ***************
- */
 
+ /* ********************** EvaluateParzenValues ***************
+ */
 template< class TFixedImage, class TMovingImage >
 void
 MultiPWHistogramImageToImageMetric< TFixedImage, TMovingImage >
@@ -881,8 +885,7 @@ MultiPWHistogramImageToImageMetric< TFixedImage, TMovingImage >
 
 
 
-  /** From here to end of file: 
-  * Just for TESTING: methods used in  GetValueAndAnalyticDerivative */
+#ifdef BENCHMARK  /* Just for TESTING analytic derivative vs. numeric (finite difference) */
 /**
  * ************************ ComputePDFsAndIncrementalPDFs *******************
  */
@@ -1103,7 +1106,7 @@ MultiPWHistogramImageToImageMetric< TFixedImage, TMovingImage >
     else
     {
       this->m_PerturbedAlphaRight[i] = 0.0;
-    }
+    }  
     if (this->m_PerturbedAlphaLeft[i] > 1e-10)
     {
       this->m_PerturbedAlphaLeft[i] = 1.0 / this->m_PerturbedAlphaLeft[i];
@@ -1353,7 +1356,7 @@ MultiPWHistogramImageToImageMetric< TFixedImage, TMovingImage >
     this->m_PerturbedAlphaLeft[mu] += (maskl - movingMaskValue);
   } // end for i
 } // end UpdateJointPDFAndIncrementalPDFs()
-
+#endif
 
 
 } // end namespace itk
