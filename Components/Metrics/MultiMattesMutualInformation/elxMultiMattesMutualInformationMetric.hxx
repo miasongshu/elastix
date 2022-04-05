@@ -37,9 +37,11 @@ template< class TElastix >
 MultiMattesMutualInformationMetric< TElastix >
 ::MultiMattesMutualInformationMetric()
 {
+#ifdef BENCHMARK  /* Just for TESTING analytic derivative vs. numeric (finite difference) */
   this->m_CurrentIteration = 0.0;
   this->m_Param_c          = 1.0;
   this->m_Param_gamma      = 0.101;
+#endif
   this->SetUseDerivative(true);
 } // end Constructor()
 
@@ -121,9 +123,10 @@ MultiMattesMutualInformationMetric< TElastix >
   this->SetMovingKernelBSplineOrder( movingKernelBSplineOrder );
 
 
+#ifdef BENCHMARK  /* Just for TESTING analytic derivative vs. numeric (finite difference) */
   /** Prepare for computing the perturbation gain c_k. */
   this->SetCurrentIteration( 0 );
-#ifdef BENCHMARK  /* Just for TESTING analytic derivative vs. numeric (finite difference) */
+
   {
     double c = 1.0;
     double gamma = 0.101;
@@ -136,14 +139,29 @@ MultiMattesMutualInformationMetric< TElastix >
     this->SetFiniteDifferencePerturbation(this->Compute_c(0));
   }
 #endif
+
 } // end BeforeEachResolution()
 
+
+#ifdef BENCHMARK  /* Just for TESTING analytic derivative vs. numeric (finite difference) */
+/**
+ * ***************** AfterEachIteration ***********************
+ */
+
+template< class TElastix >
+void
+MultiMattesMutualInformationMetric< TElastix >
+::AfterEachIteration(void)
+{
+    this->m_CurrentIteration++;
+    this->SetFiniteDifferencePerturbation(
+      this->Compute_c(this->m_CurrentIteration));
+} // end AfterEachIteration()
 
 
 /**
  * ************************** Compute_c *************************
  */
-
 template< class TElastix >
 double
 MultiMattesMutualInformationMetric< TElastix >
@@ -153,7 +171,7 @@ MultiMattesMutualInformationMetric< TElastix >
     this->m_Param_c / std::pow( k + 1, this->m_Param_gamma ) );
 
 } // end Compute_c()
-
+#endif
 
 } // end namespace elastix
 

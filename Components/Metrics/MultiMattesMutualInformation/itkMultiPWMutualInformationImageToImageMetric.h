@@ -190,7 +190,7 @@ protected:
   typedef typename Superclass::NonZeroJacobianIndicesType          NonZeroJacobianIndicesType;
 
   /**  Get the value and analytic derivative.
-   * Called by GetValueAndDerivative if UseFiniteDifferenceDerivative == false.
+   * Called by GetValueAndDerivative
    *
    * Implements a version that only loops once over the samples, but uses
    * a large block of memory to explicitly store the joint histogram derivative.

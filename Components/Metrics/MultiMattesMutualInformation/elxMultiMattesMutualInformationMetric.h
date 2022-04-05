@@ -198,10 +198,18 @@ public:
    * \li Set the fixed/moving limiter. */
   void BeforeEachResolution( void ) override;
 
+#ifdef BENCHMARK  /* Just for TESTING analytic derivative vs. numeric (finite difference) */
+  /** Update the CurrenIteration. This is only important
+   * if a finite difference derivative estimation is used
+   * (selected by the experimental parameter FiniteDifferenceDerivative)  */
+  void AfterEachIteration(void) override;
+#endif
+
   /** Set up a timer to measure the initialization time and
    * call the Superclass' implementation. */
   void Initialize( void ) override;
 
+#ifdef BENCHMARK  /* Just for TESTING analytic derivative vs. numeric (finite difference) */
   /** Set/Get c. For finite difference derivative estimation */
   itkSetMacro( Param_c, double );
   itkGetConstMacro( Param_c, double );
@@ -213,6 +221,7 @@ public:
   /** Set/Get the current iteration. For finite difference derivative estimation */
   itkSetMacro( CurrentIteration, unsigned int );
   itkGetConstMacro( CurrentIteration, unsigned int );
+#endif
 
 protected:
 
@@ -222,10 +231,12 @@ protected:
   /** The destructor. */
   ~MultiMattesMutualInformationMetric() override {}
 
+#ifdef BENCHMARK  /* Just for TESTING analytic derivative vs. numeric (finite difference) */
   unsigned long m_CurrentIteration;
 
   /** A function to compute the finite difference perturbation in each iteration */
   double Compute_c( unsigned long k ) const;
+#endif
 
 private:
 

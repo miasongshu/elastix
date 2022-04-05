@@ -460,7 +460,7 @@ protected:
   virtual void InitializeKernels( void );
 
   /** Get the value and analytic derivatives for single valued optimizers.
-   * Called by GetValueAndDerivative if UseFiniteDifferenceDerivative == false
+   * Called by GetValueAndDerivative
    * Implement this method in subclasses.
    */
   virtual void GetValueAndAnalyticDerivative(

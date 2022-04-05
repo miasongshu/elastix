@@ -289,6 +289,8 @@ MultiPWHistogramImageToImageMetric< TFixedImage, TMovingImage >
     {
       this->m_JointPDFDerivativesVector.push_back(nullptr);
 #ifdef BENCHMARK
+      this->m_IncrementalJointPDFRightVector.push_back(nullptr);
+      this->m_IncrementalJointPDFLeftVector.push_back(nullptr);
       itkExceptionMacro("Not finished implementation of !GetUseDerivative() !!!! Exiting");
 #endif
     }
