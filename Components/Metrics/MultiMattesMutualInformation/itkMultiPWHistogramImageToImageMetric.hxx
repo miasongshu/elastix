@@ -19,6 +19,9 @@
 #define _itkMultiPWHistogramImageToImageMetric_HXX__
 
 #include <algorithm>
+// for debug
+#include <chrono>
+#include <thread>
 #include "itkMultiPWHistogramImageToImageMetric.h"
 
 #include "itkBSplineKernelFunction2.h"
@@ -400,8 +403,18 @@ MultiPWHistogramImageToImageMetric< TFixedImage, TMovingImage >
   MeasureType & value, DerivativeType & derivative ) const
 {
    this->GetValueAndFiniteDifferenceDerivative(parameters, value, derivative);
-   itkWarningMacro(<< "Testing: numeric deriv. = " <<
-     derivative[0] << ", " << derivative[10] << ", " << derivative[25] << ", " << derivative[100] << " !!!!!!!!!!!!");
+
+   MeasureType sum{};
+   for (const auto& it : derivative)
+     sum += std::fabs(it);
+
+   this->GetValueAndAnalyticDerivative( parameters, value, derivative );
+   MeasureType sum2{};
+   for (const auto& it : derivative)
+     sum2 += std::fabs(it);
+
+   itkWarningMacro(<< "FD = " << sum << ", Analytical = " << sum2 << "!!!!!!!!!!!!");
+   std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
    //this->GetValueAndAnalyticDerivative( parameters, value, derivative );
    //itkWarningMacro(<< "Testing: analytic deriv. = " << 

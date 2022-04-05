@@ -120,7 +120,7 @@ public:
 
   /** Run-time type information (and related methods). */
   itkTypeMacro( MultiMattesMutualInformationMetric,
-    itk::ParzenWindowMutualInformationImageToImageMetric );
+    itk::MultiPWMutualInformationImageToImageMetric );
 
   /** Name of this class.
    * Use this name in the parameter file to select this specific metric. \n

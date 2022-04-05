@@ -430,16 +430,16 @@ MultiPWMutualInformationImageToImageMetric< TFixedImage, TMovingImage >
   }  // end while-loop over fixed index
 
     value = static_cast<MeasureType>(-1.0 * MI);
-
-    /** Divide the derivative by -delta*2. */
-    const double delta2 = -1.0 / (this->GetFiniteDifferencePerturbation() * 2.0);
-    derivit = derivative.begin();
-    while (derivit != derivend)
-    {
-      (*derivit) *= delta2;
-      ++derivit;
-    }
   } // end for-loop over image cluster
+  /** Divide the derivative by -delta*2. */
+  const double delta2 = -1.0 / (this->GetFiniteDifferencePerturbation() * 2.0);
+  DerivativeType::iterator       derivit = derivative.begin();
+  const  DerivativeType::iterator derivend = derivative.end();
+  while (derivit != derivend)
+  {
+    (*derivit) *= delta2;
+    ++derivit;
+  }
 } // end GetValueAndFiniteDifferenceDerivative
 
 

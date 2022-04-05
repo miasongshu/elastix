@@ -123,6 +123,18 @@ MultiMattesMutualInformationMetric< TElastix >
 
   /** Prepare for computing the perturbation gain c_k. */
   this->SetCurrentIteration( 0 );
+  //if (useFiniteDifferenceDerivative)
+  {
+    double c = 1.0;
+    double gamma = 0.101;
+    this->GetConfiguration()->ReadParameter(c, "SP_c",
+      this->GetComponentLabel(), level, 0);
+    this->GetConfiguration()->ReadParameter(gamma, "SP_gamma",
+      this->GetComponentLabel(), level, 0);
+    this->SetParam_c(c);
+    this->SetParam_gamma(gamma);
+    this->SetFiniteDifferencePerturbation(this->Compute_c(0));
+  }
 
 } // end BeforeEachResolution()
 
