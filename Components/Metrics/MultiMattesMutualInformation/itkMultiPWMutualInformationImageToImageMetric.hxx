@@ -249,6 +249,9 @@ MultiPWMutualInformationImageToImageMetric< TFixedImage, TMovingImage >
     itkExceptionMacro(<< "MultiNormalizedCorrelationImageToImageMetric requires the same number of fixed and moving images");
 
   const unsigned int clusterSize = this->GetNumberOfFixedImages();
+
+  const double delta2 = -1.0 / (this->GetFiniteDifferencePerturbation() * 2.0);
+
   /** Loop over all the multiple images in the cluster */
   /** Initialize some variables. */
   value = NumericTraits< MeasureType >::Zero;
@@ -394,8 +397,9 @@ MultiPWMutualInformationImageToImageMetric< TFixedImage, TMovingImage >
               * std::log(perturbedJointPDFLeftValue / perturbedfixPDFmovPDFAlphaLeft);
           }
 
-          /** Update the derivative component. */
-          (*derivit) += contrib;
+          /** Update the derivative component and divide the derivative by -delta*2. */
+          (*derivit) += contrib*delta2;
+   
 
           /** Move the iterators to the next parameter. */
           ++derivit;
@@ -428,18 +432,9 @@ MultiPWMutualInformationImageToImageMetric< TFixedImage, TMovingImage >
       movingIncPDFRightit.GoToBegin();                      // first moving bin
       movingIncPDFLeftit.GoToBegin();                       // first moving bin
   }  // end while-loop over fixed index
-
-    value = static_cast<MeasureType>(-1.0 * MI);
   } // end for-loop over image cluster
-  /** Divide the derivative by -delta*2. */
-  const double delta2 = -1.0 / (this->GetFiniteDifferencePerturbation() * 2.0);
-  DerivativeType::iterator       derivit = derivative.begin();
-  const  DerivativeType::iterator derivend = derivative.end();
-  while (derivit != derivend)
-  {
-    (*derivit) *= delta2;
-    ++derivit;
-  }
+  value = static_cast<MeasureType>(-1.0 * MI);
+
 } // end GetValueAndFiniteDifferenceDerivative
 
 #endif
