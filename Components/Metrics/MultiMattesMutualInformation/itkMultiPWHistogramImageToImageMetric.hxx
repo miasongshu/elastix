@@ -473,11 +473,11 @@ MultiPWHistogramImageToImageMetric< TFixedImage, TMovingImage >
 
   /** The lowest bin numbers affected by this pixel: */
   const OffsetValueType fixedImageParzenWindowIndex
-    = static_cast< OffsetValueType >( std::min(std::max(std::floor(
-      fixedImageParzenWindowTerm + this->m_FixedParzenTermToIndexOffset), 0.0), static_cast<double>(this->m_JointPDFWindow.GetSize()[1] - 1)));
+    = static_cast<OffsetValueType>(std::floor(
+      fixedImageParzenWindowTerm + this->m_FixedParzenTermToIndexOffset));
   const OffsetValueType movingImageParzenWindowIndex
-    = static_cast< OffsetValueType >(std::min(std::max(std::floor(
-    movingImageParzenWindowTerm + this->m_MovingParzenTermToIndexOffset ),0.0), static_cast<double>(this->m_JointPDFWindow.GetSize()[0] - 1)));
+    = static_cast<OffsetValueType>(std::floor(
+      movingImageParzenWindowTerm + this->m_MovingParzenTermToIndexOffset));
 
   /** The Parzen values. */
   ParzenValueContainerType fixedParzenValues( this->m_JointPDFWindow.GetSize()[ 1 ] );
