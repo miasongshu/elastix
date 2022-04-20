@@ -62,6 +62,7 @@ MultiPWHistogramImageToImageMetric< TFixedImage, TMovingImage >
   this->m_MovingParzenTermToIndexOffset = -1.0;
 
   this->SetUseImageSampler( true );
+  // this will be overridden by default or user input in elxMultiMattesMutualInformationMetric.hxx
   this->SetUseFixedImageLimiter( true );
   this->SetUseMovingImageLimiter( true );
 
@@ -73,6 +74,8 @@ MultiPWHistogramImageToImageMetric< TFixedImage, TMovingImage >
   this->m_MovingIncrementalMarginalPDFRightVector = {};
   this->m_FixedIncrementalMarginalPDFLeftVector = {};
   this->m_MovingIncrementalMarginalPDFLeftVector = {};
+  this->m_PerturbedAlphaRightVector = {};
+  this->m_PerturbedAlphaLeftVector = {};
 #endif
 
 } // end Constructor
@@ -98,10 +101,6 @@ MultiPWHistogramImageToImageMetric< TFixedImage, TMovingImage >
   /** Set up the Parzen windows. */
   this->InitializeKernels();
 
-#ifdef BENCHMARK  /* Just for TESTING analytic derivative vs. numeric (finite difference) */
-  this->m_PerturbedAlphaRight.SetSize(this->GetNumberOfParameters());
-  this->m_PerturbedAlphaLeft.SetSize(this->GetNumberOfParameters());
-#endif
 } // end Initialize()
 
 
@@ -235,6 +234,12 @@ MultiPWHistogramImageToImageMetric< TFixedImage, TMovingImage >
 
 
 #ifdef BENCHMARK  /* Just for TESTING analytic derivative vs. numeric (finite difference) */
+
+    DerivativeType AlphaDummy;
+    AlphaDummy.SetSize(this->GetNumberOfParameters());
+    this->m_PerturbedAlphaRightVector.push_back(AlphaDummy);
+    this->m_PerturbedAlphaLeftVector.push_back(AlphaDummy);
+
     /** First set these ones to zero */
     this->m_FixedIncrementalMarginalPDFRightVector.push_back(IncrementalMarginalPDFType::New());
     this->m_MovingIncrementalMarginalPDFRightVector.push_back(IncrementalMarginalPDFType::New());
@@ -331,6 +336,7 @@ MultiPWHistogramImageToImageMetric< TFixedImage, TMovingImage >
        * Anyway, if you plan to call GetValueAndDerivative you should use
        * a higher B-spline order.
        */
+      itkExceptionMacro(<< " Please use a higher BSpline order!!! ");
       this->m_DerivativeMovingKernel = BSplineDerivativeKernelFunction2< 1 >::New();
       break;
     case 1:
@@ -407,11 +413,13 @@ MultiPWHistogramImageToImageMetric< TFixedImage, TMovingImage >
   MeasureType & value, DerivativeType & derivative ) const
 {
 #ifdef BENCHMARK  /* Just for TESTING analytic derivative vs. numeric (finite difference) */
-   this->GetValueAndFiniteDifferenceDerivative(parameters, value, derivative);
+  this->GetValueAndFiniteDifferenceDerivative(parameters, value, derivative);
 
-   MeasureType sum{};
-   for (const auto& it : derivative)
-     sum += std::fabs(it);
+  MeasureType sum{};
+  for (const auto& it : derivative)
+    sum += std::fabs(it);
+
+  MeasureType value1 = value;
 
    this->GetValueAndAnalyticDerivative( parameters, value, derivative );
    MeasureType sum2{};
@@ -419,7 +427,8 @@ MultiPWHistogramImageToImageMetric< TFixedImage, TMovingImage >
      sum2 += std::fabs(it);
 
    itkWarningMacro(<< "FD = " << sum << ", Analytical = " << sum2 << "!!!!!!!!!!!!");
-   std::this_thread::sleep_for(std::chrono::milliseconds(100));
+   itkWarningMacro(<< "FD = " << value1 << ", Analytical = " << value << "!!!!!!!! value !!");
+   //std::this_thread::sleep_for(std::chrono::milliseconds(100));
 #else
   this->GetValueAndAnalyticDerivative(parameters, value, derivative);
 #endif
@@ -827,6 +836,7 @@ MultiPWHistogramImageToImageMetric< TFixedImage, TMovingImage >
       RealType                    movingImageValue;
       MovingImagePointType        mappedPoint;
       MovingImageDerivativeType   movingImageDerivative;
+   
       /** Transform point and check if it is inside the B-spline support region. */
       bool sampleOk = this->TransformPoint(fixedPoint, mappedPoint);
 
@@ -872,13 +882,14 @@ MultiPWHistogramImageToImageMetric< TFixedImage, TMovingImage >
         this->UpdateJointPDFAndDerivatives(
           fixedImageValue, movingImageValue, &imageJacobian, &nzji, this->m_JointPDFVector[pos].GetPointer(), pos);
       } //end if-block check sampleOk
-
-
     } // end iterating over fixed image spatial sample container for loop
+
     /** Check if enough samples were valid. */
     this->CheckNumberOfSamples(
       sampleContainer->Size(), this->m_NumberOfPixelsCounted);
+
     /** Compute alpha. */
+    this->m_AlphaVector[pos] = 0.0;
     if (this->m_NumberOfPixelsCounted > 0)
     {
     this->m_AlphaVector[pos] = 1.0 / static_cast< double >( this->m_NumberOfPixelsCounted );
@@ -902,8 +913,8 @@ MultiPWHistogramImageToImageMetric< TFixedImage, TMovingImage >
   this->m_IncrementalJointPDFRightVector[pos]->FillBuffer(0.0);
   this->m_IncrementalJointPDFLeftVector[pos]->FillBuffer(0.0);
   this->m_AlphaVector[pos] = 0.0;
-  this->m_PerturbedAlphaRight.Fill(0.0);
-  this->m_PerturbedAlphaLeft.Fill(0.0);
+  this->m_PerturbedAlphaRightVector[pos].Fill(0.0);
+  this->m_PerturbedAlphaLeftVector[pos].Fill(0.0);
 
   this->m_NumberOfPixelsCounted = 0;
   double       sumOfMovingMaskValues = 0.0;
@@ -984,8 +995,8 @@ MultiPWHistogramImageToImageMetric< TFixedImage, TMovingImage >
         sampleOk = this->EvaluateMovingImageValueAndDerivative(
           mappedPoint, movingImageValue, 0, pos);
         if (sampleOk)
-        {
-          movingImageValue = this->GetMovingImageLimiter(pos)->Evaluate(movingImageValue);
+        { if (this->GetUseMovingImageLimiter())
+           movingImageValue = this->GetMovingImageLimiter(pos)->Evaluate(movingImageValue);
         }
         else
         {
@@ -1039,8 +1050,9 @@ MultiPWHistogramImageToImageMetric< TFixedImage, TMovingImage >
             mappedPointRight, movingImageValueRight, 0, pos);
           if (sampleOk)
           {
-            movingImageValueRight
-              = this->GetMovingImageLimiter(pos)->Evaluate(movingImageValueRight);
+            if (this->GetUseMovingImageLimiter())
+              movingImageValueRight
+                = this->GetMovingImageLimiter(pos)->Evaluate(movingImageValueRight);
             movingImageValuesRight[i] = movingImageValueRight;
           }
           else
@@ -1062,8 +1074,9 @@ MultiPWHistogramImageToImageMetric< TFixedImage, TMovingImage >
             mappedPointLeft, movingImageValueLeft, 0, pos);
           if (sampleOk)
           {
-            movingImageValueLeft
-              = this->GetMovingImageLimiter(pos)->Evaluate(movingImageValueLeft);
+            if (this->GetUseMovingImageLimiter())
+              movingImageValueLeft
+                = this->GetMovingImageLimiter(pos)->Evaluate(movingImageValueLeft);
             movingImageValuesLeft[i] = movingImageValueLeft;
           }
           else
@@ -1099,23 +1112,23 @@ MultiPWHistogramImageToImageMetric< TFixedImage, TMovingImage >
   }
   for (unsigned int i = 0; i < this->GetNumberOfParameters(); ++i)
   {
-    this->m_PerturbedAlphaRight[i] += sumOfMovingMaskValues;
-    this->m_PerturbedAlphaLeft[i] += sumOfMovingMaskValues;
-    if (this->m_PerturbedAlphaRight[i] > 1e-10)
+    this->m_PerturbedAlphaRightVector[pos][i] += sumOfMovingMaskValues;
+    this->m_PerturbedAlphaLeftVector[pos][i] += sumOfMovingMaskValues;
+    if (this->m_PerturbedAlphaRightVector[pos][i] > 1e-10)
     {
-      this->m_PerturbedAlphaRight[i] = 1.0 / this->m_PerturbedAlphaRight[i];
+      this->m_PerturbedAlphaRightVector[pos][i] = 1.0 / this->m_PerturbedAlphaRightVector[pos][i];
     }
     else
     {
-      this->m_PerturbedAlphaRight[i] = 0.0;
+      this->m_PerturbedAlphaRightVector[pos][i] = 0.0;
     }  
-    if (this->m_PerturbedAlphaLeft[i] > 1e-10)
+    if (this->m_PerturbedAlphaLeftVector[pos][i] > 1e-10)
     {
-      this->m_PerturbedAlphaLeft[i] = 1.0 / this->m_PerturbedAlphaLeft[i];
+      this->m_PerturbedAlphaLeftVector[pos][i] = 1.0 / this->m_PerturbedAlphaLeftVector[pos][i];
     }
     else
     {
-      this->m_PerturbedAlphaLeft[i] = 0.0;
+      this->m_PerturbedAlphaLeftVector[pos][i] = 0.0;
     }
   }
 } // end ComputePDFsAndIncrementalPDFs()
@@ -1354,8 +1367,8 @@ MultiPWHistogramImageToImageMetric< TFixedImage, TMovingImage >
     } // end if maskl
 
     /** Update the perturbed alphas. */
-    this->m_PerturbedAlphaRight[mu] += (maskr - movingMaskValue);
-    this->m_PerturbedAlphaLeft[mu] += (maskl - movingMaskValue);
+    this->m_PerturbedAlphaRightVector[pos][mu] += (maskr - movingMaskValue);
+    this->m_PerturbedAlphaLeftVector[pos][mu] += (maskl - movingMaskValue);
   } // end for i
 } // end UpdateJointPDFAndIncrementalPDFs()
 #endif

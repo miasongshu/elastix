@@ -64,6 +64,7 @@ ParzenWindowHistogramImageToImageMetric< TFixedImage, TMovingImage >
   this->m_FiniteDifferencePerturbation  = 1.0;
 
   this->SetUseImageSampler( true );
+  // this will be overridden by default or user input in elxAdvancedMattesMutualInformationMetric.hxx
   this->SetUseFixedImageLimiter( true );
   this->SetUseMovingImageLimiter( true );
 

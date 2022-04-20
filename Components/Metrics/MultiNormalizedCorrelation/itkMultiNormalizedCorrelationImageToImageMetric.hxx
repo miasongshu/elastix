@@ -125,7 +125,6 @@ MultiNormalizedCorrelationImageToImageMetric< TFixedImage, TMovingImage >
     itkExceptionMacro(<< "MultiNormalizedCorrelationImageToImageMetric requires the same number of fixed and moving images");
 
   /** Initialize some variables. */
-  this->m_NumberOfPixelsCounted = 0;
   MeasureType measure = NumericTraits< MeasureType >::Zero;
 
   /** Call non-thread-safe stuff, such as:
@@ -149,6 +148,8 @@ MultiNormalizedCorrelationImageToImageMetric< TFixedImage, TMovingImage >
   /** Loop over all the multiple images in the cluster */
   for (unsigned int pos = 0; pos < clusterSize; ++pos)
   {
+  this->m_NumberOfPixelsCounted = 0;
+
   /** Get a handle to the sample container. */
   ImageSampleContainerPointer sampleContainer = this->GetImageSampler()->GetOutput();
 

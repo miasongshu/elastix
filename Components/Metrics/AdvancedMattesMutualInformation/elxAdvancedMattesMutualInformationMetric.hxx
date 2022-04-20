@@ -93,6 +93,16 @@ AdvancedMattesMutualInformationMetric< TElastix >
   this->SetNumberOfFixedHistogramBins( numberOfFixedHistogramBins );
   this->SetNumberOfMovingHistogramBins( numberOfMovingHistogramBins );
 
+  bool useFixedImageLimiter = true;
+  this->GetConfiguration()->ReadParameter(useFixedImageLimiter,
+    "useFixedImageLimiter", this->GetComponentLabel(), level, 0);
+  this->SetUseFixedImageLimiter(useFixedImageLimiter);
+
+  bool useMovingImageLimiter = true;
+  this->GetConfiguration()->ReadParameter(useMovingImageLimiter,
+    "useMovingImageLimiter", this->GetComponentLabel(), level, 0);
+  this->SetUseMovingImageLimiter(useMovingImageLimiter);
+
   /** Set limiters. */
   typedef itk::HardLimiterFunction< RealType, FixedImageDimension >         FixedLimiterType;
   typedef itk::ExponentialLimiterFunction< RealType, MovingImageDimension > MovingLimiterType;
@@ -130,6 +140,7 @@ AdvancedMattesMutualInformationMetric< TElastix >
   this->GetConfiguration()->ReadParameter( useJacobianPreconditioning,
     "UseJacobianPreconditioning", this->GetComponentLabel(), level, 0 );
   this->SetUseJacobianPreconditioning( useJacobianPreconditioning );
+
 
   /** Set whether a finite difference derivative should be used. */
   bool useFiniteDifferenceDerivative = false;

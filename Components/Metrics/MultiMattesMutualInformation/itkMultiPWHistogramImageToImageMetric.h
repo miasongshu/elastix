@@ -288,7 +288,7 @@ protected:
   mutable std::vector< double >        m_AlphaVector;
 
   /** Variables for the pdfs (actually: histograms). */
-  mutable std::vector< MarginalPDFType>    m_FixedImageMarginalPDFVector;
+  mutable std::vector< MarginalPDFType>    m_FixedImageMarginalPDFVector;  // remove mutable as it is vector now...!
   mutable std::vector< MarginalPDFType>    m_MovingImageMarginalPDFVector;
   std::vector< JointPDFPointer>            m_JointPDFVector;
   std::vector< JointPDFDerivativesPointer> m_JointPDFDerivativesVector;
@@ -313,8 +313,8 @@ protected:
   std::vector < IncrementalMarginalPDFPointer>  m_MovingIncrementalMarginalPDFRightVector;
   std::vector < IncrementalMarginalPDFPointer>  m_FixedIncrementalMarginalPDFLeftVector;
   std::vector < IncrementalMarginalPDFPointer>  m_MovingIncrementalMarginalPDFLeftVector;
-  mutable DerivativeType m_PerturbedAlphaRight;
-  mutable DerivativeType m_PerturbedAlphaLeft;
+  mutable std::vector < DerivativeType > m_PerturbedAlphaRightVector;
+  mutable std::vector < DerivativeType > m_PerturbedAlphaLeftVector;
 #endif
 
   /** Compute the Parzen values given an image value and a starting histogram index

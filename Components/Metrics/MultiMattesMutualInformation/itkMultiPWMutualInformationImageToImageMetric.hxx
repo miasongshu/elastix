@@ -325,12 +325,11 @@ MultiPWMutualInformationImageToImageMetric< TFixedImage, TMovingImage >
     const DerivativeIteratorType derivbegin = derivative.begin();
     const DerivativeIteratorType derivend = derivative.end();
 
-    DerivativeConstIteratorType       perturbedAlphaRightit = this->m_PerturbedAlphaRight.begin();
-    const DerivativeConstIteratorType perturbedAlphaRightbegin = this->m_PerturbedAlphaRight.begin();
-    DerivativeConstIteratorType       perturbedAlphaLeftit = this->m_PerturbedAlphaLeft.begin();
-    const DerivativeConstIteratorType perturbedAlphaLeftbegin = this->m_PerturbedAlphaLeft.begin();
+    DerivativeConstIteratorType       perturbedAlphaRightit = this->m_PerturbedAlphaRightVector[pos].begin();
+    const DerivativeConstIteratorType perturbedAlphaRightbegin = this->m_PerturbedAlphaRightVector[pos].begin();
+    DerivativeConstIteratorType       perturbedAlphaLeftit = this->m_PerturbedAlphaLeftVector[pos].begin();
+    const DerivativeConstIteratorType perturbedAlphaLeftbegin = this->m_PerturbedAlphaLeftVector[pos].begin();
 
-    double MI = 0.0;
     while (fixedPDFit != fixedPDFend)
     {
       const double fixedPDFValue = *fixedPDFit;

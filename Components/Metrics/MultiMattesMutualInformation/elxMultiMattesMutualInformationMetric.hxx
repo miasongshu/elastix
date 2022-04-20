@@ -96,11 +96,21 @@ MultiMattesMutualInformationMetric< TElastix >
 
   // There is only one set here - the rest happens in InitializeLimiter
 
-  /** Set limiters. */
-  typedef itk::HardLimiterFunction< RealType, FixedImageDimension >         FixedLimiterType;
-  typedef itk::ExponentialLimiterFunction< RealType, MovingImageDimension > MovingLimiterType;
-  this->SetFixedImageLimiter( FixedLimiterType::New() );
-  this->SetMovingImageLimiter( MovingLimiterType::New() );
+  bool useFixedImageLimiter = true;
+  this->GetConfiguration()->ReadParameter(useFixedImageLimiter,
+    "useFixedImageLimiter", this->GetComponentLabel(), level, 0);
+  this->SetUseFixedImageLimiter(useFixedImageLimiter);
+
+  bool useMovingImageLimiter = true;
+  this->GetConfiguration()->ReadParameter(useMovingImageLimiter,
+    "useMovingImageLimiter", this->GetComponentLabel(), level, 0);
+  this->SetUseMovingImageLimiter(useMovingImageLimiter);
+
+  ///** Set limiters. */
+  //typedef itk::HardLimiterFunction< RealType, FixedImageDimension >         FixedLimiterType;
+  //typedef itk::ExponentialLimiterFunction< RealType, MovingImageDimension > MovingLimiterType;
+  //this->SetFixedImageLimiter( FixedLimiterType::New() );
+  //this->SetMovingImageLimiter( MovingLimiterType::New() );
 
   /** Get and set the limit range ratios. */
   double fixedLimitRangeRatio  = 0.01;
