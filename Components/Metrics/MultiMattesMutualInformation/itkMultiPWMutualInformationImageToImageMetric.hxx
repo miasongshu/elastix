@@ -228,6 +228,8 @@ MultiPWMutualInformationImageToImageMetric< TFixedImage, TMovingImage >
     value += static_cast<MeasureType>(-1.0 * MI);
 
   } // end for-loop over image cluster
+  value = static_cast<MeasureType>(value/clusterSize);
+  derivative /= clusterSize;
 } // end GetValueAndAnalyticDerivative()
 
 
@@ -432,8 +434,8 @@ MultiPWMutualInformationImageToImageMetric< TFixedImage, TMovingImage >
       movingIncPDFLeftit.GoToBegin();                       // first moving bin
   }  // end while-loop over fixed index
   } // end for-loop over image cluster
-  value = static_cast<MeasureType>(-1.0 * MI);
-
+  value = static_cast<MeasureType>(-1.0 * MI/clusterSize);
+  derivative /= clusterSize;
 } // end GetValueAndFiniteDifferenceDerivative
 
 #endif

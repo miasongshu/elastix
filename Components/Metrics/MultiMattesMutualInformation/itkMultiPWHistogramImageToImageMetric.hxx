@@ -415,19 +415,25 @@ MultiPWHistogramImageToImageMetric< TFixedImage, TMovingImage >
 #ifdef BENCHMARK  /* Just for TESTING analytic derivative vs. numeric (finite difference) */
   this->GetValueAndFiniteDifferenceDerivative(parameters, value, derivative);
 
+  itkWarningMacro(<< "FD derivatives --------------------------------------");
   MeasureType sum{};
-  for (const auto& it : derivative)
+  for (const auto& it : derivative) {
+    itkWarningMacro(<< it);
     sum += std::fabs(it);
+  }
 
   MeasureType value1 = value;
 
    this->GetValueAndAnalyticDerivative( parameters, value, derivative );
    MeasureType sum2{};
-   for (const auto& it : derivative)
+   itkWarningMacro(<< "Analytic derivatives --------------------------------------" );
+   for (const auto& it : derivative) {
+     itkWarningMacro(<< it );
      sum2 += std::fabs(it);
+   }
 
-   itkWarningMacro(<< "FD = " << sum << ", Analytical = " << sum2 << "!!!!!!!!!!!!");
-   itkWarningMacro(<< "FD = " << value1 << ", Analytical = " << value << "!!!!!!!! value !!");
+   itkWarningMacro(<< "FD = " << sum << ", Analytical = " << sum2 << "!!!!!!! derivative sum");
+   itkWarningMacro(<< "FD = " << value1 << ", Analytical = " << value << "!!!!!!!! metric  value !!");
    //std::this_thread::sleep_for(std::chrono::milliseconds(100));
 #else
   this->GetValueAndAnalyticDerivative(parameters, value, derivative);
