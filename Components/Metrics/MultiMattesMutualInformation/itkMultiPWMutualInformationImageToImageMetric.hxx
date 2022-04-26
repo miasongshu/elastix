@@ -225,10 +225,8 @@ MultiPWMutualInformationImageToImageMetric< TFixedImage, TMovingImage >
         ++fixedPDFit;
         jointPDFit.NextLine();
       }  // end while-loop over fixed index
-    value += static_cast<MeasureType>(-1.0 * MI);
-
   } // end for-loop over image cluster
-  value = static_cast<MeasureType>(value/clusterSize);
+  value = static_cast<MeasureType>(-1.0 * MI/clusterSize);
   derivative /= clusterSize;
 } // end GetValueAndAnalyticDerivative()
 
