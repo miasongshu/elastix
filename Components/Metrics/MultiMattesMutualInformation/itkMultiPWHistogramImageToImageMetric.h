@@ -454,6 +454,8 @@ protected:
    */
   virtual void ComputePDFs( const ParametersType & parameters, const unsigned int pos ) const;
 
+  virtual void ResetVectors(void);
+
   /** Some initialization functions, called by Initialize. */
   virtual void InitializeHistograms( void );
 

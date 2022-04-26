@@ -43,15 +43,6 @@ MultiPWHistogramImageToImageMetric< TFixedImage, TMovingImage >
 {
   this->m_NumberOfFixedHistogramBins        = 32;
   this->m_NumberOfMovingHistogramBins       = 32;
-  this->m_JointPDFVector                    = {};
-  this->m_JointPDFDerivativesVector         = {};
-  this->m_FixedImageNormalizedMinVector     = {};
-  this->m_MovingImageNormalizedMinVector    = {};
-  this->m_FixedImageBinSizeVector           = {};
-  this->m_MovingImageBinSizeVector          = {};
-  this->m_AlphaVector                       = {};
-  this->m_FixedImageMarginalPDFVector       = {};
-  this->m_MovingImageMarginalPDFVector      = {};
 
   this->m_FixedKernel                   = 0;
   this->m_MovingKernel                  = 0;
@@ -68,6 +59,28 @@ MultiPWHistogramImageToImageMetric< TFixedImage, TMovingImage >
 
 #ifdef BENCHMARK  /* Just for TESTING analytic derivative vs. numeric (finite difference) */
   this->m_FiniteDifferencePerturbation = 1.0;
+#endif
+
+  this->ResetVectors();
+
+} // end Constructor
+
+template< class TFixedImage, class TMovingImage >
+void
+MultiPWHistogramImageToImageMetric< TFixedImage, TMovingImage >
+::ResetVectors()
+{
+  this->m_JointPDFVector = {};
+  this->m_JointPDFDerivativesVector = {};
+  this->m_FixedImageNormalizedMinVector = {};
+  this->m_MovingImageNormalizedMinVector = {};
+  this->m_FixedImageBinSizeVector = {};
+  this->m_MovingImageBinSizeVector = {};
+  this->m_AlphaVector = {};
+  this->m_FixedImageMarginalPDFVector = {};
+  this->m_MovingImageMarginalPDFVector = {};
+
+#ifdef BENCHMARK  /* Just for TESTING analytic derivative vs. numeric (finite difference) */
   this->m_IncrementalJointPDFRightVector = {};
   this->m_IncrementalJointPDFLeftVector = {};
   this->m_FixedIncrementalMarginalPDFRightVector = {};
@@ -77,10 +90,7 @@ MultiPWHistogramImageToImageMetric< TFixedImage, TMovingImage >
   this->m_PerturbedAlphaRightVector = {};
   this->m_PerturbedAlphaLeftVector = {};
 #endif
-
-} // end Constructor
-
-
+}
 
 
 /**
@@ -92,6 +102,10 @@ void
 MultiPWHistogramImageToImageMetric< TFixedImage, TMovingImage >
 ::Initialize( void )
 {
+  // Reset vector size to 0
+
+  this->ResetVectors();
+
   /** Call the superclass to check that standard components are available. */
   this->Superclass::Initialize();
 

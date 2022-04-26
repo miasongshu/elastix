@@ -106,12 +106,6 @@ MultiMattesMutualInformationMetric< TElastix >
     "useMovingImageLimiter", this->GetComponentLabel(), level, 0);
   this->SetUseMovingImageLimiter(useMovingImageLimiter);
 
-  ///** Set limiters. */
-  //typedef itk::HardLimiterFunction< RealType, FixedImageDimension >         FixedLimiterType;
-  //typedef itk::ExponentialLimiterFunction< RealType, MovingImageDimension > MovingLimiterType;
-  //this->SetFixedImageLimiter( FixedLimiterType::New() );
-  //this->SetMovingImageLimiter( MovingLimiterType::New() );
-
   /** Get and set the limit range ratios. */
   double fixedLimitRangeRatio  = 0.01;
   double movingLimitRangeRatio = 0.01;
