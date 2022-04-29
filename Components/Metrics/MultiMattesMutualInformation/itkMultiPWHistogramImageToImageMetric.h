@@ -27,7 +27,7 @@
  /** Include for the spatial derivatives. */
 #include "itkArray2D.h"
 
-#define BENCHMARK /* Switch on for TESTING analytic derivative vs. numeric (finite difference) */
+//#define BENCHMARK /* Switch on for TESTING analytic derivative vs. numeric (finite difference) */
 
 
 namespace itk
